@@ -69,22 +69,30 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
       <View style={styles.formContainer}>
         <Text style={styles.title}>Sign In</Text>
         
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Email Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            placeholderTextColor="#aaa"
+          />
+        </View>
         
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor="#aaa"
+          />
+        </View>
         
         <TouchableOpacity 
           style={styles.button}
@@ -164,11 +172,22 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
   },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 6,
+    color: '#333',
+  },
   input: {
     backgroundColor: '#f2f2f2',
     padding: 16,
     borderRadius: 8,
-    marginBottom: 16,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   button: {
     backgroundColor: '#007bff',
@@ -180,6 +199,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 16,
   },
   divider: {
     flexDirection: 'row',
