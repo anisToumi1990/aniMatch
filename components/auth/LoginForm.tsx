@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation, useRouter } from 'expo-router';
+import { AntDesign } from '@expo/vector-icons';
 
 interface LoginFormProps {
   onRegisterPress?: () => void;
@@ -11,7 +12,8 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth();
   const navigation = useNavigation();
   const router = useRouter();
 
@@ -32,6 +34,24 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
       Alert.alert('Login Failed', error.message || 'An error occurred during login');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+    try {
+      setSocialLoading(provider);
+      if (provider === 'google') {
+        await signInWithGoogle();
+      } else {
+        await signInWithApple();
+      }
+    } catch (error: any) {
+      Alert.alert(
+        `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`, 
+        error.message || `Login with ${provider} failed. Please try again.`
+      );
+    } finally {
+      setSocialLoading(null);
     }
   };
 
@@ -78,6 +98,44 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
           )}
         </TouchableOpacity>
         
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.dividerLine} />
+        </View>
+        
+        <View style={styles.socialButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.socialButton, styles.googleButton]}
+            onPress={() => handleSocialLogin('google')}
+            disabled={!!socialLoading}
+          >
+            {socialLoading === 'google' ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <AntDesign name="google" size={18} color="#fff" />
+                <Text style={styles.socialButtonText}>Google</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.socialButton, styles.appleButton]}
+            onPress={() => handleSocialLogin('apple')}
+            disabled={!!socialLoading}
+          >
+            {socialLoading === 'apple' ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <AntDesign name="apple1" size={18} color="#fff" />
+                <Text style={styles.socialButtonText}>Apple</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+        
         <TouchableOpacity 
           style={styles.linkButton}
           onPress={navigateToRegister}
@@ -122,6 +180,44 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e0e0e0',
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    color: '#666',
+  },
+  socialButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    flex: 0.48,
+  },
+  googleButton: {
+    backgroundColor: '#DB4437',
+  },
+  appleButton: {
+    backgroundColor: '#000',
+  },
+  socialButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
   linkButton: {
     marginTop: 16,
