@@ -8,6 +8,7 @@ interface AuthContextProps {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
+  checkEmailExists: (email: string) => Promise<boolean>;
   signUp: (email: string, password: string) => Promise<{ error: any | null }>;
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
   signOut: () => Promise<{ error: any | null }>;
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextProps>({
   session: null,
   user: null,
   isLoading: true,
+  checkEmailExists: async () => false,
   signUp: async () => ({ error: null }),
   signIn: async () => ({ error: null }),
   signOut: async () => ({ error: null }),
@@ -125,8 +127,58 @@ export function AuthProvider({ children }: AuthProviderProps) {
     refreshSession,
     signInWithGoogle,
     signInWithApple,
+    checkEmailExists: async (email: string) => {
+      try {
+        // Try to reset password for the email - this endpoint returns an error if email doesn't exist
+        // but will return success for existing emails without actually sending an email
+        const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: 'io.supabase.animatch://no-reset', // Invalid URL, we don't actually want to reset
+        });
+        
+        // If there's no error, email exists in the system
+        if (!error) {
+          // Check for more confirmation
+          return true;
+        }
+        
+        // If the error message includes "user not found", email doesn't exist
+        if (error && error.message && 
+           (error.message.toLowerCase().includes('user not found') || 
+            error.message.toLowerCase().includes('no user found'))) {
+          return false;
+        }
+        
+        // If we get other errors, try the fallback method
+        console.log("Trying fallback email check method");
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password: `Temp${Math.random().toString(36).slice(2, 10)}!`, // Random temp password
+        });
+        
+        // If error contains 'already registered', the email exists
+        if (signUpError && signUpError.message.includes('already registered')) {
+          return true;
+        }
+        
+        // If no clear indication, assume email doesn't exist
+        return false;
+      } catch (error) {
+        console.error('Error checking email:', error);
+        return false;
+      }
+    },
     signUp: async (email: string, password: string) => {
       try {
+        // First check if the email already exists to prevent duplicate registrations
+        const emailExists = await value.checkEmailExists(email);
+        if (emailExists) {
+          return { 
+            error: { 
+              message: 'Email already registered. Please sign in or use a different email.'
+            } 
+          };
+        }
+        
         const { error } = await supabase.auth.signUp({ email, password });
         if (!error) {
           await refreshSession();

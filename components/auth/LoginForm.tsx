@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { 
+  View, 
+  TextInput, 
+  TouchableOpacity, 
+  Text, 
+  StyleSheet, 
+  Alert, 
+  ActivityIndicator, 
+  KeyboardAvoidingView, 
+  ScrollView, 
+  Platform, 
+  TouchableWithoutFeedback,
+  Keyboard
+} from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation, useRouter } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
@@ -65,101 +78,115 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>Sign In</Text>
-        
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Email Address</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholderTextColor="#aaa"
-          />
-        </View>
-        
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholderTextColor="#aaa"
-          />
-        </View>
-        
-        <TouchableOpacity 
-          style={styles.button}
-          onPress={handleLogin}
-          disabled={isLoading}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Login</Text>
-          )}
-        </TouchableOpacity>
-        
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.dividerLine} />
-        </View>
-        
-        <View style={styles.socialButtonsContainer}>
-          <TouchableOpacity
-            style={[styles.socialButton, styles.googleButton]}
-            onPress={() => handleSocialLogin('google')}
-            disabled={!!socialLoading}
-          >
-            {socialLoading === 'google' ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <AntDesign name="google" size={18} color="#fff" />
-                <Text style={styles.socialButtonText}>Google</Text>
-              </>
-            )}
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.socialButton, styles.appleButton]}
-            onPress={() => handleSocialLogin('apple')}
-            disabled={!!socialLoading}
-          >
-            {socialLoading === 'apple' ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <AntDesign name="apple1" size={18} color="#fff" />
-                <Text style={styles.socialButtonText}>Apple</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-        
-        <TouchableOpacity 
-          style={styles.linkButton}
-          onPress={navigateToRegister}
-        >
-          <Text style={styles.linkButtonText}>
-            Don't have an account? Sign up
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <View style={styles.formContainer}>
+            <Text style={styles.title}>Sign In</Text>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Email Address</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                placeholderTextColor="#aaa"
+              />
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                placeholderTextColor="#aaa"
+              />
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Login</Text>
+              )}
+            </TouchableOpacity>
+            
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+            
+            <View style={styles.socialButtonsContainer}>
+              <TouchableOpacity
+                style={[styles.socialButton, styles.googleButton]}
+                onPress={() => handleSocialLogin('google')}
+                disabled={!!socialLoading}
+              >
+                {socialLoading === 'google' ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <AntDesign name="google" size={18} color="#fff" />
+                    <Text style={styles.socialButtonText}>Google</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.socialButton, styles.appleButton]}
+                onPress={() => handleSocialLogin('apple')}
+                disabled={!!socialLoading}
+              >
+                {socialLoading === 'apple' ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <AntDesign name="apple1" size={18} color="#fff" />
+                    <Text style={styles.socialButtonText}>Apple</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.linkButton}
+              onPress={navigateToRegister}
+            >
+              <Text style={styles.linkButtonText}>
+                Don't have an account? Sign up
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 16,
   },
