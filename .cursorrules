@@ -98,3 +98,11 @@
   - Use Expo's official documentation for setting up and configuring your projects: https://docs.expo.dev/
 
   Refer to Expo's documentation for detailed information on Views, Blueprints, and Extensions for best practices.
+
+  Development Tips:
+
+  1- Implement feature by feature, starting with authentication
+  2- Test each component individually
+  3- Implement error handling for each feature
+  4- Follow mobile UI/UX best practices
+  5- Maintain consistent styling with Tailwind

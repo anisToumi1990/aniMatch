@@ -1,4 +1,7 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -6,69 +9,109 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
 export default function HomeScreen() {
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        return;
+      }
+      
+      // Explicitly navigate to the login screen after sign out
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+  
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
+        <View style={styles.headerImageContainer}>
+          <Text style={styles.headerText}>AniMatch</Text>
+        </View>
       }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome to AniMatch!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <ThemedView style={styles.titleContainer}>
+          <ThemedText type="title">Welcome to AniMatch!</ThemedText>
+          <HelloWave />
+        </ThemedView>
+        
+        <ThemedView style={styles.userInfoContainer}>
+          <ThemedText type="subtitle">
+            Hello, {user?.email || 'User'}
+          </ThemedText>
+          <ThemedText>
+            You're signed in and ready to start matching!
+          </ThemedText>
+        </ThemedView>
+        
+        <ThemedView style={styles.stepContainer}>
+          <ThemedText type="subtitle">What's Next?</ThemedText>
+          <ThemedText>
+            Explore the app and start connecting with other users.
+          </ThemedText>
+        </ThemedView>
+        
+        <TouchableOpacity 
+          style={styles.signOutButton}
+          onPress={handleSignOut}
+        >
+          <Text style={styles.signOutButtonText}>Sign Out</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  headerImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
+  },
+  container: {
+    flex: 1,
+    padding: 16,
+  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginBottom: 24,
+  },
+  userInfoContainer: {
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 24,
   },
   stepContainer: {
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 24,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  signOutButton: {
+    backgroundColor: '#ff6347',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  signOutButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
