@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { AuthProvider } from '../context/AuthContext';
+import { QuizProvider } from '../context/QuizContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import 'react-native-url-polyfill/auto';
 
@@ -32,15 +33,17 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
-          <Stack.Screen name="index" options={{ title: 'Index' }} />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <QuizProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
+            <Stack.Screen name="index" options={{ title: 'Index' }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </QuizProvider>
     </AuthProvider>
   );
 }

@@ -48,3 +48,25 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Animal Aura Quiz
+
+The AniMatch app includes a personality quiz feature that matches users with their "Animal Aura" based on their responses to 10 questions. Each question has 4 possible answers, and the cumulative pattern of responses determines which of 15 animal auras best represents the user's personality.
+
+### Quiz Features:
+
+- **10 Personality Questions**: Answer thoughtful questions about your personality, preferences, and behavior
+- **Real-time Progress Tracking**: See which question you're on and your overall progress
+- **Interactive UI**: Clear, engaging interface with animated selection states
+- **Results Analysis**: Algorithm that processes your answers to find your matching animal aura
+- **Detailed Aura Profiles**: Each animal aura includes a description, strengths, challenges, and key traits
+- **Result Sharing**: Share your animal aura with friends on social media
+- **Retake Option**: Take the quiz again if you'd like to explore other possibilities
+
+### Technical Implementation:
+
+- Data stored in Supabase database tables
+- Secure user authentication integration
+- Optimized for mobile with responsive design
+- Smooth transitions between questions
+- State persistence during quiz progress
