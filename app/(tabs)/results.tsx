@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Share } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Share, Platform } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useQuiz } from '@/context/QuizContext';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,12 +7,14 @@ import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AnimalIcon } from '@/components/AnimalIcon';
+import { captureRef } from 'react-native-view-shot';
 
 export default function ResultsScreen() {
   const router = useRouter();
-  const { animalAura, resetQuiz, isQuizComplete } = useQuiz();
+  const { animalAura, resetQuiz, isQuizComplete, isPreviousResult } = useQuiz();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const viewShotRef = useRef(null);
 
   // If user navigates here without completing the quiz, redirect to quiz
   useEffect(() => {
@@ -37,8 +39,41 @@ export default function ResultsScreen() {
 
   const handleShare = async () => {
     try {
+      // Create a more attractive sharing message
+      const shareMessage = `🌟 I discovered my Animal Aura is the ${animalAura.name}! 🌟\n\n${animalAura.description}\n\nMy key traits: ${animalAura.traits}\n\n#AniMatch #AnimalAura`;
+      
+      // Try to capture the result card as an image
+      if (viewShotRef.current) {
+        try {
+          // Capture the view as an image using captureRef
+          const uri = await captureRef(viewShotRef, {
+            format: 'png',
+            quality: 0.8,
+          });
+          
+          // Share the image along with text
+          if (Platform.OS === 'ios' || Platform.OS === 'android') {
+            // Use the Share API which works on both platforms
+            await Share.share({
+              message: shareMessage,
+              url: uri, // iOS will use this
+              title: 'My Animal Aura', // Android will use this as title
+            });
+          } else {
+            // Fallback for web and other platforms
+            await Share.share({
+              message: shareMessage,
+            });
+          }
+          return;
+        } catch (error) {
+          console.error('Error capturing or sharing image:', error);
+        }
+      }
+      
+      // Fallback to simple text sharing
       await Share.share({
-        message: `I discovered my Animal Aura is ${animalAura.name}! ${animalAura.description} #AniMatch`,
+        message: shareMessage,
       });
     } catch (error) {
       console.error('Error sharing result:', error);
@@ -46,8 +81,9 @@ export default function ResultsScreen() {
   };
 
   const handleRetakeQuiz = () => {
+    // Just reset the quiz, which will trigger the directNavigateToQuiz flag
+    // The tab layout will handle the navigation to avoid the home tab flash
     resetQuiz();
-    router.navigate("/(tabs)");
   };
 
   // Function to get category color
@@ -74,7 +110,19 @@ export default function ResultsScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           
-          <View style={[styles.auraCard, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]}>
+          {isPreviousResult && (
+            <View style={styles.welcomeBackBanner}>
+              <Ionicons name="arrow-back" size={16} color={isDark ? '#FFFFFF' : '#000000'} />
+              <ThemedText style={styles.welcomeBackText}>
+                Welcome back! Here's your previous result.
+              </ThemedText>
+            </View>
+          )}
+          
+          <View 
+            ref={viewShotRef}
+            style={[styles.auraCard, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]}
+          >
             <View style={styles.iconWrapper}>
               <AnimalIcon 
                 animalName={animalAura.name}
@@ -128,6 +176,11 @@ export default function ResultsScreen() {
                   </View>
                 ))}
               </View>
+            </View>
+            
+            {/* Add AniMatch branding */}
+            <View style={styles.brandingContainer}>
+              <ThemedText style={styles.brandingText}>AniMatch</ThemedText>
             </View>
           </View>
           
@@ -273,6 +326,33 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: '600',
+    marginLeft: 8,
+  },
+  brandingContainer: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#DDD',
+    width: '100%',
+    alignItems: 'center',
+  },
+  brandingText: {
+    fontSize: 16,
+    fontWeight: '600',
+    opacity: 0.7,
+  },
+  welcomeBackBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginBottom: 16,
+    borderRadius: 8,
+    backgroundColor: '#7E4EFF20', // Purple with 20% opacity
+    justifyContent: 'center',
+  },
+  welcomeBackText: {
+    fontSize: 14,
+    fontWeight: '500',
     marginLeft: 8,
   },
 }); 

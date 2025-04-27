@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuiz } from '@/context/QuizContext';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -10,6 +10,9 @@ import { NavigationControls } from '@/components/quiz/NavigationControls';
 
 export default function QuizScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const isRetaking = params.source === 'retake';
+  
   const {
     questions,
     currentQuestionIndex,
@@ -26,18 +29,29 @@ export default function QuizScreen() {
     isQuizComplete,
     animalAura,
   } = useQuiz();
-
-  // Load the quiz when the component mounts
+  
   useEffect(() => {
+    // For debugging
+    console.log('Quiz screen params:', params);
+    console.log('isRetaking:', isRetaking);
+    console.log('isQuizComplete:', isQuizComplete);
+  }, [params, isRetaking, isQuizComplete]);
+
+  // If quiz is already complete and not retaking, redirect to results
+  useEffect(() => {
+    if (isQuizComplete && animalAura && !isRetaking) {
+      console.log('Quiz is complete, redirecting to results');
+      // The QuizContext's submitQuiz will now handle navigation to results
+      // This redirect is only for cases where someone navigates back to the quiz
+      router.replace("/(tabs)/results");
+    }
+  }, [isQuizComplete, animalAura, router, isRetaking]);
+
+  // Load the quiz when the component mounts or is accessed through Retake Quiz
+  useEffect(() => {
+    // Always load the quiz when the component mounts
     loadQuiz();
   }, []);
-
-  useEffect(() => {
-    if (isQuizComplete && animalAura) {
-      // Navigate directly to results tab
-      router.navigate("/(tabs)/results");
-    }
-  }, [isQuizComplete, animalAura]);
 
   // Handle error state
   if (error) {
@@ -101,8 +115,10 @@ export default function QuizScreen() {
     if (isLastQuestion) {
       // Check if all questions are answered
       if (userAnswers.length === questions.length) {
+        console.log('Submitting quiz with', userAnswers.length, 'answers');
         // Submit directly without showing the popup
         submitQuiz();
+        console.log('Quiz submitted, isQuizComplete:', isQuizComplete);
       } else {
         Alert.alert(
           'Incomplete Quiz',

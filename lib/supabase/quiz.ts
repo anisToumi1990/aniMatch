@@ -71,9 +71,9 @@ export async function fetchAnswerOptions(questionId: number): Promise<QuizAnswer
 
 // Calculate the result based on user answers
 export async function calculateQuizResult(userAnswers: UserAnswer[]): Promise<number> {
-  // Get the mapping data to calculate scores for each animal aura category
+  // Get the mapping data to calculate scores for each animal directly
   const { data: mappings, error } = await supabase
-    .from('answer_aura_mapping')
+    .from('answer_animal_mapping')
     .select('*')
     .in(
       'question_id',
@@ -85,42 +85,46 @@ export async function calculateQuizResult(userAnswers: UserAnswer[]): Promise<nu
     throw error;
   }
 
-  // Calculate scores for each category
-  const categoryScores: Record<string, number> = {
-    'Extroverted/Social': 0,
-    'Balanced/Adaptive': 0,
-    'Introverted/Strategic': 0,
-  };
+  // Calculate scores for each animal
+  const animalScores: Record<number, number> = {};
 
+  // Initialize scores for all animals to zero
+  const { data: allAnimals, error: animalsError } = await supabase
+    .from('animal_auras')
+    .select('id');
+  
+  if (animalsError) {
+    console.error('Error fetching animals:', animalsError);
+    throw animalsError;
+  }
+  
+  allAnimals.forEach(animal => {
+    animalScores[animal.id] = 0;
+  });
+
+  // Calculate the scores based on user answers
   userAnswers.forEach((answer) => {
-    const mapping = mappings.find(
+    const matchingMappings = mappings.filter(
       (m) => m.question_id === answer.question_id && m.option_key === answer.selected_option
     );
 
-    if (mapping) {
-      categoryScores[mapping.aura_category] += mapping.aura_weight;
+    matchingMappings.forEach(mapping => {
+      animalScores[mapping.animal_aura_id] += mapping.animal_weight;
+    });
+  });
+
+  // Find the animal with the highest score
+  let highestScore = 0;
+  let dominantAnimalId = 0;
+
+  Object.entries(animalScores).forEach(([animalId, score]) => {
+    if (score > highestScore) {
+      highestScore = score;
+      dominantAnimalId = parseInt(animalId);
     }
   });
 
-  // Find the dominant category
-  let dominantCategory = Object.keys(categoryScores).reduce((a, b) =>
-    categoryScores[a] > categoryScores[b] ? a : b
-  );
-
-  // Get a random animal aura from the dominant category
-  const { data: auras, error: aurasError } = await supabase
-    .from('animal_auras')
-    .select('id')
-    .eq('category', dominantCategory);
-
-  if (aurasError) {
-    console.error('Error fetching animal auras:', aurasError);
-    throw aurasError;
-  }
-
-  // Randomly select one of the auras from the dominant category
-  const randomIndex = Math.floor(Math.random() * auras.length);
-  return auras[randomIndex].id;
+  return dominantAnimalId;
 }
 
 // Submit quiz results to the database

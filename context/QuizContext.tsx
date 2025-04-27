@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'expo-router';
 import {
   fetchQuizQuestions,
   fetchAnswerOptions,
   calculateQuizResult,
   submitQuizResult,
   fetchAnimalAura,
+  fetchLatestQuizResult,
   QuizQuestion,
   QuizAnswerOption,
   UserAnswer,
@@ -25,6 +27,11 @@ interface QuizContextType {
   isQuizComplete: boolean;
   progress: number;
   animalAura: AnimalAura | null;
+  isPreviousResult: boolean;
+  
+  // Navigation helper
+  directNavigateToQuiz: boolean;
+  setDirectNavigateToQuiz: (value: boolean) => void;
   
   // Actions
   loadQuiz: () => Promise<void>;
@@ -40,6 +47,7 @@ const QuizContext = createContext<QuizContextType | undefined>(undefined);
 export function QuizProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user?.id;
+  const router = useRouter();
 
   // Quiz data state
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -52,6 +60,10 @@ export function QuizProvider({ children }: { children: ReactNode }) {
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [animalAura, setAnimalAura] = useState<AnimalAura | null>(null);
+  const [isPreviousResult, setIsPreviousResult] = useState(false);
+
+  // Navigation helper to enable direct navigation to quiz tab
+  const [directNavigateToQuiz, setDirectNavigateToQuiz] = useState(false);
 
   // Calculate progress (0 to 1)
   const progress = questions.length ? userAnswers.length / questions.length : 0;
@@ -133,6 +145,34 @@ export function QuizProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  // Load the user's latest quiz result when they sign in
+  useEffect(() => {
+    const loadLatestResult = async () => {
+      // Only attempt to load if user is authenticated and we don't already have a result
+      if (userId && !isQuizComplete && !animalAura) {
+        setIsLoading(true);
+        try {
+          const latestResult = await fetchLatestQuizResult(userId);
+          
+          if (latestResult && latestResult.animal_aura) {
+            // Set the animal aura from the latest result
+            setAnimalAura(latestResult.animal_aura);
+            setIsQuizComplete(true);
+            setIsPreviousResult(true); // Mark this as a restored previous result
+            console.log('Loaded previous quiz result:', latestResult.animal_aura.name);
+          }
+        } catch (err) {
+          console.error('Error loading latest quiz result:', err);
+          // Don't set error state here to avoid showing error to user on login
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadLatestResult();
+  }, [userId]);
+
   // Submit the quiz and calculate results
   const submitQuiz = async () => {
     if (!userId) {
@@ -147,16 +187,33 @@ export function QuizProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
+      console.log('Starting quiz submission process');
+      
       // Calculate the matching animal aura
       const auraId = await calculateQuizResult(userAnswers);
+      console.log('Calculated aura ID:', auraId);
       
       // Save the user's result
       await submitQuizResult(userId, auraId, userAnswers);
+      console.log('Saved quiz result to database');
       
       // Fetch the detailed aura information
       const aura = await fetchAnimalAura(auraId);
+      console.log('Fetched aura details:', aura.name);
+      
+      // Update state
       setAnimalAura(aura);
       setIsQuizComplete(true);
+      setIsPreviousResult(false); // This is a fresh result, not a previous one
+      
+      console.log('States updated, navigating to results screen');
+      
+      // Ensure the state updates are processed before navigation
+      setTimeout(() => {
+        router.replace("/(tabs)/results");
+        console.log('Navigation to results complete');
+      }, 100);
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred submitting your answers');
       console.error('Error submitting quiz:', err);
@@ -167,11 +224,22 @@ export function QuizProvider({ children }: { children: ReactNode }) {
 
   // Reset the quiz to start over
   const resetQuiz = () => {
+    setIsLoading(true);
     setCurrentQuestionIndex(0);
     setUserAnswers([]);
     setIsQuizComplete(false);
     setAnimalAura(null);
-    loadCurrentQuestionOptions();
+    setIsPreviousResult(false);
+    
+    // Set flag to directly navigate to quiz tab
+    setDirectNavigateToQuiz(true);
+    
+    // Immediately fetch fresh quiz data
+    loadQuiz().then(() => {
+      console.log('Quiz reset and reloaded successfully');
+    }).catch(err => {
+      console.error('Error reloading quiz after reset:', err);
+    });
   };
 
   // Load answer options when the current question changes
@@ -189,6 +257,9 @@ export function QuizProvider({ children }: { children: ReactNode }) {
     isQuizComplete,
     progress,
     animalAura,
+    isPreviousResult,
+    directNavigateToQuiz,
+    setDirectNavigateToQuiz,
     loadQuiz,
     goToNextQuestion,
     goToPreviousQuestion,
