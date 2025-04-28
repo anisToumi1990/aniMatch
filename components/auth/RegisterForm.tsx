@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 interface RegisterFormProps {
   onLoginPress?: () => void;
@@ -26,6 +27,8 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signUp, signIn } = useAuth();
   const navigation = useNavigation();
   const router = useRouter();
@@ -52,19 +55,15 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
       const { error } = await signUp(email, password, fullName);
       if (error) throw error;
       
-      // Try to sign in immediately after successful registration
-      try {
-        await signIn(email, password);
-        // Navigate to tabs on successful sign-in
-        router.replace("/(tabs)");
-      } catch (signInError) {
-        // Fall back to login screen if auto sign-in fails
-        Alert.alert(
-          'Registration Successful', 
-          'Please check your email for verification instructions',
-          [{ text: 'OK', onPress: () => navigateToLogin() }]
-        );
-      }
+      // Show email verification message
+      Alert.alert(
+        'Registration Successful', 
+        'Please check your email to verify your account before signing in. You will need to click the verification link in the email to activate your account.',
+        [{ text: 'OK', onPress: () => navigateToLogin() }]
+      );
+      
+      // Navigate to login screen
+      navigateToLogin();
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message || 'An error occurred during registration');
     } finally {
@@ -121,14 +120,27 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
             
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Create a password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholderTextColor="#aaa"
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Create a password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  placeholderTextColor="#aaa"
+                  textContentType="oneTimeCode"
+                />
+                <TouchableOpacity 
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons 
+                    name={showPassword ? "eye-off" : "eye"} 
+                    size={24} 
+                    color="#666" 
+                  />
+                </TouchableOpacity>
+              </View>
               <Text style={styles.helperText}>
                 Password must be at least 6 characters
               </Text>
@@ -136,14 +148,27 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
             
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Confirm Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                placeholderTextColor="#aaa"
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  placeholderTextColor="#aaa"
+                  textContentType="oneTimeCode"
+                />
+                <TouchableOpacity 
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <Ionicons 
+                    name={showConfirmPassword ? "eye-off" : "eye"} 
+                    size={24} 
+                    color="#666" 
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
             
             <TouchableOpacity 
@@ -207,6 +232,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#e0e0e0',
+    color: '#000',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f2f2f2',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 16,
+    fontSize: 16,
+    color: '#000',
+  },
+  eyeIcon: {
+    padding: 10,
+    marginRight: 10,
   },
   helperText: {
     fontSize: 12,

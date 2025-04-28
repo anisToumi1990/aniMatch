@@ -65,6 +65,18 @@ export function QuizProvider({ children }: { children: ReactNode }) {
   // Navigation helper to enable direct navigation to quiz tab
   const [directNavigateToQuiz, setDirectNavigateToQuiz] = useState(false);
 
+  // Reset quiz state when user changes
+  useEffect(() => {
+    console.log('User ID changed, resetting quiz state');
+    setQuestions([]);
+    setCurrentQuestionIndex(0);
+    setUserAnswers([]);
+    setIsQuizComplete(false);
+    setAnimalAura(null);
+    setIsPreviousResult(false);
+    setDirectNavigateToQuiz(false);
+  }, [userId]);
+
   // Calculate progress (0 to 1)
   const progress = questions.length ? userAnswers.length / questions.length : 0;
 
@@ -152,6 +164,7 @@ export function QuizProvider({ children }: { children: ReactNode }) {
       if (userId && !isQuizComplete && !animalAura) {
         setIsLoading(true);
         try {
+          console.log('Loading latest result for user:', userId);
           const latestResult = await fetchLatestQuizResult(userId);
           
           if (latestResult && latestResult.animal_aura) {
@@ -160,10 +173,20 @@ export function QuizProvider({ children }: { children: ReactNode }) {
             setIsQuizComplete(true);
             setIsPreviousResult(true); // Mark this as a restored previous result
             console.log('Loaded previous quiz result:', latestResult.animal_aura.name);
+          } else {
+            // Explicitly set animalAura to null for users with no results
+            console.log('No quiz result found for user:', userId);
+            setAnimalAura(null);
+            setIsQuizComplete(false);
+            setIsPreviousResult(false);
           }
         } catch (err) {
           console.error('Error loading latest quiz result:', err);
           // Don't set error state here to avoid showing error to user on login
+          // But do reset the quiz state
+          setAnimalAura(null);
+          setIsQuizComplete(false);
+          setIsPreviousResult(false);
         } finally {
           setIsLoading(false);
         }

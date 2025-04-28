@@ -8,6 +8,7 @@ interface AuthContextProps {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
+  isEmailConfirmed: boolean;
   checkEmailExists: (email: string) => Promise<boolean>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any | null }>;
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextProps>({
   session: null,
   user: null,
   isLoading: true,
+  isEmailConfirmed: false,
   checkEmailExists: async () => false,
   signUp: async () => ({ error: null }),
   signIn: async () => ({ error: null }),
@@ -40,12 +42,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isEmailConfirmed, setIsEmailConfirmed] = useState<boolean>(false);
 
   const refreshSession = async () => {
     try {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
       setUser(data.session?.user ?? null);
+      
+      // Check if email is confirmed
+      if (data.session?.user) {
+        setIsEmailConfirmed(data.session.user.email_confirmed_at !== null);
+      } else {
+        setIsEmailConfirmed(false);
+      }
+      
       setIsLoading(false);
     } catch (error) {
       console.error('Error refreshing session:', error);
@@ -112,6 +123,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Update email confirmation status when auth state changes
+      if (session?.user) {
+        setIsEmailConfirmed(session.user.email_confirmed_at !== null);
+      } else {
+        setIsEmailConfirmed(false);
+      }
+      
       setIsLoading(false);
     });
 
@@ -124,31 +143,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
     session,
     user,
     isLoading,
+    isEmailConfirmed,
     refreshSession,
     signInWithGoogle,
     signInWithApple,
     checkEmailExists: async (email: string) => {
       try {
-        // Try to reset password for the email - this endpoint returns an error if email doesn't exist
-        // but will return success for existing emails without actually sending an email
-        const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: 'io.supabase.animatch://no-reset', // Invalid URL, we don't actually want to reset
+        // Direct approach: Try to sign in with a dummy password
+        // This is more reliable than the reset password approach
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password: 'dummy-password-for-check',
         });
         
-        // If there's no error, email exists in the system
-        if (!error) {
-          // Check for more confirmation
-          return true;
+        // If we get a specific error about invalid credentials, the email exists
+        // If we get a "user not found" error, the email doesn't exist
+        if (error) {
+          if (error.message && 
+              (error.message.toLowerCase().includes('invalid login credentials') ||
+               error.message.toLowerCase().includes('invalid email or password'))) {
+            return true; // Email exists but password is wrong
+          }
+          
+          if (error.message && 
+              (error.message.toLowerCase().includes('user not found') || 
+               error.message.toLowerCase().includes('no user found'))) {
+            return false; // Email doesn't exist
+          }
         }
         
-        // If the error message includes "user not found", email doesn't exist
-        if (error && error.message && 
-           (error.message.toLowerCase().includes('user not found') || 
-            error.message.toLowerCase().includes('no user found'))) {
-          return false;
-        }
-        
-        // If we get other errors, try the fallback method
+        // If we get here, we couldn't determine with certainty
+        // Try the fallback method
         console.log("Trying fallback email check method");
         const { error: signUpError } = await supabase.auth.signUp({
           email,
@@ -169,17 +194,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     signUp: async (email: string, password: string, fullName: string) => {
       try {
-        // First check if the email already exists to prevent duplicate registrations
-        const emailExists = await value.checkEmailExists(email);
-        if (emailExists) {
-          return { 
-            error: { 
-              message: 'Email already registered. Please sign in or use a different email.'
-            } 
-          };
-        }
-        
-        // Sign up with email and password
+        // Directly attempt to sign up without checking if email exists first
+        // Supabase will handle the validation and return appropriate errors
         const { error } = await supabase.auth.signUp({ 
           email, 
           password,
@@ -189,6 +205,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
           }
         });
+        
+        // If the error is about email already registered, return a user-friendly message
+        if (error && error.message && 
+            (error.message.includes('already registered') || 
+             error.message.includes('User already registered'))) {
+          return { 
+            error: { 
+              message: 'Email already registered. Please sign in or use a different email.'
+            } 
+          };
+        }
         
         if (!error) {
           await refreshSession();
