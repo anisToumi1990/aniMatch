@@ -7,11 +7,9 @@ import { AuraTab } from '@/components/AuraTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { useQuiz } from '@/context/QuizContext';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
   const { isQuizComplete, directNavigateToQuiz, setDirectNavigateToQuiz } = useQuiz();
   const pathname = usePathname();
   const router = useRouter();
@@ -37,7 +35,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors.tint,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,

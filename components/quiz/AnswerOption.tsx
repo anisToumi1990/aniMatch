@@ -1,6 +1,5 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { ThemedText } from '@/components/ThemedText';
 
 interface AnswerOptionProps {
@@ -16,16 +15,13 @@ export function AnswerOption({
   isSelected, 
   onSelect 
 }: AnswerOptionProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
-  const selectedBackgroundColor = isDark ? '#7E4EFF' : '#7E4EFF';
+  const selectedBackgroundColor = '#7E4EFF';
   const selectedTextColor = '#FFFFFF';
   
-  const unselectedBackgroundColor = isDark ? '#2C2C2E' : '#F2F2F7';
-  const unselectedTextColor = isDark ? '#FFFFFF' : '#000000';
+  const unselectedBackgroundColor = '#F2F2F7';
+  const unselectedTextColor = '#000000';
 
-  const borderColor = isDark ? '#3A3A3C' : '#E5E5EA';
+  const borderColor = '#E5E5EA';
 
   return (
     <TouchableOpacity

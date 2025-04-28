@@ -13,22 +13,19 @@ export function ProgressIndicator({
   totalQuestions, 
   progress 
 }: ProgressIndicatorProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
   return (
     <View style={styles.container}>
       <ThemedText style={styles.questionCounter}>
         Question {currentQuestion} of {totalQuestions}
       </ThemedText>
       
-      <View style={[styles.progressBarContainer, { backgroundColor: isDark ? '#333' : '#E5E5E5' }]}>
+      <View style={[styles.progressBarContainer, { backgroundColor: '#E5E5E5' }]}>
         <View 
           style={[
             styles.progressBar, 
             { 
               width: `${progress * 100}%`,
-              backgroundColor: isDark ? '#7E4EFF' : '#7E4EFF' 
+              backgroundColor: '#7E4EFF'
             }
           ]} 
         />

@@ -3,7 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { QuizQuestion, QuizAnswerOption, UserAnswer } from '@/lib/supabase/quiz';
 import { ThemedText } from '@/components/ThemedText';
 import { AnswerOption } from './AnswerOption';
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 interface QuestionCardProps {
   question: QuizQuestion;
@@ -22,9 +21,6 @@ export function QuestionCard({
   goToNextQuestion,
   isLastQuestion
 }: QuestionCardProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
   const selectedAnswer = userAnswers.find(
     (answer) => answer.question_id === question.id
   );
@@ -44,7 +40,7 @@ export function QuestionCard({
   return (
     <View style={[
       styles.container, 
-      { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }
+      { backgroundColor: '#FFFFFF' }
     ]}>
       <ThemedText style={styles.questionText}>
         {question.question_text}

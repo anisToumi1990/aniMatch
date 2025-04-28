@@ -5,15 +5,12 @@ import { useQuiz } from '@/context/QuizContext';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { AnimalIcon } from '@/components/AnimalIcon';
 import { captureRef } from 'react-native-view-shot';
 
 export default function ResultsScreen() {
   const router = useRouter();
   const { animalAura, resetQuiz, isQuizComplete, isPreviousResult } = useQuiz();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const viewShotRef = useRef(null);
 
   // If user navigates here without completing the quiz, redirect to quiz
@@ -112,7 +109,6 @@ export default function ResultsScreen() {
           
           {isPreviousResult && (
             <View style={styles.welcomeBackBanner}>
-              <Ionicons name="arrow-back" size={16} color={isDark ? '#FFFFFF' : '#000000'} />
               <ThemedText style={styles.welcomeBackText}>
                 Welcome back! Here's your previous result.
               </ThemedText>
@@ -121,7 +117,7 @@ export default function ResultsScreen() {
           
           <View 
             ref={viewShotRef}
-            style={[styles.auraCard, { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' }]}
+            style={[styles.auraCard, { backgroundColor: '#FFFFFF' }]}
           >
             <View style={styles.iconWrapper}>
               <AnimalIcon 
@@ -167,7 +163,7 @@ export default function ResultsScreen() {
                     key={index} 
                     style={[
                       styles.traitBadge, 
-                      { backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7' }
+                      { backgroundColor: '#F2F2F7' }
                     ]}
                   >
                     <ThemedText style={styles.traitText}>
@@ -209,7 +205,7 @@ export default function ResultsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1
   },
   scrollView: {
     flex: 1,
@@ -266,7 +262,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   auraDescription: {
@@ -294,10 +290,10 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   traitBadge: {
-    paddingHorizontal: 5,
-    paddingVertical: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 16,
-    margin: 3,
+    margin: 5,
   },
   traitText: {
     fontSize: 14,

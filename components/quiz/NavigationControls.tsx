@@ -23,11 +23,8 @@ export function NavigationControls({
   isLoading,
   allQuestionsAnswered,
 }: NavigationControlsProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  
   const primaryColor = '#7E4EFF';
-  const disabledColor = isDark ? '#3A3A3C' : '#E5E5EA';
+  const disabledColor = '#E5E5EA';
   const textColor = '#FFFFFF';
 
   return (
@@ -43,7 +40,7 @@ export function NavigationControls({
         <Ionicons 
           name="chevron-back" 
           size={24} 
-          color={isDark ? '#FFFFFF' : '#000000'} 
+          color="#000000" 
         />
         <ThemedText style={styles.backButtonText}>Back</ThemedText>
       </TouchableOpacity>

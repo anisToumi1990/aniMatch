@@ -29,7 +29,7 @@ export default function HomeScreen() {
   
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerBackgroundColor="#A1CEDC"
       headerImage={
         <View style={styles.headerImageContainer}>
           <Text style={styles.headerText}>AniMatch</Text>
@@ -53,16 +53,10 @@ export default function HomeScreen() {
         <ThemedView style={styles.stepContainer}>
           <ThemedText type="subtitle">What's Next?</ThemedText>
           <ThemedText>
-            Explore the app and start connecting with other users.
+            Explore the app, take the personality quiz, and find your animal aura.
           </ThemedText>
         </ThemedView>
-        
-        <TouchableOpacity 
-          style={styles.signOutButton}
-          onPress={handleSignOut}
-        >
-          <Text style={styles.signOutButtonText}>Sign Out</Text>
-        </TouchableOpacity>
+
       </SafeAreaView>
     </ParallaxScrollView>
   );
