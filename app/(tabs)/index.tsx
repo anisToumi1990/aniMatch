@@ -12,6 +12,9 @@ export default function HomeScreen() {
   const { user, signOut } = useAuth();
   const router = useRouter();
 
+  // Get the user's full name from user metadata
+  const fullName = user?.user_metadata?.full_name || user?.email || 'User';
+
   const handleSignOut = async () => {
     try {
       const { error } = await signOut();
@@ -43,7 +46,7 @@ export default function HomeScreen() {
         
         <ThemedView style={styles.userInfoContainer}>
           <ThemedText type="subtitle">
-            Hello, {user?.email || 'User'}
+            Hello, {fullName}
           </ThemedText>
           <ThemedText>
             You're signed in and ready to start matching!
@@ -56,7 +59,13 @@ export default function HomeScreen() {
             Explore the app, take the personality quiz, and find your animal aura.
           </ThemedText>
         </ThemedView>
-
+        
+        <TouchableOpacity 
+          style={styles.signOutButton}
+          onPress={handleSignOut}
+        >
+          <Text style={styles.signOutButtonText}>Sign Out</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     </ParallaxScrollView>
   );

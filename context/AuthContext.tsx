@@ -9,7 +9,7 @@ interface AuthContextProps {
   user: User | null;
   isLoading: boolean;
   checkEmailExists: (email: string) => Promise<boolean>;
-  signUp: (email: string, password: string) => Promise<{ error: any | null }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any | null }>;
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
   signOut: () => Promise<{ error: any | null }>;
   refreshSession: () => Promise<void>;
@@ -167,7 +167,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return false;
       }
     },
-    signUp: async (email: string, password: string) => {
+    signUp: async (email: string, password: string, fullName: string) => {
       try {
         // First check if the email already exists to prevent duplicate registrations
         const emailExists = await value.checkEmailExists(email);
@@ -179,7 +179,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
           };
         }
         
-        const { error } = await supabase.auth.signUp({ email, password });
+        // Sign up with email and password
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: {
+            data: {
+              full_name: fullName
+            }
+          }
+        });
+        
         if (!error) {
           await refreshSession();
         }

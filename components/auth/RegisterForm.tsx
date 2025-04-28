@@ -21,6 +21,7 @@ interface RegisterFormProps {
 }
 
 export function RegisterForm({ onLoginPress }: RegisterFormProps) {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -30,7 +31,7 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
   const router = useRouter();
 
   const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
+    if (!fullName || !email || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -48,7 +49,7 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
     setIsLoading(true);
     try {
       // The signUp method now includes email existence check internally
-      const { error } = await signUp(email, password);
+      const { error } = await signUp(email, password, fullName);
       if (error) throw error;
       
       // Try to sign in immediately after successful registration
@@ -92,6 +93,18 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
         >
           <View style={styles.formContainer}>
             <Text style={styles.title}>Create Account</Text>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your full name"
+                value={fullName}
+                onChangeText={setFullName}
+                autoCapitalize="words"
+                placeholderTextColor="#aaa"
+              />
+            </View>
             
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Email Address</Text>
