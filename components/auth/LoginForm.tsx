@@ -73,10 +73,9 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
   const navigateToRegister = () => {
     if (onRegisterPress) {
       onRegisterPress();
-    } else {
-      // Use the passed navigation function or fallback to manual navigation
-      navigation.navigate('register' as never);
+      return;
     }
+    router.replace('/(auth)/register');
   };
 
   return (

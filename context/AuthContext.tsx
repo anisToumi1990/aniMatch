@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import { Session, User, Subscription } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
@@ -46,17 +46,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const refreshSession = async () => {
     try {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      
-      // Check if email is confirmed
-      if (data.session?.user) {
-        setIsEmailConfirmed(data.session.user.email_confirmed_at !== null);
-      } else {
-        setIsEmailConfirmed(false);
-      }
-      
+      const session = supabase.auth.session();
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) setIsEmailConfirmed(session.user.email_confirmed_at !== null)
+      else setIsEmailConfirmed(false)
       setIsLoading(false);
     } catch (error) {
       console.error('Error refreshing session:', error);
@@ -71,71 +65,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
         scheme: "animatchaura",
         path: "auth/callback",
       });
-      
-      const { error, data } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: redirectUri,
-          skipBrowserRedirect: true,
-        },
-      });
-
+      const { error, url } = await supabase.auth.signIn({ provider }, { redirectTo: redirectUri });
       if (error) {
-        if (error.message.includes('provider is not enabled')) {
-          throw new Error(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login is not configured. Please enable ${provider} provider in Supabase dashboard.`);
-        }
+        if (error.message.includes('provider is not enabled')) throw new Error(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login is not configured. Please enable ${provider} provider in Supabase dashboard.`)
         throw error;
       }
-      
-      if (!data.url) {
-        throw new Error(`Failed to get authentication URL for ${provider}`);
-      }
-      
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.url,
-        redirectUri
-      );
-      
-      if (result.type === 'success') {
-        await refreshSession();
-      } else if (result.type === 'cancel') {
-        throw new Error('Authentication cancelled');
-      }
+      if (!url) throw new Error(`Failed to get authentication URL for ${provider}`)
+      const result = await WebBrowser.openAuthSessionAsync(url, redirectUri);
+      if (result.type === 'success') await refreshSession()
+      else if (result.type === 'cancel') throw new Error('Authentication cancelled')
     } catch (error) {
       console.error(`Error signing in with ${provider}:`, error);
       throw error;
     }
   };
 
-  // Google sign-in
   const signInWithGoogle = async () => {
     await signInWithProvider('google');
   };
 
-  // Apple sign-in
   const signInWithApple = async () => {
     await signInWithProvider('apple');
   };
 
   useEffect(() => {
     refreshSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
-      // Update email confirmation status when auth state changes
-      if (session?.user) {
-        setIsEmailConfirmed(session.user.email_confirmed_at !== null);
-      } else {
-        setIsEmailConfirmed(false);
-      }
-      
+      if (session?.user) setIsEmailConfirmed(session.user.email_confirmed_at !== null)
+      else setIsEmailConfirmed(false)
       setIsLoading(false);
     });
-
     return () => {
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
@@ -149,43 +112,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signInWithApple,
     checkEmailExists: async (email: string) => {
       try {
-        // Direct approach: Try to sign in with a dummy password
-        // This is more reliable than the reset password approach
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signIn({
           email,
           password: 'dummy-password-for-check',
         });
-        
-        // If we get a specific error about invalid credentials, the email exists
-        // If we get a "user not found" error, the email doesn't exist
         if (error) {
           if (error.message && 
               (error.message.toLowerCase().includes('invalid login credentials') ||
-               error.message.toLowerCase().includes('invalid email or password'))) {
-            return true; // Email exists but password is wrong
-          }
-          
+               error.message.toLowerCase().includes('invalid email or password'))) return true
           if (error.message && 
               (error.message.toLowerCase().includes('user not found') || 
-               error.message.toLowerCase().includes('no user found'))) {
-            return false; // Email doesn't exist
-          }
+               error.message.toLowerCase().includes('no user found'))) return false
         }
-        
-        // If we get here, we couldn't determine with certainty
-        // Try the fallback method
         console.log("Trying fallback email check method");
         const { error: signUpError } = await supabase.auth.signUp({
           email,
-          password: `Temp${Math.random().toString(36).slice(2, 10)}!`, // Random temp password
+          password: `Temp${Math.random().toString(36).slice(2, 10)}!`,
         });
-        
-        // If error contains 'already registered', the email exists
-        if (signUpError && signUpError.message.includes('already registered')) {
-          return true;
-        }
-        
-        // If no clear indication, assume email doesn't exist
+        if (signUpError && signUpError.message.includes('already registered')) return true
         return false;
       } catch (error) {
         console.error('Error checking email:', error);
@@ -194,19 +138,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     signUp: async (email: string, password: string, fullName: string) => {
       try {
-        // Directly attempt to sign up without checking if email exists first
-        // Supabase will handle the validation and return appropriate errors
         const { error } = await supabase.auth.signUp({ 
           email, 
           password,
-          options: {
-            data: {
-              full_name: fullName
-            }
+        }, {
+          data: {
+            full_name: fullName
           }
         });
-        
-        // If the error is about email already registered, return a user-friendly message
         if (error && error.message && 
             (error.message.includes('already registered') || 
              error.message.includes('User already registered'))) {
@@ -216,10 +155,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             } 
           };
         }
-        
-        if (!error) {
-          await refreshSession();
-        }
+        if (!error) await refreshSession();
         return { error };
       } catch (error) {
         return { error };
@@ -227,10 +163,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     signIn: async (email: string, password: string) => {
       try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (!error) {
-          await refreshSession();
-        }
+        const { error } = await supabase.auth.signIn({ email, password });
+        if (!error) await refreshSession();
         return { error };
       } catch (error) {
         return { error };
@@ -239,9 +173,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signOut: async () => {
       try {
         const { error } = await supabase.auth.signOut();
-        if (!error) {
-          await refreshSession();
-        }
+        if (!error) await refreshSession();
         return { error };
       } catch (error) {
         return { error };

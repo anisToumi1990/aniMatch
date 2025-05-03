@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { View, StyleSheet, Image, ViewStyle, StyleProp, TouchableOpacity, Animated } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, Image, ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
 
 interface AnimalIconProps {
   animalName: string;
@@ -21,73 +21,21 @@ export function AnimalIcon({
   
   // Define the image source dynamically based on animal name
   const imageSource = getAnimalImageSource(animalNameLower);
-  
-  // Animation values
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  
-  // Handle press animation
-  const handlePress = () => {
-    // Reset animations
-    Animated.parallel([
-      // Scale animation
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.2,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]),
-      // Rotation animation
-      Animated.sequence([
-        Animated.timing(rotateAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotateAnim, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start();
-  };
-  
-  // Interpolate rotation
-  const spin = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-  
+
   return (
     <TouchableOpacity 
       activeOpacity={0.8} 
-      onPress={handlePress}
       style={[styles.container, { width, height, backgroundColor }, style]}
     >
-      <Animated.View 
-        style={[
-          styles.imageContainer,
-          { 
-            transform: [
-              { scale: scaleAnim },
-              { rotate: spin }
-            ] 
-          }
-        ]}
+      <View 
+        style={styles.imageContainer}
       >
         <Image 
           source={imageSource} 
           style={styles.image}
           resizeMode="contain"
         />
-      </Animated.View>
+      </View>
     </TouchableOpacity>
   );
 }

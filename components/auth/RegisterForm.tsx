@@ -74,9 +74,9 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
   const navigateToLogin = () => {
     if (onLoginPress) {
       onLoginPress();
-    } else {
-      navigation.navigate('login' as never);
+      return;
     }
+    router.replace('/(auth)/login');
   };
 
   return (

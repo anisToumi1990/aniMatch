@@ -1,14 +1,14 @@
 import { View, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { RegisterForm } from '../../components/auth/RegisterForm';
 import { StatusBar } from 'expo-status-bar';
 
 export default function RegisterScreen() {
-  const navigation = useNavigation();
+  const router = useRouter();
   
   const handleLoginPress = () => {
-    navigation.navigate('login' as never);
+    router.replace('/(auth)/login');
   };
 
   return (

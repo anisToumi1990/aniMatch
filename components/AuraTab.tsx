@@ -1,5 +1,5 @@
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
-import { PlatformPressable } from '@react-navigation/elements';
+import { Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useQuiz } from '@/context/QuizContext';
 import { Alert } from 'react-native';
@@ -8,11 +8,14 @@ export function AuraTab(props: BottomTabBarButtonProps) {
   const { animalAura, isQuizComplete } = useQuiz();
   const hasResult = isQuizComplete && animalAura;
 
+  // Omit ref from props to avoid linter error
+  const { style, onPress, onPressIn, ref, ...rest } = props;
+
   return (
-    <PlatformPressable
-      {...props}
+    <Pressable
+      {...rest}
+      style={[style, { opacity: hasResult ? 1 : 0.5 }]}
       disabled={!hasResult}
-      style={[props.style, { opacity: hasResult ? 1 : 0.5 }]}
       onPressIn={(ev) => {
         if (!hasResult) {
           // Show alert instead of navigating
@@ -28,8 +31,10 @@ export function AuraTab(props: BottomTabBarButtonProps) {
           // Add a soft haptic feedback when pressing down on the tabs.
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
-        props.onPressIn?.(ev);
+        onPressIn?.(ev);
       }}
+      onPress={onPress}
+      accessibilityState={{ disabled: !hasResult }}
     />
   );
 } 

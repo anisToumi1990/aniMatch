@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Text, View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 
 export default function AuthCallback() {
@@ -14,14 +13,9 @@ export default function AuthCallback() {
       // Handle auth callback
       try {
         if (params.access_token && params.refresh_token) {
-          // Set session based on URL parameters
-          await supabase.auth.setSession({
-            access_token: params.access_token as string,
-            refresh_token: params.refresh_token as string,
-          });
-          // Refresh auth state
+          // In supabase-js v1, setSession does not exist. Session is handled by the OAuth redirect.
+          // Just refresh the session and redirect.
           await refreshSession();
-          // Redirect to home
           router.replace('/(tabs)');
         } else {
           // If no tokens found, go back to login

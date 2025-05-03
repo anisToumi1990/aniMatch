@@ -46,6 +46,7 @@ export default function TabLayout() {
           },
           default: {},
         }),
+        animation: 'none',
       }}>
       <Tabs.Screen
         name="index"
@@ -85,6 +86,13 @@ export default function TabLayout() {
           title: 'Your Animal Aura',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
           tabBarButton: AuraTab,
+        }}
+      />
+      <Tabs.Screen
+        name="invite"
+        options={{
+          title: 'Invite',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="envelope.fill" color={color} />,
         }}
       />
     </Tabs>
