@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { QuizProvider } from '../context/QuizContext';
+import { NotificationsProvider } from '../context/NotificationsContext';
 import 'react-native-url-polyfill/auto';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -18,9 +19,14 @@ SplashScreen.preventAutoHideAsync();
 // This is the main layout of the app
 // It wraps all the screens in our app
 export default function RootLayout() {
-  const [loaded] = useFonts({
+  const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
 
   useEffect(() => {
     if (loaded) {
@@ -33,13 +39,15 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
         <QuizProvider>
-          <AuthGuard />
+          <NotificationsProvider>
+            <AuthGuard />
+          </NotificationsProvider>
         </QuizProvider>
-      </SafeAreaProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 
