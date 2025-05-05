@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
@@ -18,12 +18,16 @@ interface Notification {
   invite_id: string | null;
 }
 
+type RelationshipType = 'lover' | 'business_partner' | 'family';
+
 export default function NotificationsScreen() {
   const { user } = useAuth();
   const { refreshCount } = useNotifications();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showRelationshipModal, setShowRelationshipModal] = useState(false);
+  const [selectedInvite, setSelectedInvite] = useState<{ notificationId: string; inviteId: string } | null>(null);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -67,7 +71,7 @@ export default function NotificationsScreen() {
     fetchNotifications();
   }, [user?.id]);
 
-  const handleInvitationResponse = async (notificationId: string, inviteId: string, isAccepted: boolean) => {
+  const handleInvitationResponse = async (notificationId: string, inviteId: string, isAccepted: boolean, relationshipType?: RelationshipType) => {
     try {
       // Update notification as read
       const { error: notificationError } = await supabase
@@ -80,12 +84,13 @@ export default function NotificationsScreen() {
 
       if (notificationError) throw notificationError;
 
-      // Update invite status
+      // Update invite status and relationship type if accepted
       const { error: inviteError } = await supabase
         .from('invites')
         .update({
           status: isAccepted ? 'accepted' : 'rejected',
-          accepted_at: isAccepted ? new Date().toISOString() : null
+          accepted_at: isAccepted ? new Date().toISOString() : null,
+          relationship_type: isAccepted ? relationshipType : null
         })
         .eq('id', inviteId);
 
@@ -101,6 +106,19 @@ export default function NotificationsScreen() {
     } catch (err) {
       console.error('Error handling invitation response:', err);
       setError('Failed to process your response');
+    }
+  };
+
+  const handleAcceptPress = (notificationId: string, inviteId: string) => {
+    setSelectedInvite({ notificationId, inviteId });
+    setShowRelationshipModal(true);
+  };
+
+  const handleRelationshipSelect = (relationshipType: RelationshipType) => {
+    if (selectedInvite) {
+      handleInvitationResponse(selectedInvite.notificationId, selectedInvite.inviteId, true, relationshipType);
+      setShowRelationshipModal(false);
+      setSelectedInvite(null);
     }
   };
 
@@ -148,7 +166,7 @@ export default function NotificationsScreen() {
               <View style={styles.actionButtons}>
                 <TouchableOpacity
                   style={[styles.button, styles.acceptButton]}
-                  onPress={() => handleInvitationResponse(item.id, item.invite_id!, true)}
+                  onPress={() => handleAcceptPress(item.id, item.invite_id!)}
                 >
                   <ThemedText style={styles.buttonText}>Accept</ThemedText>
                 </TouchableOpacity>
@@ -164,6 +182,46 @@ export default function NotificationsScreen() {
         )}
         contentContainerStyle={styles.listContent}
       />
+
+      <Modal
+        visible={showRelationshipModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowRelationshipModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ThemedText type="subtitle" style={styles.modalTitle}>Select Relationship Type</ThemedText>
+            <TouchableOpacity
+              style={styles.relationshipButton}
+              onPress={() => handleRelationshipSelect('lover')}
+            >
+              <ThemedText style={styles.relationshipButtonText}>Lover</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.relationshipButton}
+              onPress={() => handleRelationshipSelect('business_partner')}
+            >
+              <ThemedText style={styles.relationshipButtonText}>Business Partner</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.relationshipButton}
+              onPress={() => handleRelationshipSelect('family')}
+            >
+              <ThemedText style={styles.relationshipButtonText}>Family</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => {
+                setShowRelationshipModal(false);
+                setSelectedInvite(null);
+              }}
+            >
+              <ThemedText style={styles.buttonText}>Cancel</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -222,5 +280,36 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  relationshipButton: {
+    padding: 15,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+    marginBottom: 10,
+  },
+  relationshipButtonText: {
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  cancelButton: {
+    backgroundColor: '#6c757d',
+    marginTop: 10,
   },
 }); 
