@@ -88,11 +88,24 @@ export function InviteScreen() {
       return;
     }
 
+    // Check if the email belongs to an existing user
+    const { data: existingUser, error: userCheckError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', state.email.toLowerCase())
+      .single();
+
+    if (userCheckError && userCheckError.code !== 'PGRST116') {
+      dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing users.' });
+      return;
+    }
+
     dispatch({ type: 'SUBMIT_START' });
     try {
       const { error } = await supabase.from('invites').insert({
         inviter_user_id: user.id,
-        recipient_email: state.email,
+        recipient_email: state.email.toLowerCase(),
+        recipient_user_id: existingUser?.id || null,
         status: 'pending',
       });
       Keyboard.dismiss();
