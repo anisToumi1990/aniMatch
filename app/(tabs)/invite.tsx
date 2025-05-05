@@ -65,6 +65,29 @@ export function InviteScreen() {
       dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You must be logged in to send an invite.' });
       return;
     }
+    if (state.email.toLowerCase() === user.email?.toLowerCase()) {
+      dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You cannot send an invitation to your own email address.' });
+      return;
+    }
+
+    // Check for existing invitation
+    const { data: existingInvite, error: checkError } = await supabase
+      .from('invites')
+      .select('id')
+      .eq('inviter_user_id', user.id)
+      .eq('recipient_email', state.email.toLowerCase())
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing invitations.' });
+      return;
+    }
+
+    if (existingInvite) {
+      dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You have already sent an invitation to this email address.' });
+      return;
+    }
+
     dispatch({ type: 'SUBMIT_START' });
     try {
       const { error } = await supabase.from('invites').insert({
