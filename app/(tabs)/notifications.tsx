@@ -96,6 +96,12 @@ export default function NotificationsScreen() {
 
       if (inviteError) throw inviteError;
 
+        // Call the function to create compatibility results
+      const { error: functionError } = await supabase.rpc('create_compatibility_results', {
+        invite_id: inviteId
+      });
+
+      if (functionError) throw functionError;
       // Remove the notification from the list
       setNotifications(prevNotifications =>
         prevNotifications.filter(notification => notification.id !== notificationId)

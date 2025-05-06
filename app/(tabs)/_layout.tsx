@@ -91,6 +91,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="compatibility"
+        options={{
+          title: 'Compatibility',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="heart.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="notifications"
         options={{
           title: 'Notifications',
