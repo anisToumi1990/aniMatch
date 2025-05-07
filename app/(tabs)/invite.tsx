@@ -70,34 +70,53 @@ export function InviteScreen() {
       return;
     }
 
-    // Check for existing invitation
-    const { data: existingInvite, error: checkError } = await supabase
-      .from('invites')
-      .select('id')
-      .eq('inviter_user_id', user.id)
-      .eq('recipient_email', state.email.toLowerCase())
-      .single();
-
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-      dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing invitations.' });
-      return;
-    }
-
-    if (existingInvite) {
-      dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You have already sent an invitation to this email address.' });
-      return;
-    }
-
     // Check if the email belongs to an existing user
     const { data: existingUser, error: userCheckError } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, email')
       .eq('email', state.email.toLowerCase())
       .single();
 
     if (userCheckError && userCheckError.code !== 'PGRST116') {
       dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing users.' });
       return;
+    }
+
+    if (existingUser?.id) {
+      // Check for any invite in either direction with status 'pending' or 'accepted'
+      const { data: bidirectionalInvites, error: bidirectionalError } = await supabase
+        .from('invites')
+        .select('id, inviter_user_id, recipient_user_id, status')
+        .or(`and(inviter_user_id.eq.${user.id},recipient_user_id.eq.${existingUser.id}),and(inviter_user_id.eq.${existingUser.id},recipient_user_id.eq.${user.id})`)
+        .in('status', ['pending', 'accepted']);
+
+      if (bidirectionalError) {
+        dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing invitations.' });
+        return;
+      }
+
+      if (bidirectionalInvites && bidirectionalInvites.length > 0) {
+        dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'An invitation already exists between you and this user.' });
+        return;
+      }
+    } else {
+      // If recipient is not registered, only check for invites sent to this email
+      const { data: existingInvite, error: checkError } = await supabase
+        .from('invites')
+        .select('id')
+        .eq('inviter_user_id', user.id)
+        .eq('recipient_email', state.email.toLowerCase())
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing invitations.' });
+        return;
+      }
+
+      if (existingInvite) {
+        dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You have already sent an invitation to this email address.' });
+        return;
+      }
     }
 
     dispatch({ type: 'SUBMIT_START' });
