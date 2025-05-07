@@ -182,6 +182,10 @@ export default function CompatibilityScreen() {
 
 
   function renderDetailView(result: CompatibilityResult) {
+    const isCurrentUserA = user?.id === result.user_a_id;
+    const leftAura = isCurrentUserA ? auraA : auraB; // connected user
+    const rightAura = isCurrentUserA ? auraB : auraA; // current user
+
     return (
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
         <View style={styles.detailHeader}>
@@ -198,9 +202,9 @@ export default function CompatibilityScreen() {
         <ScrollView contentContainerStyle={styles.detailScrollContent}>
           <View style={[styles.detailContent, styles.auraCard]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              {isAuraLoading ? <ActivityIndicator size="large" /> : auraA && <AnimalIcon animalName={auraA.name} width={120} height={120} />}
+              {isAuraLoading ? <ActivityIndicator size="large" /> : leftAura && <AnimalIcon animalName={leftAura.name} width={120} height={120} />}
               <ThemedText style={styles.auraArrow}>⇄</ThemedText>
-              {isAuraLoading ? <ActivityIndicator size="large" /> : auraB && <AnimalIcon animalName={auraB.name} width={120} height={120} />}
+              {isAuraLoading ? <ActivityIndicator size="large" /> : rightAura && <AnimalIcon animalName={rightAura.name} width={120} height={120} />}
             </View>
             <ThemedText style={styles.detailUserName}>
               Match with : {getOtherUserName(result)}
