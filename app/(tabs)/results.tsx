@@ -117,7 +117,7 @@ export default function ResultsScreen() {
           
           <View 
             ref={viewShotRef}
-            style={[styles.auraCard, { backgroundColor: '#FFFFFF' }]}
+            style={[styles.auraCard]}
           >
             <View style={styles.iconWrapper}>
               <AnimalIcon 
@@ -240,6 +240,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
   iconWrapper: {
     marginBottom: 20,
