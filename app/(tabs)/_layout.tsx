@@ -60,7 +60,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="quiz"
         options={{
-          title: 'Personality Quiz',
+          title: 'Quiz',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="questionmark.circle.fill" color={isQuizComplete ? `${color}80` : color} />,
           tabBarButton: (props) => {
             // Don't disable the tab if we're currently on it
@@ -85,7 +85,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="results"
         options={{
-          title: 'Your Animal Aura',
+          title: 'Animal Aura',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
           tabBarButton: AuraTab,
         }}
@@ -111,13 +111,6 @@ export default function TabLayout() {
               )}
             </View>
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="invite"
-        options={{
-          title: 'Invite',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="envelope.fill" color={color} />,
         }}
       />
     </Tabs>
