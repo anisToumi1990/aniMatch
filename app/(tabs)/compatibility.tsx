@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -28,37 +28,46 @@ export default function CompatibilityScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const userId = user?.id;
-    if (!userId) {
+  const fetchCompatibilityResults = useCallback(async () => {
+    if (!user?.id) return;
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('compatibility_results')
+        .select(`
+          *,
+          user_a:user_a_id(full_name),
+          user_b:user_b_id(full_name)
+        `)
+        .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`);
+      if (error) throw error;
+      setCompatibilityResults(data || []);
+    } catch (err) {
+      setError('Failed to load compatibility results');
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    async function fetchCompatibilityResults() {
-      try {
-        const { data, error } = await supabase
-          .from('compatibility_results')
-          .select(`
-            *,
-            user_a:user_a_id(full_name),
-            user_b:user_b_id(full_name)
-          `)
-          .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
-
-        if (error) throw error;
-
-        setCompatibilityResults(data || []);
-      } catch (err) {
-        console.error('Error fetching compatibility results:', err);
-        setError('Failed to load compatibility results');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchCompatibilityResults();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchCompatibilityResults();
+
+    const subscription = supabase
+      .from('compatibility_results')
+      .on('*', payload => {
+        const row = payload.new || payload.old;
+        if (!row) return;
+        if (row.user_a_id === user.id || row.user_b_id === user.id) {
+          fetchCompatibilityResults();
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeSubscription(subscription);
+    };
+  }, [user?.id, fetchCompatibilityResults]);
 
   const getOtherUserName = (result: CompatibilityResult) => {
     if (!user?.id) return 'Unknown User';
