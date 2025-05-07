@@ -7,6 +7,7 @@ import {
   submitQuizResult,
   fetchAnimalAura,
   fetchLatestQuizResult,
+  updateUserCompatibilityResults,
   QuizQuestion,
   QuizAnswerOption,
   UserAnswer,
@@ -222,8 +223,9 @@ export function QuizProvider({ children }: { children: ReactNode }) {
       
       // Fetch the detailed aura information
       const aura = await fetchAnimalAura(auraId);
-      console.log('Fetched aura details:', aura.name);
-      
+      // Update all compatibility results for this user
+      await updateUserCompatibilityResults(userId, auraId);
+      console.log('Updated compatibility results for user:', userId);
       // Update state
       setAnimalAura(aura);
       setIsQuizComplete(true);

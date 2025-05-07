@@ -182,4 +182,16 @@ export async function fetchLatestQuizResult(userId: string): Promise<QuizResult 
   }
 
   return data;
+}
+
+// Update all compatibility results for a user after quiz retake
+export async function updateUserCompatibilityResults(userId: string, newAuraId: number): Promise<void> {
+  const { error } = await supabase.rpc('update_user_compatibility_results', {
+    user_id: userId,
+    new_aura_id: newAuraId,
+  });
+  if (error) {
+    console.error('Error updating compatibility results:', error);
+    throw error;
+  }
 } 
