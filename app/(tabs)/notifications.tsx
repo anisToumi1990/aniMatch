@@ -133,7 +133,7 @@ export default function NotificationsScreen() {
   if (isLoading) {
     return (
       <BackgroundPattern>
-        <SafeAreaView style={[styles.container, { paddingTop: 60 }]} edges={['left', 'right']}>
+        <SafeAreaView style={styles.container}>
           <Stack.Screen
             options={{
               title: 'Notifications',
@@ -156,7 +156,7 @@ export default function NotificationsScreen() {
   if (error) {
     return (
       <BackgroundPattern>
-        <SafeAreaView style={[styles.container, { paddingTop: 60 }]} edges={['left', 'right']}>
+        <SafeAreaView style={styles.container}>
           <Stack.Screen
             options={{
               title: 'Notifications',
@@ -179,7 +179,7 @@ export default function NotificationsScreen() {
   if (notifications.length === 0) {
     return (
       <BackgroundPattern>
-        <SafeAreaView style={[styles.container, { paddingTop: 60 }]} edges={['left', 'right']}>
+        <SafeAreaView style={styles.container}>
           <Stack.Screen
             options={{
               title: 'Notifications',
@@ -202,7 +202,7 @@ export default function NotificationsScreen() {
 
   return (
     <BackgroundPattern>
-      <SafeAreaView style={[styles.container, { paddingTop: 60 }]} edges={['left', 'right']}>
+      <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
             title: 'Notifications',
@@ -255,6 +255,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 60,
   },
   centerContent: {
     flex: 1,
@@ -281,7 +282,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContainer: {
-    padding: 20,
   },
   notificationItem: {
     padding: 20,

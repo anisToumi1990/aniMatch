@@ -171,7 +171,7 @@ export default function QuizScreen() {
 
   return (
     <BackgroundPattern>
-      <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaViewContext style={styles.container}>
         <Stack.Screen
           options={{
             title: 'Personality Quiz',
@@ -220,9 +220,9 @@ export default function QuizScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 60,
   },
   scrollView: {
-    paddingTop: 60,
     flex: 1,
   },
   scrollContent: {
@@ -231,7 +231,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
-    paddingTop: 60,
   },
   title: {
     fontSize: 24,

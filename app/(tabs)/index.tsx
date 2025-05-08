@@ -170,7 +170,7 @@ export default function HomeScreen() {
   
   return (
     <BackgroundPattern>
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
             title: 'AniMatch',
@@ -384,11 +384,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 60,
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 16,
-    paddingTop: 140,
+    padding: 20,
   },
   auraCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.7)',

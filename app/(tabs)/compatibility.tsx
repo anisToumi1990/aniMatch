@@ -188,18 +188,7 @@ export default function CompatibilityScreen() {
     const rightAura = isCurrentUserA ? auraB : auraA; // current user
 
     return (
-      <SafeAreaView style={[styles.container, { paddingTop: 60 }]}  edges={['left', 'right']}>
-        <View style={styles.detailHeader}>
-          <Pressable
-            onPress={() => setSelectedResult(null)}
-            accessibilityRole="button"
-            accessibilityLabel="Go back to compatibility results"
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color="#222" />
-          </Pressable>
-          <ThemedText style={styles.detailTitle}>Relationship Details</ThemedText>
-        </View>
+      <SafeAreaView style={styles.container}  edges={['left', 'right']}>
         <ScrollView contentContainerStyle={styles.detailScrollContent}>
           <View style={[styles.detailContent, styles.auraCard]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
@@ -249,13 +238,24 @@ export default function CompatibilityScreen() {
       <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
-            title: 'Compatibility',
+            title: selectedResult ? 'Relationship Details' : 'Compatibility',
             headerShown: true,
             headerStyle: {
               backgroundColor: 'transparent',
             },
             headerTransparent: true,
             headerTintColor: '#2E7D32',
+            headerLeft: () => selectedResult ? (
+              <Pressable
+                onPress={() => setSelectedResult(null)}
+                style={({ pressed }) => [
+                  styles.backButton,
+                  pressed && { opacity: 0.7 }
+                ]}
+              >
+                <Ionicons name="arrow-back" size={25} color="#2E7D32" />
+              </Pressable>
+            ) : null,
           }}
         />
         {selectedResult ? (
@@ -297,6 +297,7 @@ export default function CompatibilityScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 30,
   },
   centerContainer: {
     flex: 1,
@@ -304,8 +305,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContainer: {
-    padding: 16,
-    paddingTop: 60,
+    padding: 20,
   },
   resultCard: {
     padding: 16,
@@ -367,7 +367,11 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: 12,
-    padding: 4,
+    padding: 12,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   detailTitle: {
     fontSize: 20,
