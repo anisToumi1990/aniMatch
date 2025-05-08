@@ -10,7 +10,7 @@ export function BackgroundPattern({ children }: BackgroundPatternProps) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#E8F5E9', '#C8E6C9', '#A5D6A7']}
+        colors={['#A5D6A7', '#C8E6C9', '#E8F5E9']}
         style={styles.gradient}
       />
       <Svg style={styles.pattern} width="100%" height="100%">
