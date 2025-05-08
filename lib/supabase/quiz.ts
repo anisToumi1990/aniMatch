@@ -194,4 +194,21 @@ export async function updateUserCompatibilityResults(userId: string, newAuraId: 
     console.error('Error updating compatibility results:', error);
     throw error;
   }
+  // Get all accepted invites for this user
+  const { data: acceptedInvites, error: invitesError } = await supabase
+  .from('invites')
+  .select('id')
+  .or(`inviter_user_id.eq.${userId},recipient_user_id.eq.${userId}`)
+  .eq('status', 'accepted');
+  
+  if (invitesError) throw invitesError;
+
+  // Try to create compatibility results for each accepted invite
+  if (acceptedInvites) {
+    for (const invite of acceptedInvites) {
+      await supabase.rpc('create_compatibility_results', {
+        invite_id: invite.id
+      });
+    }
+  }
 } 

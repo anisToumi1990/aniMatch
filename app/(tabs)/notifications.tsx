@@ -247,6 +247,45 @@ export default function NotificationsScreen() {
             </ThemedView>
           )}
         />
+          <Modal
+          visible={showRelationshipModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowRelationshipModal(false)}
+          >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <ThemedText type="subtitle" style={styles.modalTitle}>Select Relationship Type</ThemedText>
+              <TouchableOpacity
+                style={styles.relationshipButton}
+                onPress={() => handleRelationshipSelect('lover')}
+              >
+                <ThemedText style={styles.relationshipButtonText}>Lover</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.relationshipButton}
+                onPress={() => handleRelationshipSelect('business_partner')}
+              >
+                <ThemedText style={styles.relationshipButtonText}>Business Partner</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.relationshipButton}
+                onPress={() => handleRelationshipSelect('family')}
+              >
+                <ThemedText style={styles.relationshipButtonText}>Family</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => {
+                  setShowRelationshipModal(false);
+                  setSelectedInvite(null);
+                }}
+              >
+                <ThemedText style={styles.buttonText}>Cancel</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </BackgroundPattern>
   );
@@ -343,5 +382,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  relationshipButton: {
+    padding: 15,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+    marginBottom: 10,
+  },
+  relationshipButtonText: {
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  cancelButton: {
+    backgroundColor: '#6c757d',
+    marginTop: 10,
   },
 });
