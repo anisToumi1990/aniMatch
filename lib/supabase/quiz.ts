@@ -186,24 +186,41 @@ export async function fetchLatestQuizResult(userId: string): Promise<QuizResult 
 
 // Update all compatibility results for a user after quiz retake
 export async function updateUserCompatibilityResults(userId: string, newAuraId: number): Promise<void> {
-  const { error } = await supabase.rpc('update_user_compatibility_results', {
-    user_id: userId,
-    new_aura_id: newAuraId,
-  });
-  if (error) {
-    console.error('Error updating compatibility results:', error);
-    throw error;
+  // First check if user has any existing compatibility results
+  const { data: existingResults, error: checkError } = await supabase
+    .from('compatibility_results')
+    .select('id')
+    .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
+    .limit(1);
+
+  if (checkError) {
+    console.error('Error checking existing compatibility results:', checkError);
+    throw checkError;
   }
-  // Get all accepted invites for this user
+
+  // If user has existing results, just update them
+  if (existingResults && existingResults.length > 0) {
+    const { error } = await supabase.rpc('update_user_compatibility_results', {
+      user_id: userId,
+      new_aura_id: newAuraId,
+    });
+    if (error) {
+      console.error('Error updating compatibility results:', error);
+      throw error;
+    }
+    return;
+  }
+
+  // If no existing results, create new ones for all accepted invites
   const { data: acceptedInvites, error: invitesError } = await supabase
-  .from('invites')
-  .select('id')
-  .or(`inviter_user_id.eq.${userId},recipient_user_id.eq.${userId}`)
-  .eq('status', 'accepted');
+    .from('invites')
+    .select('id')
+    .or(`inviter_user_id.eq.${userId},recipient_user_id.eq.${userId}`)
+    .eq('status', 'accepted');
   
   if (invitesError) throw invitesError;
 
-  // Try to create compatibility results for each accepted invite
+  // Create compatibility results for each accepted invite
   if (acceptedInvites) {
     for (const invite of acceptedInvites) {
       await supabase.rpc('create_compatibility_results', {
