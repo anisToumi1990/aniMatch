@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Modal, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Modal, Pressable, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Stack } from 'expo-router';
 import { BackgroundPattern } from '../../components/BackgroundPattern';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Notification {
   id: string;
@@ -251,40 +252,55 @@ export default function NotificationsScreen() {
           visible={showRelationshipModal}
           transparent
           animationType="slide"
-          onRequestClose={() => setShowRelationshipModal(false)}
+          onRequestClose={() => {
+            setShowRelationshipModal(false);
+            setSelectedInvite(null);
+          }}
           >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <ThemedText type="subtitle" style={styles.modalTitle}>Select Relationship Type</ThemedText>
-              <TouchableOpacity
-                style={styles.relationshipButton}
-                onPress={() => handleRelationshipSelect('lover')}
-              >
-                <ThemedText style={styles.relationshipButtonText}>Lover</ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.relationshipButton}
-                onPress={() => handleRelationshipSelect('business_partner')}
-              >
-                <ThemedText style={styles.relationshipButtonText}>Business Partner</ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.relationshipButton}
-                onPress={() => handleRelationshipSelect('family')}
-              >
-                <ThemedText style={styles.relationshipButtonText}>Family</ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={() => {
-                  setShowRelationshipModal(false);
-                  setSelectedInvite(null);
-                }}
-              >
-                <ThemedText style={styles.buttonText}>Cancel</ThemedText>
-              </TouchableOpacity>
+          <TouchableWithoutFeedback
+            onPress={event => {
+              if (event.target === event.currentTarget) {
+                setShowRelationshipModal(false);
+                setSelectedInvite(null);
+              }
+            }}
+            accessible={false}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => {
+                    setShowRelationshipModal(false);
+                    setSelectedInvite(null);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close relationship type modal"
+                >
+                  <Ionicons name="close" size={28} color="#2E7D32" />
+                </TouchableOpacity>
+                <ThemedText type="subtitle" style={styles.modalTitle}>Select Relationship Type</ThemedText>
+                <TouchableOpacity
+                  style={styles.relationshipButton}
+                  onPress={() => handleRelationshipSelect('lover')}
+                >
+                  <ThemedText style={styles.relationshipButtonText}>Lover</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.relationshipButton}
+                  onPress={() => handleRelationshipSelect('business_partner')}
+                >
+                  <ThemedText style={styles.relationshipButtonText}>Business Partner</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.relationshipButton}
+                  onPress={() => handleRelationshipSelect('family')}
+                >
+                  <ThemedText style={styles.relationshipButtonText}>Family</ThemedText>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
       </SafeAreaView>
     </BackgroundPattern>
@@ -395,10 +411,18 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '80%',
     maxWidth: 400,
+    position: 'relative',
   },
   modalTitle: {
     textAlign: 'center',
     marginBottom: 20,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 4,
+    zIndex: 1,
   },
   relationshipButton: {
     padding: 15,
@@ -409,9 +433,5 @@ const styles = StyleSheet.create({
   relationshipButtonText: {
     textAlign: 'center',
     fontSize: 16,
-  },
-  cancelButton: {
-    backgroundColor: '#6c757d',
-    marginTop: 10,
   },
 });
