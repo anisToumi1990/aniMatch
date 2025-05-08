@@ -304,15 +304,37 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
 
             <View style={styles.section}>
               <ThemedText style={styles.sectionTitle}>Theme</ThemedText>
-              <View style={styles.themeToggle}>
-                <Ionicons name="sunny" size={24} color={textColor} />
-                <Switch
-                  value={isDarkMode}
-                  onValueChange={setIsDarkMode}
-                  trackColor={{ false: '#767577', true: '#81b0ff' }}
-                  thumbColor={isDarkMode ? '#4f46e5' : '#f4f3f4'}
-                />
-                <Ionicons name="moon" size={24} color={textColor} />
+              <View style={styles.themeOptions}>
+                <TouchableOpacity
+                  style={[
+                    styles.themeOption,
+                    !isDarkMode && styles.selectedThemeOption,
+                  ]}
+                  onPress={() => setIsDarkMode(false)}
+                >
+                  <Ionicons name="sunny" size={24} color={!isDarkMode ? '#4f46e5' : textColor} />
+                  <ThemedText style={[
+                    styles.themeOptionText,
+                    !isDarkMode && styles.selectedThemeText,
+                  ]}>
+                    Light
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.themeOption,
+                    isDarkMode && styles.selectedThemeOption,
+                  ]}
+                  onPress={() => setIsDarkMode(true)}
+                >
+                  <Ionicons name="moon" size={24} color={isDarkMode ? '#4f46e5' : textColor} />
+                  <ThemedText style={[
+                    styles.themeOptionText,
+                    isDarkMode && styles.selectedThemeText,
+                  ]}>
+                    Dark
+                  </ThemedText>
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -449,11 +471,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
   },
-  themeToggle: {
+  themeOptions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    gap: 12,
+  },
+  themeOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  selectedThemeOption: {
+    borderColor: '#4f46e5',
+    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+  },
+  themeOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  selectedThemeText: {
+    color: '#4f46e5',
+    fontWeight: '600',
   },
   inviteContainer: {
     flexDirection: 'row',
