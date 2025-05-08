@@ -62,7 +62,7 @@ export default function QuizScreen() {
         <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
           <Stack.Screen
             options={{
-              title: 'Personality Quiz',
+              title: 'Quiz',
               headerShown: true,
               headerStyle: {
                 backgroundColor: 'transparent',
@@ -94,7 +94,7 @@ export default function QuizScreen() {
         <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
           <Stack.Screen
             options={{
-              title: 'Personality Quiz',
+              title: 'Quiz',
               headerShown: true,
               headerStyle: {
                 backgroundColor: 'transparent',
@@ -120,7 +120,7 @@ export default function QuizScreen() {
         <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
           <Stack.Screen
             options={{
-              title: 'Personality Quiz',
+              title: 'Quiz',
               headerShown: true,
               headerStyle: {
                 backgroundColor: 'transparent',
@@ -174,7 +174,7 @@ export default function QuizScreen() {
       <SafeAreaViewContext style={styles.container}>
         <Stack.Screen
           options={{
-            title: 'Personality Quiz',
+            title: 'Quiz',
             headerShown: true,
             headerStyle: {
               backgroundColor: 'transparent',
