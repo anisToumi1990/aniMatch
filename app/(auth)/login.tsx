@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LoginForm } from '../../components/auth/LoginForm';
 import { StatusBar } from 'expo-status-bar';
+import { BackgroundPattern } from '../../components/BackgroundPattern';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -12,24 +13,25 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-      <View style={styles.logoContainer}>
-        <Image 
-          source={require('../../assets/images/icon.png')} 
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-      <LoginForm onRegisterPress={handleRegisterPress} />
-    </SafeAreaView>
+    <BackgroundPattern>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="dark" />
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../../assets/images/icon.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+        <LoginForm onRegisterPress={handleRegisterPress} />
+      </SafeAreaView>
+    </BackgroundPattern>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   logoContainer: {
     alignItems: 'center',
