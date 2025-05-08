@@ -188,28 +188,105 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.auraCard}>
           <ThemedView style={styles.titleContainer}>
-            <ThemedText type="title">Welcome to AniMatch!</ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.userInfoContainer}>
-            <ThemedText type="subtitle">
-              Hello, {fullName}
-            </ThemedText>
-            <ThemedText>
-              You're signed in and ready to start matching!
+            <ThemedText type="title" style={{ textAlign: 'center' }}>
+              Welcome to{'\n'}
+              🐾 AniMatch 🐾
             </ThemedText>
           </ThemedView>
-          <ThemedView style={styles.stepContainer}>
-            <ThemedText type="subtitle">What's Next?</ThemedText>
-            <ThemedText>
-              Explore the app, take the personality quiz, and find your animal aura.
+          
+          <ThemedView style={styles.descriptionContainer}>
+            <ThemedText style={styles.descriptionText}>
+              Discover your unique animal aura and unlock deeper connections.
+            </ThemedText>
+            <ThemedText style={styles.descriptionText}>
+              Take our quick 10-question quiz to find out which animal reflects your personality – and explore how you vibe with others.
             </ThemedText>
           </ThemedView>
-          <TouchableOpacity 
-            style={styles.signOutButton}
-            onPress={handleSignOut}
-          >
-            <Text style={styles.signOutButtonText}>Sign Out</Text>
-          </TouchableOpacity>
+
+          <ThemedView style={styles.carouselContainer}>
+            <ThemedText type="subtitle" style={styles.carouselTitle}>👇 Meet the Auras 👇</ThemedText>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContent}
+            >
+              <Image 
+                source={require('../../assets/auras/png/bear.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/cat.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/deer.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/dolphin.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/eagle.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/elephant.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/fox.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/lion.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/otter.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/owl.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/parrot.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/peacock.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/snake.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/unicorn.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              />
+              <Image 
+                source={require('../../assets/auras/png/wolf.png')} 
+                style={styles.carouselImage}
+                resizeMode="contain"
+              /> 
+            </ScrollView>
+          </ThemedView>
         </View>
       </ScrollView>
       <Modal
@@ -299,11 +376,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
   },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
     marginBottom: 24,
   },
@@ -316,18 +393,6 @@ const styles = StyleSheet.create({
   stepContainer: {
     gap: 8,
     marginBottom: 24,
-  },
-  signOutButton: {
-    backgroundColor: '#ff6347',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  signOutButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
   userInitialButton: {
     width: 40,
@@ -441,5 +506,32 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingBottom: 32,
+  },
+  descriptionContainer: {
+    marginBottom: 24,
+    gap: 12,
+  },
+  descriptionText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  carouselContainer: {
+    width: '100%',
+    marginTop: 16,
+  },
+  carouselTitle: {
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  carouselContent: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  carouselImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
   },
 });
