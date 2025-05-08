@@ -263,8 +263,11 @@ export default function CompatibilityScreen() {
         </View>
       ) : compatibilityResults.length === 0 ? (
         <View style={styles.centerContainer}>
+          <ThemedText type="subtitle" style={styles.noResultsText}>
+            No compatibility results
+          </ThemedText>
           <ThemedText style={styles.noResultsText}>
-            No compatibility results yet. Invite someone to take the quiz!
+            Invite someone to take the quiz or take the quiz yourself!
           </ThemedText>
         </View>
       ) : (
@@ -287,7 +290,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   listContainer: {
     padding: 16,

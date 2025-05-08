@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Modal, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import { supabase } from '../../lib/supabase';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { Stack } from 'expo-router';
 
 interface Notification {
   id: string;
@@ -130,43 +131,73 @@ export default function NotificationsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#007bff" />
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        <Stack.Screen
+          options={{
+            title: 'Notifications',
+            headerShown: true,
+          }}
+        />
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large"/>
+        </View>
       </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ThemedText type="subtitle" style={styles.errorText}>{error}</ThemedText>
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        <Stack.Screen
+          options={{
+            title: 'Notifications',
+            headerShown: true,
+          }}
+        />
+        <View style={styles.centerContent}>
+          <ThemedText type="subtitle" style={styles.errorText}>{error}</ThemedText>
+        </View>
       </SafeAreaView>
     );
   }
 
   if (notifications.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ThemedView style={styles.emptyContainer}>
-          <ThemedText type="subtitle">No pending notifications</ThemedText>
-          <ThemedText>You'll see new notifications here when you receive them.</ThemedText>
-        </ThemedView>
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        <Stack.Screen
+          options={{
+            title: 'Notifications',
+            headerShown: true,
+          }}
+        />
+        <View style={styles.centerContent}>
+            <ThemedText type="subtitle" style={styles.noResultsText}>No pending notifications</ThemedText>
+            <ThemedText style={styles.noResultsText}>You'll see new notifications here when you receive them.</ThemedText>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <Stack.Screen
+        options={{
+          title: 'Notifications',
+          headerShown: true,
+        }}
+      />
       <FlatList
         data={notifications}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <ThemedView style={[styles.notificationItem, !item.is_read && styles.unreadNotification]}>
-            <ThemedText type="subtitle">{item.title}</ThemedText>
-            <ThemedText>{item.message}</ThemedText>
-            <ThemedText style={styles.timestamp}>
-              {new Date(item.created_at).toLocaleDateString()}
-            </ThemedText>
+          <ThemedView style={[styles.notificationItem]}>
+            <View style={styles.notificationHeader}>
+              <ThemedText type="subtitle" style={styles.notificationTitle}>{item.title}</ThemedText>
+              <ThemedText style={styles.timestamp}>
+                {new Date(item.created_at).toLocaleDateString()}
+              </ThemedText>
+            </View>
+            <ThemedText style={styles.notificationMessage}>{item.message}</ThemedText>
             
             {item.invite_id && !item.is_read && (
               <View style={styles.actionButtons}>
@@ -186,48 +217,7 @@ export default function NotificationsScreen() {
             )}
           </ThemedView>
         )}
-        contentContainerStyle={styles.listContent}
       />
-
-      <Modal
-        visible={showRelationshipModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowRelationshipModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <ThemedText type="subtitle" style={styles.modalTitle}>Select Relationship Type</ThemedText>
-            <TouchableOpacity
-              style={styles.relationshipButton}
-              onPress={() => handleRelationshipSelect('lover')}
-            >
-              <ThemedText style={styles.relationshipButtonText}>Lover</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.relationshipButton}
-              onPress={() => handleRelationshipSelect('business_partner')}
-            >
-              <ThemedText style={styles.relationshipButtonText}>Business Partner</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.relationshipButton}
-              onPress={() => handleRelationshipSelect('family')}
-            >
-              <ThemedText style={styles.relationshipButtonText}>Family</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={() => {
-                setShowRelationshipModal(false);
-                setSelectedInvite(null);
-              }}
-            >
-              <ThemedText style={styles.buttonText}>Cancel</ThemedText>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -235,87 +225,94 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
-  listContent: {
-    padding: 16,
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  notificationItem: {
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 8,
-    backgroundColor: '#f8f9fa',
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 20,
   },
-  unreadNotification: {
-    backgroundColor: '#e3f2fd',
+  scrollContent: {
+    padding: 20,
   },
-  timestamp: {
-    fontSize: 12,
+  noResultsText: {
+    textAlign: 'center',
+    fontSize: 16,
     color: '#666',
-    marginTop: 8,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
   },
-  errorText: {
-    textAlign: 'center',
-    color: '#dc3545',
+  listContent: {
+    padding: 20,
+    paddingVertical: 24,
+  },
+  notificationItem: {
+    padding: 20,
+    marginBottom: 20,
+    marginHorizontal: 20,
+    marginVertical: 20,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  notificationTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  notificationMessage: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#374151',
+  },
+  timestamp: {
+    fontSize: 12,
+    color: '#6b7280',
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 12,
-    gap: 8,
+    marginTop: 16,
+    gap: 12,
   },
   button: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 4,
-    minWidth: 80,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 100,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   acceptButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#2196f3',
   },
   refuseButton: {
-    backgroundColor: '#dc3545',
+    backgroundColor: '#f44336',
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    width: '80%',
-    maxWidth: 400,
-  },
-  modalTitle: {
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  relationshipButton: {
-    padding: 15,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-    marginBottom: 10,
-  },
-  relationshipButtonText: {
-    textAlign: 'center',
     fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
   },
-  cancelButton: {
-    backgroundColor: '#6c757d',
-    marginTop: 10,
-  },
-}); 
+});

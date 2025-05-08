@@ -218,7 +218,7 @@ export default function HomeScreen() {
         animationType="slide"
         onRequestClose={() => {
           setShowAccountModal(false);
-          dispatch({ type: 'RESET_EMAIL' });
+          dispatch({ type: 'RESET' });
         }}
       >
         <TouchableWithoutFeedback
@@ -226,7 +226,7 @@ export default function HomeScreen() {
             Keyboard.dismiss();
             if (event.target === event.currentTarget) {
               setShowAccountModal(false);
-              dispatch({ type: 'RESET_EMAIL' });
+              dispatch({ type: 'RESET' });
             }
           }}
           accessible={false}
@@ -281,7 +281,7 @@ export default function HomeScreen() {
                 style={styles.modalCloseButton}
                 onPress={() => {
                   setShowAccountModal(false);
-                  dispatch({ type: 'RESET_EMAIL' });
+                  dispatch({ type: 'RESET' });
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Close account modal"
