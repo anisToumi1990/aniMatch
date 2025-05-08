@@ -133,12 +133,13 @@ export default function QuizScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ title: 'Personality Quiz' }} />
+      <Stack.Screen options={{ 
+        title: 'Discover Your Animal Aura',
+        headerShown: true 
+      }} />
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          <ThemedText style={styles.title}>Discover Your Animal Aura</ThemedText>
-          
           <ProgressIndicator
             currentQuestion={currentQuestionIndex + 1}
             totalQuestions={questions.length}
