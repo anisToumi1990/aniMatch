@@ -48,7 +48,7 @@ export default function HomeScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.auraCard}>
             <View style={styles.titleContainer}>
-              <ThemedText type="title" style={{ textAlign: 'center', color: '#2E7D32' }}>
+              <ThemedText type="title" style={{ textAlign: 'center' }}>
                 Welcome to{'\n'}
                 🐾 AniMatch 🐾
               </ThemedText>
@@ -187,7 +187,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   descriptionText: {
-    color: '#1B5E20',
     fontSize: 16,
     lineHeight: 24,
     marginBottom: 12,
@@ -197,7 +196,6 @@ const styles = StyleSheet.create({
   },
   carouselTitle: {
     textAlign: 'center',
-    color: '#2E7D32',
     marginBottom: 16,
     fontSize: 18,
   },
