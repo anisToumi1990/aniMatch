@@ -26,7 +26,7 @@ export default function ResultsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ 
-          title: 'Your Animal Aura',
+          title: 'Animal Aura',
           headerShown: true
         }} />
         <ThemedView style={styles.loadingContainer}>
@@ -104,7 +104,7 @@ export default function ResultsScreen() {
       <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
-            title: 'Your Animal Aura',
+            title: 'Animal Aura',
             headerShown: true,
             headerStyle: {
               backgroundColor: 'transparent',
@@ -243,6 +243,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   auraCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
@@ -251,7 +252,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
   },
   iconWrapper: {
     marginBottom: 20,

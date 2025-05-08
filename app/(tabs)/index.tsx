@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     paddingTop: 140,
   },
   auraCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',

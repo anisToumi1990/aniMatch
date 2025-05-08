@@ -249,7 +249,7 @@ export default function CompatibilityScreen() {
       <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
-            title: 'Animal Compatibility',
+            title: 'Compatibility',
             headerShown: true,
             headerStyle: {
               backgroundColor: 'transparent',
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -441,6 +441,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   auraCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 20,
@@ -451,6 +452,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
   },
 }); 

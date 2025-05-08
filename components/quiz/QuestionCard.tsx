@@ -39,8 +39,7 @@ export function QuestionCard({
 
   return (
     <View style={[
-      styles.container, 
-      { backgroundColor: '#FFFFFF' }
+      styles.container
     ]}>
       <ThemedText style={styles.questionText}>
         {question.question_text}
@@ -71,6 +70,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
   },
   questionText: {
     fontSize: 20,
