@@ -7,6 +7,8 @@ import { ThemedView } from '@/components/ThemedView';
 import { ProgressIndicator } from '@/components/quiz/ProgressIndicator';
 import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { NavigationControls } from '@/components/quiz/NavigationControls';
+import { BackgroundPattern } from '../../components/BackgroundPattern';
+import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-context';
 
 export default function QuizScreen() {
   const router = useRouter();
@@ -56,54 +58,90 @@ export default function QuizScreen() {
   // Handle error state
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Stack.Screen options={{ title: 'Personality Quiz' }} />
-        <ThemedView style={styles.errorContainer}>
-          <ThemedText style={styles.errorText}>
-            {error}
-          </ThemedText>
-          <ThemedText
-            style={styles.retryText}
-            onPress={loadQuiz}
-          >
-            Tap to retry
-          </ThemedText>
-        </ThemedView>
-      </SafeAreaView>
+      <BackgroundPattern>
+        <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
+          <Stack.Screen
+            options={{
+              title: 'Personality Quiz',
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: 'transparent',
+              },
+              headerTransparent: true,
+              headerTintColor: '#2E7D32',
+            }}
+          />
+          <ThemedView style={styles.errorContainer}>
+            <ThemedText style={styles.errorText}>
+              {error}
+            </ThemedText>
+            <ThemedText
+              style={styles.retryText}
+              onPress={loadQuiz}
+            >
+              Tap to retry
+            </ThemedText>
+          </ThemedView>
+        </SafeAreaViewContext>
+      </BackgroundPattern>
     );
   }
 
   // Handle loading state
   if (isLoading && questions.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Stack.Screen options={{ title: 'Personality Quiz' }} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7E4EFF" />
-          <ThemedText style={styles.loadingText}>
-            Loading quiz...
-          </ThemedText>
-        </View>
-      </SafeAreaView>
+      <BackgroundPattern>
+        <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
+          <Stack.Screen
+            options={{
+              title: 'Personality Quiz',
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: 'transparent',
+              },
+              headerTransparent: true,
+              headerTintColor: '#2E7D32',
+            }}
+          />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#7E4EFF" />
+            <ThemedText style={styles.loadingText}>
+              Loading quiz...
+            </ThemedText>
+          </View>
+        </SafeAreaViewContext>
+      </BackgroundPattern>
     );
   }
 
   if (questions.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Stack.Screen options={{ title: 'Personality Quiz' }} />
-        <ThemedView style={styles.errorContainer}>
-          <ThemedText style={styles.errorText}>
-            No questions available. Please try again later.
-          </ThemedText>
-          <ThemedText
-            style={styles.retryText}
-            onPress={loadQuiz}
-          >
-            Tap to retry
-          </ThemedText>
-        </ThemedView>
-      </SafeAreaView>
+      <BackgroundPattern>
+        <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
+          <Stack.Screen
+            options={{
+              title: 'Personality Quiz',
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: 'transparent',
+              },
+              headerTransparent: true,
+              headerTintColor: '#2E7D32',
+            }}
+          />
+          <ThemedView style={styles.errorContainer}>
+            <ThemedText style={styles.errorText}>
+              No questions available. Please try again later.
+            </ThemedText>
+            <ThemedText
+              style={styles.retryText}
+              onPress={loadQuiz}
+            >
+              Tap to retry
+            </ThemedText>
+          </ThemedView>
+        </SafeAreaViewContext>
+      </BackgroundPattern>
     );
   }
 
@@ -132,41 +170,50 @@ export default function QuizScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ 
-        title: 'Discover Your Animal Aura',
-        headerShown: true 
-      }} />
-      
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <ProgressIndicator
-            currentQuestion={currentQuestionIndex + 1}
-            totalQuestions={questions.length}
-            progress={(currentQuestionIndex + 1) / questions.length}
-          />
-          
-          <QuestionCard 
-            question={currentQuestion}
-            answerOptions={currentAnswerOptions}
-            userAnswers={userAnswers}
-            onSelectAnswer={selectAnswer}
-            goToNextQuestion={goToNextQuestion}
-            isLastQuestion={isLastQuestion}
-          />
-          
-          <NavigationControls
-            onPrevious={goToPreviousQuestion}
-            onNext={handleNext}
-            canGoBack={currentQuestionIndex > 0}
-            canGoForward={currentQuestionIndex < questions.length}
-            isLastQuestion={isLastQuestion}
-            isLoading={isLoading}
-            allQuestionsAnswered={userAnswers.length === questions.length}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <BackgroundPattern>
+      <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
+        <Stack.Screen
+          options={{
+            title: 'Personality Quiz',
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: 'transparent',
+            },
+            headerTransparent: true,
+            headerTintColor: '#2E7D32',
+          }}
+        />
+        
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <ProgressIndicator
+              currentQuestion={currentQuestionIndex + 1}
+              totalQuestions={questions.length}
+              progress={(currentQuestionIndex + 1) / questions.length}
+            />
+            
+            <QuestionCard 
+              question={currentQuestion}
+              answerOptions={currentAnswerOptions}
+              userAnswers={userAnswers}
+              onSelectAnswer={selectAnswer}
+              goToNextQuestion={goToNextQuestion}
+              isLastQuestion={isLastQuestion}
+            />
+            
+            <NavigationControls
+              onPrevious={goToPreviousQuestion}
+              onNext={handleNext}
+              canGoBack={currentQuestionIndex > 0}
+              canGoForward={currentQuestionIndex < questions.length}
+              isLastQuestion={isLastQuestion}
+              isLoading={isLoading}
+              allQuestionsAnswered={userAnswers.length === questions.length}
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaViewContext>
+    </BackgroundPattern>
   );
 }
 
@@ -183,6 +230,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
+    paddingTop: 60,
   },
   title: {
     fontSize: 24,

@@ -9,6 +9,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { supabase } from '@/lib/supabase';
+import { BackgroundPattern } from '../../components/BackgroundPattern';
 
 function isValidEmail(email: string): boolean {
   return /\S+@\S+\.\S+/.test(email);
@@ -168,208 +169,215 @@ export default function HomeScreen() {
   };
   
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <Stack.Screen
-        options={{
-          title: 'AniMatch',
-          headerShown: true,
-          headerRight: () => (
-            <TouchableOpacity
-              style={styles.userInitialButton}
-              onPress={() => setShowAccountModal(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Open account menu"
-            >
-              <Image source={require('../../assets/images/avatar.png')} style={styles.avatarImage} resizeMode="cover" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.auraCard}>
-          <ThemedView style={styles.titleContainer}>
-            <ThemedText type="title" style={{ textAlign: 'center' }}>
-              Welcome to{'\n'}
-              🐾 AniMatch 🐾
-            </ThemedText>
-          </ThemedView>
-          
-          <ThemedView style={styles.descriptionContainer}>
-            <ThemedText style={styles.descriptionText}>
-              Discover your unique animal aura and unlock deeper connections.
-            </ThemedText>
-            <ThemedText style={styles.descriptionText}>
-              Take our quick 10-question quiz to find out which animal reflects your personality – and explore how you vibe with others.
-            </ThemedText>
-          </ThemedView>
-
-          <ThemedView style={styles.carouselContainer}>
-            <ThemedText type="subtitle" style={styles.carouselTitle}>👇 Meet the Auras 👇</ThemedText>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.carouselContent}
-            >
-              <Image 
-                source={require('../../assets/auras/png/bear.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/cat.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/deer.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/dolphin.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/eagle.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/elephant.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/fox.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/lion.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/otter.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/owl.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/parrot.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/peacock.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/snake.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/unicorn.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              />
-              <Image 
-                source={require('../../assets/auras/png/wolf.png')} 
-                style={styles.carouselImage}
-                resizeMode="contain"
-              /> 
-            </ScrollView>
-          </ThemedView>
-        </View>
-      </ScrollView>
-      <Modal
-        visible={showAccountModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => {
-          setShowAccountModal(false);
-          dispatch({ type: 'RESET' });
-        }}
-      >
-        <TouchableWithoutFeedback
-          onPress={event => {
-            Keyboard.dismiss();
-            if (event.target === event.currentTarget) {
-              setShowAccountModal(false);
-              dispatch({ type: 'RESET' });
-            }
+    <BackgroundPattern>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <Stack.Screen
+          options={{
+            title: 'AniMatch',
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: 'transparent',
+            },
+            headerTransparent: true,
+            headerTintColor: '#2E7D32',
+            headerRight: () => (
+              <TouchableOpacity
+                style={styles.userInitialButton}
+                onPress={() => setShowAccountModal(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Open account menu"
+              >
+                <Image source={require('../../assets/images/avatar.png')} style={styles.avatarImage} resizeMode="cover" />
+              </TouchableOpacity>
+            ),
           }}
-          accessible={false}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Account</Text>
-              <Text style={styles.modalSubtitle}>Invite a Friend</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter email address"
-                placeholderTextColor="#6b7280"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                value={state.email}
-                onChangeText={handleEmailChange}
-                accessible
-                accessibilityLabel="Email address input"
-                returnKeyType="done"
-              />
-              {state.hasError && (
-                <Text style={styles.errorText} accessibilityRole="alert">
-                  {state.errorMessage}
-                </Text>
-              )}
-              {state.isSuccess && (
-                <Text style={styles.successText}>
-                  Invitation sent successfully!
-                </Text>
-              )}
-              <TouchableOpacity
-                onPress={handleInvitePress}
-                style={styles.inviteButton}
-                disabled={state.isLoading}
-                accessibilityRole="button"
-                accessibilityLabel="Send Invite"
+        />
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.auraCard}>
+            <View style={styles.titleContainer}>
+              <ThemedText type="title" style={{ textAlign: 'center', color: '#2E7D32' }}>
+                Welcome to{'\n'}
+                🐾 AniMatch 🐾
+              </ThemedText>
+            </View>
+            
+            <View style={styles.descriptionContainer}>
+              <ThemedText style={styles.descriptionText}>
+                Discover your unique animal aura and unlock deeper connections.
+              </ThemedText>
+              <ThemedText style={styles.descriptionText}>
+                Take our quick 10-question quiz to find out which animal reflects your personality – and explore how you vibe with others.
+              </ThemedText>
+            </View>
+
+            <View style={styles.carouselContainer}>
+              <ThemedText type="subtitle" style={styles.carouselTitle}>👇 Meet the Auras 👇</ThemedText>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.carouselContent}
               >
-                {state.isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.inviteButtonText}>Send Invite</Text>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalSignOutButton}
-                onPress={handleSignOut}
-              >
-                <Text style={styles.modalSignOutButtonText}>Sign Out</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => {
-                  setShowAccountModal(false);
-                  dispatch({ type: 'RESET' });
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Close account modal"
-              >
-                <Ionicons name="close" size={28} color="#333" />
-              </TouchableOpacity>
+                <Image 
+                  source={require('../../assets/auras/png/bear.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/cat.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/deer.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/dolphin.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/eagle.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/elephant.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/fox.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/lion.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/otter.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/owl.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/parrot.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/peacock.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/snake.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/unicorn.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                />
+                <Image 
+                  source={require('../../assets/auras/png/wolf.png')} 
+                  style={styles.carouselImage}
+                  resizeMode="contain"
+                /> 
+              </ScrollView>
             </View>
           </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    </SafeAreaView>
+        </ScrollView>
+        <Modal
+          visible={showAccountModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => {
+            setShowAccountModal(false);
+            dispatch({ type: 'RESET' });
+          }}
+        >
+          <TouchableWithoutFeedback
+            onPress={event => {
+              Keyboard.dismiss();
+              if (event.target === event.currentTarget) {
+                setShowAccountModal(false);
+                dispatch({ type: 'RESET' });
+              }
+            }}
+            accessible={false}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Account</Text>
+                <Text style={styles.modalSubtitle}>Invite a Friend</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter email address"
+                  placeholderTextColor="#6b7280"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  value={state.email}
+                  onChangeText={handleEmailChange}
+                  accessible
+                  accessibilityLabel="Email address input"
+                  returnKeyType="done"
+                />
+                {state.hasError && (
+                  <Text style={styles.errorText} accessibilityRole="alert">
+                    {state.errorMessage}
+                  </Text>
+                )}
+                {state.isSuccess && (
+                  <Text style={styles.successText}>
+                    Invitation sent successfully!
+                  </Text>
+                )}
+                <TouchableOpacity
+                  onPress={handleInvitePress}
+                  style={styles.inviteButton}
+                  disabled={state.isLoading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send Invite"
+                >
+                  {state.isLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.inviteButtonText}>Send Invite</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalSignOutButton}
+                  onPress={handleSignOut}
+                >
+                  <Text style={styles.modalSignOutButtonText}>Sign Out</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => {
+                    setShowAccountModal(false);
+                    dispatch({ type: 'RESET' });
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close account modal"
+                >
+                  <Ionicons name="close" size={28} color="#333" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      </SafeAreaView>
+    </BackgroundPattern>
   );
 }
 
@@ -377,40 +385,66 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 24,
-  },
-  userInfoContainer: {
-    backgroundColor: '#f5f5f5',
+  scrollContent: {
+    flexGrow: 1,
     padding: 16,
-    borderRadius: 8,
-    marginBottom: 24,
+    paddingTop: 140,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 24,
-  },
-  userInitialButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 24,
-    backgroundColor: '#E5E5EA',
-    justifyContent: 'center',
-    alignItems: 'center',
+  auraCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 16,
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
+  },
+  titleContainer: {
+    marginBottom: 20,
+  },
+  descriptionContainer: {
+    marginBottom: 24,
+  },
+  descriptionText: {
+    color: '#1B5E20',
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 12,
+  },
+  carouselContainer: {
+    marginTop: 16,
+  },
+  carouselTitle: {
+    textAlign: 'center',
+    color: '#2E7D32',
+    marginBottom: 16,
+    fontSize: 18,
+  },
+  carouselContent: {
+    paddingVertical: 8,
+  },
+  carouselImage: {
+    width: 80,
+    height: 80,
+    marginHorizontal: 8,
+  },
+  userInitialButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   avatarImage: {
-    width: 30,
-    height: 30,
-    borderRadius: 1,
+    width: 40,
+    height: 40,
+    borderRadius: 5,
   },
   modalOverlay: {
     flex: 1,
@@ -489,49 +523,5 @@ const styles = StyleSheet.create({
     right: 12,
     zIndex: 10,
     padding: 4,
-  },
-  auraCard: {
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    margin: 20,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingBottom: 32,
-  },
-  descriptionContainer: {
-    marginBottom: 24,
-    gap: 12,
-  },
-  descriptionText: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  carouselContainer: {
-    width: '100%',
-    marginTop: 16,
-  },
-  carouselTitle: {
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  carouselContent: {
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  carouselImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
   },
 });

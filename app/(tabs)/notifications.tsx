@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Stack } from 'expo-router';
+import { BackgroundPattern } from '../../components/BackgroundPattern';
 
 interface Notification {
   id: string;
@@ -131,94 +132,123 @@ export default function NotificationsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
-        <Stack.Screen
-          options={{
-            title: 'Notifications',
-            headerShown: true,
-          }}
-        />
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large"/>
-        </View>
-      </SafeAreaView>
+      <BackgroundPattern>
+        <SafeAreaView style={[styles.container, { paddingTop: 60 }]} edges={['left', 'right']}>
+          <Stack.Screen
+            options={{
+              title: 'Notifications',
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: 'transparent',
+              },
+              headerTransparent: true,
+              headerTintColor: '#2E7D32',
+            }}
+          />
+          <View style={styles.centerContent}>
+            <ActivityIndicator size="large"/>
+          </View>
+        </SafeAreaView>
+      </BackgroundPattern>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
-        <Stack.Screen
-          options={{
-            title: 'Notifications',
-            headerShown: true,
-          }}
-        />
-        <View style={styles.centerContent}>
-          <ThemedText type="subtitle" style={styles.errorText}>{error}</ThemedText>
-        </View>
-      </SafeAreaView>
+      <BackgroundPattern>
+        <SafeAreaView style={[styles.container, { paddingTop: 60 }]} edges={['left', 'right']}>
+          <Stack.Screen
+            options={{
+              title: 'Notifications',
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: 'transparent',
+              },
+              headerTransparent: true,
+              headerTintColor: '#2E7D32',
+            }}
+          />
+          <View style={styles.centerContent}>
+            <ThemedText type="subtitle" style={styles.errorText}>{error}</ThemedText>
+          </View>
+        </SafeAreaView>
+      </BackgroundPattern>
     );
   }
 
   if (notifications.length === 0) {
     return (
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
-        <Stack.Screen
-          options={{
-            title: 'Notifications',
-            headerShown: true,
-          }}
-        />
-        <View style={styles.centerContent}>
+      <BackgroundPattern>
+        <SafeAreaView style={[styles.container, { paddingTop: 60 }]} edges={['left', 'right']}>
+          <Stack.Screen
+            options={{
+              title: 'Notifications',
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: 'transparent',
+              },
+              headerTransparent: true,
+              headerTintColor: '#2E7D32',
+            }}
+          />
+          <View style={styles.centerContent}>
             <ThemedText type="subtitle" style={styles.noResultsText}>No pending notifications</ThemedText>
             <ThemedText style={styles.noResultsText}>You'll see new notifications here when you receive them.</ThemedText>
-        </View>
-      </SafeAreaView>
+          </View>
+        </SafeAreaView>
+      </BackgroundPattern>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <Stack.Screen
-        options={{
-          title: 'Notifications',
-          headerShown: true,
-        }}
-      />
-      <FlatList
-        data={notifications}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <ThemedView style={[styles.notificationItem]}>
-            <View style={styles.notificationHeader}>
-              <ThemedText type="subtitle" style={styles.notificationTitle}>{item.title}</ThemedText>
-              <ThemedText style={styles.timestamp}>
-                {new Date(item.created_at).toLocaleDateString()}
-              </ThemedText>
-            </View>
-            <ThemedText style={styles.notificationMessage}>{item.message}</ThemedText>
-            
-            {item.invite_id && !item.is_read && (
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={[styles.button, styles.acceptButton]}
-                  onPress={() => handleAcceptPress(item.id, item.invite_id!)}
-                >
-                  <ThemedText style={styles.buttonText}>Accept</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, styles.refuseButton]}
-                  onPress={() => handleInvitationResponse(item.id, item.invite_id!, false)}
-                >
-                  <ThemedText style={styles.buttonText}>Reject</ThemedText>
-                </TouchableOpacity>
+    <BackgroundPattern>
+      <SafeAreaView style={[styles.container, { paddingTop: 60 }]} edges={['left', 'right']}>
+        <Stack.Screen
+          options={{
+            title: 'Notifications',
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: 'transparent',
+            },
+            headerTransparent: true,
+            headerTintColor: '#2E7D32',
+          }}
+        />
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          renderItem={({ item }) => (
+            <ThemedView style={[styles.notificationItem]}>
+              <View style={styles.notificationHeader}>
+                <ThemedText type="subtitle" style={styles.notificationTitle}>{item.title}</ThemedText>
+                <ThemedText style={styles.timestamp}>
+                  {new Date(item.created_at).toLocaleDateString()}
+                </ThemedText>
               </View>
-            )}
-          </ThemedView>
-        )}
-      />
-    </SafeAreaView>
+              <ThemedText style={styles.notificationMessage}>{item.message}</ThemedText>
+              
+              {item.invite_id && !item.is_read && (
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={[styles.button, styles.acceptButton]}
+                    onPress={() => handleAcceptPress(item.id, item.invite_id!)}
+                  >
+                    <ThemedText style={styles.buttonText}>Accept</ThemedText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.button, styles.refuseButton]}
+                    onPress={() => handleInvitationResponse(item.id, item.invite_id!, false)}
+                  >
+                    <ThemedText style={styles.buttonText}>Reject</ThemedText>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </ThemedView>
+          )}
+        />
+      </SafeAreaView>
+    </BackgroundPattern>
   );
 }
 
@@ -250,9 +280,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  listContent: {
+  listContainer: {
     padding: 20,
-    paddingVertical: 24,
   },
   notificationItem: {
     padding: 20,

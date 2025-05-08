@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { AnimalIcon } from '@/components/AnimalIcon';
+import { BackgroundPattern } from '../../components/BackgroundPattern';
 
 interface CompatibilityResult {
   id: string;
@@ -187,7 +188,7 @@ export default function CompatibilityScreen() {
     const rightAura = isCurrentUserA ? auraB : auraA; // current user
 
     return (
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <SafeAreaView style={[styles.container, { paddingTop: 60 }]}  edges={['left', 'right']}>
         <View style={styles.detailHeader}>
           <Pressable
             onPress={() => setSelectedResult(null)}
@@ -243,42 +244,53 @@ export default function CompatibilityScreen() {
     );
   }
 
-  return selectedResult ? (
-    renderDetailView(selectedResult)
-  ) : (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <Stack.Screen
-        options={{
-          title: 'Compatibility',
-          headerShown: true,
-        }}
-      />
-      {isLoading ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" />
-        </View>
-      ) : error ? (
-        <View style={styles.centerContainer}>
-          <ThemedText style={styles.errorText}>{error}</ThemedText>
-        </View>
-      ) : compatibilityResults.length === 0 ? (
-        <View style={styles.centerContainer}>
-          <ThemedText type="subtitle" style={styles.noResultsText}>
-            No compatibility results
-          </ThemedText>
-          <ThemedText style={styles.noResultsText}>
-            Invite someone to take the quiz or take the quiz yourself!
-          </ThemedText>
-        </View>
-      ) : (
-        <FlatList
-          data={compatibilityResults}
-          renderItem={renderCompatibilityItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
+  return (
+    <BackgroundPattern>
+      <SafeAreaView style={styles.container}>
+        <Stack.Screen
+          options={{
+            title: 'Animal Compatibility',
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: 'transparent',
+            },
+            headerTransparent: true,
+            headerTintColor: '#2E7D32',
+          }}
         />
-      )}
-    </SafeAreaView>
+        {selectedResult ? (
+          renderDetailView(selectedResult)
+        ) : (
+          <View style={styles.container}>
+            {isLoading ? (
+              <View style={styles.centerContainer}>
+                <ActivityIndicator size="large" />
+              </View>
+            ) : error ? (
+              <View style={styles.centerContainer}>
+                <ThemedText style={styles.errorText}>{error}</ThemedText>
+              </View>
+            ) : compatibilityResults.length === 0 ? (
+              <View style={styles.centerContainer}>
+                <ThemedText type="subtitle" style={styles.noResultsText}>
+                  No compatibility results
+                </ThemedText>
+                <ThemedText style={styles.noResultsText}>
+                  Invite someone to take the quiz or take the quiz yourself!
+                </ThemedText>
+              </View>
+            ) : (
+              <FlatList
+                data={compatibilityResults}
+                renderItem={renderCompatibilityItem}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.listContainer}
+              />
+            )}
+          </View>
+        )}
+      </SafeAreaView>
+    </BackgroundPattern>
   );
 }
 
@@ -293,6 +305,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 16,
+    paddingTop: 60,
   },
   resultCard: {
     padding: 16,

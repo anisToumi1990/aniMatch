@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Share, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Share, Platform, Image, Modal, TextInput, ActivityIndicator, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useQuiz } from '@/context/QuizContext';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,6 +7,8 @@ import { ThemedView } from '@/components/ThemedView';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimalIcon } from '@/components/AnimalIcon';
 import { captureRef } from 'react-native-view-shot';
+import { BackgroundPattern } from '../../components/BackgroundPattern';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ResultsScreen() {
   const router = useRouter();
@@ -98,108 +100,117 @@ export default function ResultsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ 
-        title: 'Your Animal Aura',
-        headerShown: true 
-      }} />
-      
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          
-          {isPreviousResult && (
-            <View style={styles.welcomeBackBanner}>
-              <ThemedText style={styles.welcomeBackText}>
-                Welcome back! Here's your previous result.
+    <BackgroundPattern>
+      <SafeAreaView style={styles.container}>
+        <Stack.Screen
+          options={{
+            title: 'Your Animal Aura',
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: 'transparent',
+            },
+            headerTransparent: true,
+            headerTintColor: '#2E7D32',
+          }}
+        />
+        
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            
+            {isPreviousResult && (
+              <View style={styles.welcomeBackBanner}>
+                <ThemedText style={styles.welcomeBackText}>
+                  Welcome back! Here's your previous result.
+                </ThemedText>
+              </View>
+            )}
+            
+            <View 
+              ref={viewShotRef}
+              style={[styles.auraCard]}
+            >
+              <View style={styles.iconWrapper}>
+                <AnimalIcon 
+                  animalName={animalAura.name}
+                  width={100}
+                  height={100}
+                />
+              </View>
+              
+              <ThemedText style={styles.auraName}>
+                {animalAura.name}
               </ThemedText>
-            </View>
-          )}
-          
-          <View 
-            ref={viewShotRef}
-            style={[styles.auraCard]}
-          >
-            <View style={styles.iconWrapper}>
-              <AnimalIcon 
-                animalName={animalAura.name}
-                width={100}
-                height={100}
-              />
-            </View>
-            
-            <ThemedText style={styles.auraName}>
-              {animalAura.name}
-            </ThemedText>
-            
-            <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor() }]}>
-              <ThemedText style={styles.categoryText}>
-                {animalAura.category.split('/')[0]}
+              
+              <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor() }]}>
+                <ThemedText style={styles.categoryText}>
+                  {animalAura.category.split('/')[0]}
+                </ThemedText>
+              </View>
+              
+              <ThemedText style={styles.auraDescription}>
+                {animalAura.description}
               </ThemedText>
-            </View>
-            
-            <ThemedText style={styles.auraDescription}>
-              {animalAura.description}
-            </ThemedText>
-            
-            <View style={styles.sectionContainer}>
-              <ThemedText style={styles.sectionTitle}>Strengths</ThemedText>
-              <ThemedText style={styles.sectionContent}>
-                {animalAura.strengths}
-              </ThemedText>
-            </View>
-            
-            <View style={styles.sectionContainer}>
-              <ThemedText style={styles.sectionTitle}>Challenges</ThemedText>
-              <ThemedText style={styles.sectionContent}>
-                {animalAura.challenges}
-              </ThemedText>
-            </View>
-            
-            <View style={styles.sectionContainer}>
-              <ThemedText style={styles.sectionTitle}>Key Traits</ThemedText>
-              <View style={styles.traitsContainer}>
-                {animalAura.traits.split(',').map((trait, index) => (
-                  <View 
-                    key={index} 
-                    style={[
-                      styles.traitBadge, 
-                      { backgroundColor: '#F2F2F7' }
-                    ]}
-                  >
-                    <ThemedText style={styles.traitText}>
-                      {trait.trim()}
-                    </ThemedText>
-                  </View>
-                ))}
+              
+              <View style={styles.sectionContainer}>
+                <ThemedText style={styles.sectionTitle}>Strengths</ThemedText>
+                <ThemedText style={styles.sectionContent}>
+                  {animalAura.strengths}
+                </ThemedText>
+              </View>
+              
+              <View style={styles.sectionContainer}>
+                <ThemedText style={styles.sectionTitle}>Challenges</ThemedText>
+                <ThemedText style={styles.sectionContent}>
+                  {animalAura.challenges}
+                </ThemedText>
+              </View>
+              
+              <View style={styles.sectionContainer}>
+                <ThemedText style={styles.sectionTitle}>Key Traits</ThemedText>
+                <View style={styles.traitsContainer}>
+                  {animalAura.traits.split(',').map((trait, index) => (
+                    <View 
+                      key={index} 
+                      style={[
+                        styles.traitBadge, 
+                        { backgroundColor: '#F2F2F7' }
+                      ]}
+                    >
+                      <ThemedText style={styles.traitText}>
+                        {trait.trim()}
+                      </ThemedText>
+                    </View>
+                  ))}
+                </View>
+              </View>
+              
+              {/* Add AniMatch branding */}
+              <View style={styles.brandingContainer}>
+                <ThemedText style={styles.brandingText}>AniMatch</ThemedText>
               </View>
             </View>
             
-            {/* Add AniMatch branding */}
-            <View style={styles.brandingContainer}>
-              <ThemedText style={styles.brandingText}>AniMatch</ThemedText>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity 
+                style={[styles.button, styles.shareButton]} 
+                onPress={handleShare}
+              >
+                <Ionicons name="share-outline" size={20} color="#FFFFFF" />
+                <ThemedText style={styles.buttonText}>Share Result</ThemedText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.button, styles.retakeButton]} 
+                onPress={handleRetakeQuiz}
+              >
+                <Ionicons name="refresh-outline" size={20} color="#FFFFFF" />
+                <ThemedText style={styles.buttonText}>Retake Quiz</ThemedText>
+              </TouchableOpacity>
             </View>
           </View>
-          
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={[styles.button, styles.shareButton]} 
-              onPress={handleShare}
-            >
-              <Ionicons name="share-outline" size={20} color="#FFFFFF" />
-              <ThemedText style={styles.buttonText}>Share Result</ThemedText>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.button, styles.retakeButton]} 
-              onPress={handleRetakeQuiz}
-            >
-              <Ionicons name="refresh-outline" size={20} color="#FFFFFF" />
-              <ThemedText style={styles.buttonText}>Retake Quiz</ThemedText>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </BackgroundPattern>
   );
 }
 
@@ -217,7 +228,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
-    paddingTop: 10,
+    paddingTop: 60,
   },
   loadingContainer: {
     flex: 1,
