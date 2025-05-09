@@ -140,9 +140,11 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
                 />
               </TouchableOpacity>
             </View>
+            {password.length > 0 && password.length < 6 && (
             <Text style={styles.helperText}>
               Password must be at least 6 characters
             </Text>
+            )}
           </View>
           
           <View style={styles.inputContainer}>
