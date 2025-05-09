@@ -17,6 +17,10 @@ interface State {
   isSuccess: boolean;
   isEditingName: boolean;
   successMessage: string;
+  nameHasError: boolean;
+  nameErrorMessage: string;
+  nameIsSuccess: boolean;
+  nameSuccessMessage: string;
 }
 
 type Action =
@@ -26,6 +30,8 @@ type Action =
   | { type: 'SUBMIT_START' }
   | { type: 'SUBMIT_SUCCESS'; message?: string }
   | { type: 'SUBMIT_ERROR'; errorMessage: string }
+  | { type: 'NAME_SUBMIT_SUCCESS'; message: string }
+  | { type: 'NAME_SUBMIT_ERROR'; errorMessage: string }
   | { type: 'RESET' }
   | { type: 'RESET_EMAIL' };
 
@@ -57,6 +63,24 @@ function reducer(state: State, action: Action): State {
         isSuccess: false,
         successMessage: ''
       };
+    case 'NAME_SUBMIT_SUCCESS':
+      return {
+        ...state,
+        isLoading: false,
+        nameIsSuccess: true,
+        nameHasError: false,
+        nameErrorMessage: '',
+        nameSuccessMessage: action.message
+      };
+    case 'NAME_SUBMIT_ERROR':
+      return {
+        ...state,
+        isLoading: false,
+        nameHasError: true,
+        nameErrorMessage: action.errorMessage,
+        nameIsSuccess: false,
+        nameSuccessMessage: ''
+      };
     case 'RESET':
       return { 
         ...state, 
@@ -65,7 +89,11 @@ function reducer(state: State, action: Action): State {
         hasError: false, 
         errorMessage: '', 
         isSuccess: false,
-        successMessage: ''
+        successMessage: '',
+        nameHasError: false,
+        nameErrorMessage: '',
+        nameIsSuccess: false,
+        nameSuccessMessage: ''
       };
     case 'RESET_EMAIL':
       return { ...state, email: '' };
@@ -95,10 +123,49 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
     isSuccess: false,
     isEditingName: false,
     successMessage: '',
+    nameHasError: false,
+    nameErrorMessage: '',
+    nameIsSuccess: false,
+    nameSuccessMessage: ''
   });
   const [isDarkMode, setIsDarkMode] = useState(false);
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
+
+  // Add timeout refs
+  const messageTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const nameMessageTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
+
+  // Cleanup function for timeouts
+  const clearMessageTimeouts = () => {
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+    }
+    if (nameMessageTimeoutRef.current) {
+      clearTimeout(nameMessageTimeoutRef.current);
+    }
+  };
+
+  // Clear messages after 5 seconds
+  const setMessageTimeout = (type: 'email' | 'name') => {
+    clearMessageTimeouts();
+    const timeoutRef = type === 'email' ? messageTimeoutRef : nameMessageTimeoutRef;
+    timeoutRef.current = setTimeout(() => {
+      if (type === 'email') {
+        dispatch({ type: 'RESET' });
+      } else {
+        dispatch({ type: 'NAME_SUBMIT_SUCCESS', message: ' ' });
+        dispatch({ type: 'NAME_SUBMIT_ERROR', errorMessage: ' ' });
+      }
+    }, 5000);
+  };
+
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      clearMessageTimeouts();
+    };
+  }, []);
 
   function handleEmailChange(text: string) {
     dispatch({ type: 'SET_EMAIL', email: text });
@@ -110,6 +177,13 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
 
   async function handleNameSave() {
     if (!user?.id) return;
+    
+    // Validate name is not empty
+    if (!state.fullName.trim()) {
+      dispatch({ type: 'NAME_SUBMIT_ERROR', errorMessage: 'Name cannot be empty' });
+      setMessageTimeout('name');
+      return;
+    }
     
     dispatch({ type: 'SUBMIT_START' });
     try {
@@ -129,9 +203,11 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
       if (userError) throw userError;
       
       dispatch({ type: 'SET_EDITING_NAME', isEditing: false });
-      dispatch({ type: 'SUBMIT_SUCCESS', message: 'Name updated successfully' });
+      dispatch({ type: 'NAME_SUBMIT_SUCCESS', message: 'Name updated successfully' });
+      setMessageTimeout('name');
     } catch (err: any) {
-      dispatch({ type: 'SUBMIT_ERROR', errorMessage: err.message || 'Failed to update name' });
+      dispatch({ type: 'NAME_SUBMIT_ERROR', errorMessage: err.message || 'Failed to update name' });
+      setMessageTimeout('name');
     }
   }
 
@@ -139,14 +215,17 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
     dispatch({ type: 'RESET' });
     if (!isValidEmail(state.email)) {
       dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Please enter a valid email address.' });
+      setMessageTimeout('email');
       return;
     }
     if (!user?.id) {
       dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You must be logged in to send an invite.' });
+      setMessageTimeout('email');
       return;
     }
     if (state.email.toLowerCase() === user.email?.toLowerCase()) {
       dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You cannot send an invitation to your own email address.' });
+      setMessageTimeout('email');
       return;
     }
     
@@ -159,6 +238,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
 
     if (userCheckError && userCheckError.code !== 'PGRST116') {
       dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing users.' });
+      setMessageTimeout('email');
       return;
     }
 
@@ -172,11 +252,13 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
 
       if (bidirectionalError) {
         dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing invitations.' });
+        setMessageTimeout('email');
         return;
       }
 
       if (bidirectionalInvites && bidirectionalInvites.length > 0) {
         dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'An invitation already exists between you and this user.' });
+        setMessageTimeout('email');
         return;
       }
     } else {
@@ -190,11 +272,13 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
 
       if (checkError && checkError.code !== 'PGRST116') {
         dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing invitations.' });
+        setMessageTimeout('email');
         return;
       }
 
       if (existingInvite) {
         dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You have already sent an invitation to this email address.' });
+        setMessageTimeout('email');
         return;
       }
     }
@@ -210,12 +294,15 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
       Keyboard.dismiss();
       if (error) {
         dispatch({ type: 'SUBMIT_ERROR', errorMessage: error.message || 'Failed to send invite.' });
+        setMessageTimeout('email');
         return;
       }
       dispatch({ type: 'SUBMIT_SUCCESS', message: 'Invitation sent successfully!' });
+      setMessageTimeout('email');
     } catch (err: any) {
       Keyboard.dismiss();
       dispatch({ type: 'SUBMIT_ERROR', errorMessage: err.message || 'Failed to send invite.' });
+      setMessageTimeout('email');
     }
   }
 
@@ -300,6 +387,18 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
                   <Ionicons name="pencil" size={16} color={textColor} style={styles.editIcon} />
                 </TouchableOpacity>
               )}
+              <View style={styles.messageContainer}>
+                {state.nameHasError && (
+                  <ThemedText style={styles.errorText} accessibilityRole="alert">
+                    {state.nameErrorMessage}
+                  </ThemedText>
+                )}
+                {state.nameIsSuccess && (
+                  <ThemedText style={styles.successText}>
+                    {state.nameSuccessMessage}
+                  </ThemedText>
+                )}
+              </View>
             </View>
 
             <View style={styles.section}>
@@ -362,16 +461,18 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
                   <Ionicons name="send" size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
-              {state.hasError && (
-                <ThemedText style={styles.errorText} accessibilityRole="alert">
-                  {state.errorMessage}
-                </ThemedText>
-              )}
-              {state.isSuccess && (
-                <ThemedText style={styles.successText}>
-                  {state.successMessage}
-                </ThemedText>
-              )}
+              <View style={styles.messageContainer}>
+                {state.hasError && (
+                  <ThemedText style={styles.errorText} accessibilityRole="alert">
+                    {state.errorMessage}
+                  </ThemedText>
+                )}
+                {state.isSuccess && (
+                  <ThemedText style={styles.successText}>
+                    {state.successMessage}
+                  </ThemedText>
+                )}
+              </View>
             </View>
 
             <TouchableOpacity
@@ -391,8 +492,9 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: 125,
   },
   modalContent: {
     borderRadius: 20,
@@ -400,6 +502,7 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     alignItems: 'center',
+    marginHorizontal: 20,
   },
   modalCloseButton: {
     position: 'absolute',
@@ -518,15 +621,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
   },
+  messageContainer: {
+    height: 24,
+    marginTop: 4,
+    justifyContent: 'center',
+  },
   errorText: {
     color: '#ef4444',
     fontSize: 14,
-    marginTop: 8,
   },
   successText: {
     color: '#22c55e',
     fontSize: 14,
-    marginTop: 8,
   },
   signOutButton: {
     flexDirection: 'row',
