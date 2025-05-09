@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import React, { useState } from 'react';
+import { useQuiz } from '../../context/QuizContext';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -14,6 +15,7 @@ import { AccountModal } from '@/components/AccountModal';
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const { isQuizComplete } = useQuiz();
 
   // Get the user's full name from user metadata
   const fullName = user?.user_metadata?.full_name || user?.email || 'User';
@@ -21,6 +23,14 @@ export default function HomeScreen() {
 
   const [showAccountModal, setShowAccountModal] = useState(false);
   
+  function handleStartQuiz() {
+    if (isQuizComplete) {
+      router.push('/(tabs)/results');
+      return;
+    }
+    router.push('/(tabs)/quiz');
+  }
+
   return (
     <BackgroundPattern>
       <SafeAreaView style={styles.container}>
@@ -147,6 +157,15 @@ export default function HomeScreen() {
                 /> 
               </ScrollView>
             </View>
+            <View style={styles.quizButtonContainer}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={handleStartQuiz}
+                style={styles.quizButton}
+              >
+                <Text style={styles.quizButtonText}>Start the Quiz</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
         <AccountModal 
@@ -221,5 +240,30 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 5,
+  },
+  quizButtonContainer: {
+    marginTop: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quizButton: {
+    backgroundColor: '#388e3c',
+    borderRadius: 32,
+    paddingVertical: 18,
+    paddingHorizontal: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+    minWidth: 260,
+  },
+  quizButtonText: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
 });
