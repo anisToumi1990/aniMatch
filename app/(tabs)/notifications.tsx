@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   acceptButton: {
-    backgroundColor: '#2196f3',
+    backgroundColor: '#388e3c',
   },
   refuseButton: {
     backgroundColor: '#f44336',
