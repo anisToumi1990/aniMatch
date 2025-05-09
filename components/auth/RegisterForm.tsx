@@ -10,7 +10,6 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
-  TouchableWithoutFeedback,
   Keyboard
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
@@ -81,119 +80,118 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.formContainer}>
-            <Text style={styles.title}>Create Account</Text>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Full Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your full name"
-                value={fullName}
-                onChangeText={setFullName}
-                autoCapitalize="words"
-                placeholderTextColor="#aaa"
-              />
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email Address</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                placeholderTextColor="#aaa"
-              />
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={styles.passwordInput}
-                  placeholder="Create a password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  placeholderTextColor="#aaa"
-                  textContentType="oneTimeCode"
-                />
-                <TouchableOpacity 
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  <Ionicons 
-                    name={showPassword ? "eye-off" : "eye"} 
-                    size={24} 
-                    color="#666" 
-                  />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.helperText}>
-                Password must be at least 6 characters
-              </Text>
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Confirm Password</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={styles.passwordInput}
-                  placeholder="Confirm your password"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showConfirmPassword}
-                  placeholderTextColor="#aaa"
-                  textContentType="oneTimeCode"
-                />
-                <TouchableOpacity 
-                  style={styles.eyeIcon}
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  <Ionicons 
-                    name={showConfirmPassword ? "eye-off" : "eye"} 
-                    size={24} 
-                    color="#666" 
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-            
-            <TouchableOpacity 
-              style={styles.button}
-              onPress={handleRegister}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Register</Text>
-              )}
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.linkButton}
-              onPress={navigateToLogin}
-            >
-              <Text style={styles.linkButtonText}>
-                Already have an account? Sign in
-              </Text>
-            </TouchableOpacity>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.formContainer}>
+          <Text style={styles.title}>Create Account</Text>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Full Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your full name"
+              value={fullName}
+              onChangeText={setFullName}
+              autoCapitalize="words"
+              placeholderTextColor="#aaa"
+            />
           </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Email Address</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholderTextColor="#aaa"
+            />
+          </View>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Create a password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                placeholderTextColor="#aaa"
+                textContentType="oneTimeCode"
+              />
+              <TouchableOpacity 
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons 
+                  name={showPassword ? "eye-off" : "eye"} 
+                  size={24} 
+                  color="#666" 
+                />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.helperText}>
+              Password must be at least 6 characters
+            </Text>
+          </View>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Confirm Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                placeholderTextColor="#aaa"
+                textContentType="oneTimeCode"
+              />
+              <TouchableOpacity 
+                style={styles.eyeIcon}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                <Ionicons 
+                  name={showConfirmPassword ? "eye-off" : "eye"} 
+                  size={24} 
+                  color="#666" 
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleRegister}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Register</Text>
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.linkButton}
+            onPress={navigateToLogin}
+          >
+            <Text style={styles.linkButtonText}>
+              Already have an account? Sign in
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

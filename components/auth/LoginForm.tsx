@@ -9,8 +9,7 @@ import {
   ActivityIndicator, 
   KeyboardAvoidingView, 
   ScrollView, 
-  Platform, 
-  TouchableWithoutFeedback,
+  Platform,
   Keyboard
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
@@ -80,117 +79,116 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.formContainer}>
-            <Text style={styles.title}>Sign In</Text>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email Address</Text>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.formContainer}>
+          <Text style={styles.title}>Sign In</Text>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Email Address</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholderTextColor="#aaa"
+            />
+          </View>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <View style={styles.passwordContainer}>
               <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
+                style={styles.passwordInput}
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
                 placeholderTextColor="#aaa"
+                textContentType="oneTimeCode"
               />
-            </View>
-            
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={styles.passwordInput}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  placeholderTextColor="#aaa"
-                  textContentType="oneTimeCode"
+              <TouchableOpacity 
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons 
+                  name={showPassword ? "eye-off" : "eye"} 
+                  size={24} 
+                  color="#666" 
                 />
-                <TouchableOpacity 
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  <Ionicons 
-                    name={showPassword ? "eye-off" : "eye"} 
-                    size={24} 
-                    color="#666" 
-                  />
-                </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity 
-              style={styles.button}
-              onPress={handleLogin}
-              disabled={isLoading}
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Login</Text>
+            )}
+          </TouchableOpacity>
+          
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+          
+          <View style={styles.socialButtonsContainer}>
+            <TouchableOpacity
+              style={[styles.socialButton, styles.googleButton]}
+              onPress={() => handleSocialLogin('google')}
+              disabled={!!socialLoading}
             >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
+              {socialLoading === 'google' ? (
+                <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Login</Text>
+                <>
+                  <AntDesign name="google" size={18} color="#fff" />
+                  <Text style={styles.socialButtonText}>Google</Text>
+                </>
               )}
             </TouchableOpacity>
             
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
-            </View>
-            
-            <View style={styles.socialButtonsContainer}>
-              <TouchableOpacity
-                style={[styles.socialButton, styles.googleButton]}
-                onPress={() => handleSocialLogin('google')}
-                disabled={!!socialLoading}
-              >
-                {socialLoading === 'google' ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <AntDesign name="google" size={18} color="#fff" />
-                    <Text style={styles.socialButtonText}>Google</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.socialButton, styles.appleButton]}
-                onPress={() => handleSocialLogin('apple')}
-                disabled={!!socialLoading}
-              >
-                {socialLoading === 'apple' ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <AntDesign name="apple1" size={18} color="#fff" />
-                    <Text style={styles.socialButtonText}>Apple</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-            
-            <TouchableOpacity 
-              style={styles.linkButton}
-              onPress={navigateToRegister}
+            <TouchableOpacity
+              style={[styles.socialButton, styles.appleButton]}
+              onPress={() => handleSocialLogin('apple')}
+              disabled={!!socialLoading}
             >
-              <Text style={styles.linkButtonText}>
-                Don't have an account? Sign up
-              </Text>
+              {socialLoading === 'apple' ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <AntDesign name="apple1" size={18} color="#fff" />
+                  <Text style={styles.socialButtonText}>Apple</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+          
+          <TouchableOpacity 
+            style={styles.linkButton}
+            onPress={navigateToRegister}
+          >
+            <Text style={styles.linkButtonText}>
+              Don't have an account? Sign up
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
