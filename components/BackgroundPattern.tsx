@@ -37,6 +37,7 @@ export function BackgroundPattern({ children }: BackgroundPatternProps) {
                   C57,48 43,48 40,55 
                   Z"
                 fill="#000"
+                transform="scale(1, -1) translate(0, -110)"
               />
             </G>
           </Pattern>
