@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, Share, Platform, Image, Modal, TextInput, ActivityIndicator, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useQuiz } from '@/context/QuizContext';
+import { useAuth } from '@/context/AuthContext';
+import { AnimalAura, fetchLatestQuizResult } from '@/lib/supabase/quiz';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { AuraAvatar } from '@/components/AuraAvatar';
 import { AuraButton } from '@/components/AuraButton';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
@@ -12,29 +13,120 @@ import { captureRef } from 'react-native-view-shot';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+type SavedResultStatus = 'idle' | 'loading' | 'loaded' | 'empty' | 'error';
+
 export default function ResultsScreen() {
   const router = useRouter();
-  const { animalAura, resetQuiz, isQuizComplete, isPreviousResult } = useQuiz();
+  const { user } = useAuth();
+  const { animalAura: contextAura, resetQuiz, isPreviousResult } = useQuiz();
   const viewShotRef = useRef(null);
 
-  // If user navigates here without completing the quiz, redirect to quiz
+  // The quiz context only has an aura right after the quiz, or once its own
+  // load finishes (and opening the quiz tab clears it). After a page reload,
+  // or when the context is empty, load the saved result here instead of
+  // redirecting: navigating from an effect on first render crashes on web
+  // ("Attempted to navigate before mounting the Root Layout component").
+  const [savedAura, setSavedAura] = useState<AnimalAura | null>(null);
+  const [savedStatus, setSavedStatus] = useState<SavedResultStatus>('idle');
+  const [reloadCount, setReloadCount] = useState(0);
+  const userId = user?.id ?? null;
+  const hasContextAura = contextAura !== null;
+
   useEffect(() => {
-    if (!isQuizComplete || !animalAura) {
-      router.replace('/(tabs)');
+    if (!userId) {
+      setSavedAura(null);
+      setSavedStatus('idle');
+      return;
     }
-  }, [isQuizComplete, animalAura]);
+    if (hasContextAura) return;
+    let isCancelled = false;
+
+    // Clear any result from a previous load (e.g. a different user) first.
+    setSavedAura(null);
+    setSavedStatus('loading');
+    fetchLatestQuizResult(userId)
+      .then(result => {
+        if (isCancelled) return;
+        if (result?.animal_aura) {
+          setSavedAura(result.animal_aura);
+          setSavedStatus('loaded');
+          return;
+        }
+        setSavedAura(null);
+        setSavedStatus('empty');
+      })
+      .catch(() => {
+        if (!isCancelled) setSavedStatus('error');
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [hasContextAura, userId, reloadCount]);
+
+  const handleRetryLoad = useCallback(() => setReloadCount(count => count + 1), []);
+  const handleStartQuiz = useCallback(() => router.push('/(tabs)/quiz'), [router]);
+
+  const animalAura = contextAura ?? savedAura;
+  // A result loaded from the database here is always a previous result.
+  const showWelcomeBack = contextAura ? isPreviousResult : animalAura !== null;
 
   if (!animalAura) {
+    const isEmpty = savedStatus === 'empty' || (!userId && savedStatus === 'idle');
     return (
-      <SafeAreaView style={styles.container}>
-        <Stack.Screen options={{ 
-          ...transparentHeaderOptions,
-          title: 'Animal aura',
-        }} />
-        <ThemedView style={styles.loadingContainer}>
-          <ThemedText type="secondary">Loading your result...</ThemedText>
-        </ThemedView>
-      </SafeAreaView>
+      <ScreenBackground>
+        <SafeAreaView style={styles.container}>
+          <Stack.Screen options={{ 
+            ...transparentHeaderOptions,
+            title: 'Animal aura',
+          }} />
+          <View style={styles.statusContainer}>
+            {isEmpty ? (
+              <>
+                <View style={styles.emptyRings}>
+                  <View style={styles.emptyRingOuter} />
+                  <View style={styles.emptyRingInner} />
+                  <View style={styles.emptyCore} />
+                </View>
+                <ThemedText type="subtitle" style={styles.statusTitle}>
+                  You haven&apos;t discovered your aura yet
+                </ThemedText>
+                <ThemedText type="secondary" style={styles.statusText}>
+                  Take the 10-question quiz to find the animal that reflects your personality.
+                </ThemedText>
+                <AuraButton
+                  label="Start the quiz"
+                  onPress={handleStartQuiz}
+                  size="large"
+                  icon="arrow-forward"
+                  iconPosition="right"
+                  style={styles.statusButton}
+                />
+              </>
+            ) : savedStatus === 'error' ? (
+              <>
+                <ThemedText type="subtitle" style={styles.statusTitle}>
+                  We couldn&apos;t load your aura
+                </ThemedText>
+                <ThemedText type="secondary" style={styles.statusText}>
+                  Please check your connection and try again.
+                </ThemedText>
+                <AuraButton
+                  label="Try again"
+                  variant="secondary"
+                  onPress={handleRetryLoad}
+                  style={styles.statusButton}
+                />
+              </>
+            ) : (
+              <>
+                <ActivityIndicator size="large" color={Colors.textSecondary} />
+                <ThemedText type="secondary" style={styles.loadingText}>Loading your result...</ThemedText>
+              </>
+            )}
+          </View>
+        </SafeAreaView>
+      </ScreenBackground>
     );
   }
 
@@ -103,7 +195,7 @@ export default function ResultsScreen() {
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             
-            {isPreviousResult && (
+            {showWelcomeBack && (
               <View style={styles.welcomeBackBanner}>
                 <ThemedText style={styles.welcomeBackText}>
                   Welcome back! Here's your previous result.
@@ -227,10 +319,60 @@ const styles = StyleSheet.create({
     maxWidth: 640,
     alignSelf: 'center',
   },
-  loadingContainer: {
+  statusContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 60,
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
+  },
+  statusTitle: {
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  statusText: {
+    textAlign: 'center',
+    marginBottom: 28,
+  },
+  statusButton: {
+    minWidth: 240,
+  },
+  loadingText: {
+    marginTop: 16,
+  },
+  emptyRings: {
+    width: 120,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 28,
+  },
+  emptyRingOuter: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 1,
+    borderColor: withAlpha(Colors.textMuted, 0.25),
+  },
+  emptyRingInner: {
+    position: 'absolute',
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    borderWidth: 1,
+    borderColor: withAlpha(Colors.textMuted, 0.4),
+  },
+  emptyCore: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.card,
   },
   auraCard: {
     backgroundColor: Colors.card,
