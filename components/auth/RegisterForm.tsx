@@ -5,7 +5,6 @@ import {
   TouchableOpacity, 
   Text, 
   StyleSheet, 
-  Alert, 
   ActivityIndicator,
   KeyboardAvoidingView,
   ScrollView,
@@ -16,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigation, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
+import { FormMessage, FormMessageState } from './FormMessage';
 
 interface RegisterFormProps {
   onLoginPress?: () => void;
@@ -29,43 +29,53 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [message, setMessage] = useState<FormMessageState | null>(null);
   const { signUp, signIn } = useAuth();
+
+  // Editing any field clears the previous message.
+  function withMessageReset(setter: (value: string) => void) {
+    return (value: string) => {
+      setter(value);
+      setMessage(null);
+    };
+  }
   const navigation = useNavigation();
   const router = useRouter();
 
   const handleRegister = async () => {
     if (!fullName || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setMessage({ type: 'error', text: 'Please fill in all fields.' });
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      setMessage({ type: 'error', text: 'Passwords do not match.' });
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      setMessage({ type: 'error', text: 'Password must be at least 6 characters.' });
       return;
     }
 
+    setMessage(null);
     setIsLoading(true);
     try {
-      // The signUp method now includes email existence check internally
-      const { error } = await signUp(email, password, fullName);
+      const { error, needsEmailConfirmation } = await signUp(email, password, fullName);
       if (error) throw error;
-      
-      // Show email verification message
-      Alert.alert(
-        'Registration Successful', 
-        'Please check your email to verify your account before signing in. You will need to click the verification link in the email to activate your account.',
-        [{ text: 'OK', onPress: () => navigateToLogin() }]
-      );
-      
-      // Navigate to login screen
-      navigateToLogin();
+
+      // Email confirmation is off: sign-up returns a session and the
+      // AuthGuard takes the new user straight into the app.
+      // If confirmation is ever turned back on, there is no session yet,
+      // so say so instead of leaving the user on a silent form.
+      if (needsEmailConfirmation) {
+        setMessage({
+          type: 'info',
+          text: 'Account created. Check your email to confirm it, then sign in.',
+        });
+      }
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.message || 'An error occurred during registration');
+      setMessage({ type: 'error', text: error.message || 'An error occurred during registration.' });
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +109,7 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
               style={styles.input}
               placeholder="Enter your full name"
               value={fullName}
-              onChangeText={setFullName}
+              onChangeText={withMessageReset(setFullName)}
               autoCapitalize="words"
               placeholderTextColor={Colors.textMuted}
               keyboardAppearance="dark"
@@ -112,7 +122,7 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
               style={styles.input}
               placeholder="Enter your email"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={withMessageReset(setEmail)}
               autoCapitalize="none"
               keyboardType="email-address"
               placeholderTextColor={Colors.textMuted}
@@ -127,7 +137,7 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
                 style={styles.passwordInput}
                 placeholder="Create a password"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={withMessageReset(setPassword)}
                 secureTextEntry={!showPassword}
                 placeholderTextColor={Colors.textMuted}
               keyboardAppearance="dark"
@@ -158,7 +168,7 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
                 style={styles.passwordInput}
                 placeholder="Confirm your password"
                 value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                onChangeText={withMessageReset(setConfirmPassword)}
                 secureTextEntry={!showConfirmPassword}
                 placeholderTextColor={Colors.textMuted}
               keyboardAppearance="dark"
@@ -188,6 +198,8 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
               <Text style={styles.buttonText}>Register</Text>
             )}
           </TouchableOpacity>
+
+          <FormMessage message={message} />
           
           <TouchableOpacity 
             style={styles.linkButton}
