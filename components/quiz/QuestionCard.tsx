@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { QuizQuestion, QuizAnswerOption, UserAnswer } from '@/lib/supabase/quiz';
 import { ThemedText } from '@/components/ThemedText';
 import { AnswerOption } from './AnswerOption';
+import { Colors } from '@/constants/Colors';
 
 interface QuestionCardProps {
   question: QuizQuestion;
@@ -62,19 +63,17 @@ export function QuestionCard({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     marginVertical: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.card,
   },
   questionText: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    lineHeight: 30,
+    fontWeight: '500',
     marginBottom: 24,
     textAlign: 'center',
   },

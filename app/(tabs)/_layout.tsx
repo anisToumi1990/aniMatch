@@ -37,16 +37,25 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.tint,
+        tabBarActiveTintColor: Colors.tabIconSelected,
+        tabBarInactiveTintColor: Colors.tabIconDefault,
+        tabBarLabelStyle: { fontWeight: '500' },
         headerShown: false,
+        sceneStyle: { backgroundColor: Colors.background },
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
             // Use a transparent background on iOS to show the blur effect
             position: 'absolute',
+            borderTopColor: Colors.border,
+            borderTopWidth: StyleSheet.hairlineWidth,
           },
-          default: {},
+          default: {
+            backgroundColor: Colors.background,
+            borderTopColor: Colors.border,
+            borderTopWidth: 1,
+          },
         }),
         animation: 'none',
       }}>
@@ -85,7 +94,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="results"
         options={{
-          title: 'Animal Aura',
+          title: 'Animal aura',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
           tabBarButton: AuraTab,
         }}
@@ -122,7 +131,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -8,
     right: -8,
-    backgroundColor: '#dc3545',
+    backgroundColor: Colors.danger,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -131,8 +140,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#fff',
+    color: Colors.text,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });

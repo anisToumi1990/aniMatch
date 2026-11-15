@@ -1,6 +1,6 @@
 import { View, StyleSheet } from 'react-native';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { ThemedText } from '@/components/ThemedText';
+import { Colors } from '@/constants/Colors';
 
 interface ProgressIndicatorProps {
   currentQuestion: number;
@@ -15,20 +15,12 @@ export function ProgressIndicator({
 }: ProgressIndicatorProps) {
   return (
     <View style={styles.container}>
-      <ThemedText style={styles.questionCounter}>
+      <ThemedText type="muted" style={styles.questionCounter}>
         Question {currentQuestion} of {totalQuestions}
       </ThemedText>
       
-      <View style={[styles.progressBarContainer, { backgroundColor: '#E5E5E5' }]}>
-        <View 
-          style={[
-            styles.progressBar, 
-            { 
-              width: `${progress * 100}%`,
-              backgroundColor: '#7E4EFF'
-            }
-          ]} 
-        />
+      <View style={styles.progressBarContainer}>
+        <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
       </View>
     </View>
   );
@@ -40,19 +32,22 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   questionCounter: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
-    marginBottom: 8,
+    letterSpacing: 0.5,
+    marginBottom: 10,
     textAlign: 'center',
   },
   progressBarContainer: {
-    height: 6,
-    borderRadius: 3,
+    height: 2,
+    borderRadius: 1,
     width: '100%',
     overflow: 'hidden',
+    backgroundColor: Colors.border,
   },
   progressBar: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 1,
+    backgroundColor: Colors.text,
   },
-}); 
+});

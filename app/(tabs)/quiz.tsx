@@ -7,7 +7,9 @@ import { ThemedView } from '@/components/ThemedView';
 import { ProgressIndicator } from '@/components/quiz/ProgressIndicator';
 import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { NavigationControls } from '@/components/quiz/NavigationControls';
-import { BackgroundPattern } from '../../components/BackgroundPattern';
+import { ScreenBackground } from '@/components/ScreenBackground';
+import { Colors } from '@/constants/Colors';
+import { transparentHeaderOptions } from '@/constants/Theme';
 import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-context';
 
 export default function QuizScreen() {
@@ -58,17 +60,12 @@ export default function QuizScreen() {
   // Handle error state
   if (error) {
     return (
-      <BackgroundPattern>
+      <ScreenBackground>
         <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
           <Stack.Screen
             options={{
+              ...transparentHeaderOptions,
               title: 'Quiz',
-              headerShown: true,
-              headerStyle: {
-                backgroundColor: 'transparent',
-              },
-              headerTransparent: true,
-              headerTintColor: '#2E7D32',
             }}
           />
           <ThemedView style={styles.errorContainer}>
@@ -83,50 +80,40 @@ export default function QuizScreen() {
             </ThemedText>
           </ThemedView>
         </SafeAreaViewContext>
-      </BackgroundPattern>
+      </ScreenBackground>
     );
   }
 
   // Handle loading state
   if (isLoading && questions.length === 0) {
     return (
-      <BackgroundPattern>
+      <ScreenBackground>
         <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
           <Stack.Screen
             options={{
+              ...transparentHeaderOptions,
               title: 'Quiz',
-              headerShown: true,
-              headerStyle: {
-                backgroundColor: 'transparent',
-              },
-              headerTransparent: true,
-              headerTintColor: '#2E7D32',
             }}
           />
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#7E4EFF" />
-            <ThemedText style={styles.loadingText}>
+            <ActivityIndicator size="large" color={Colors.textSecondary} />
+            <ThemedText type="secondary" style={styles.loadingText}>
               Loading quiz...
             </ThemedText>
           </View>
         </SafeAreaViewContext>
-      </BackgroundPattern>
+      </ScreenBackground>
     );
   }
 
   if (questions.length === 0) {
     return (
-      <BackgroundPattern>
+      <ScreenBackground>
         <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
           <Stack.Screen
             options={{
+              ...transparentHeaderOptions,
               title: 'Quiz',
-              headerShown: true,
-              headerStyle: {
-                backgroundColor: 'transparent',
-              },
-              headerTransparent: true,
-              headerTintColor: '#2E7D32',
             }}
           />
           <ThemedView style={styles.errorContainer}>
@@ -141,7 +128,7 @@ export default function QuizScreen() {
             </ThemedText>
           </ThemedView>
         </SafeAreaViewContext>
-      </BackgroundPattern>
+      </ScreenBackground>
     );
   }
 
@@ -170,17 +157,12 @@ export default function QuizScreen() {
   };
 
   return (
-    <BackgroundPattern>
+    <ScreenBackground>
       <SafeAreaViewContext style={styles.container}>
         <Stack.Screen
           options={{
+            ...transparentHeaderOptions,
             title: 'Quiz',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: 'transparent',
-            },
-            headerTransparent: true,
-            headerTintColor: '#2E7D32',
           }}
         />
         
@@ -213,7 +195,7 @@ export default function QuizScreen() {
           </View>
         </ScrollView>
       </SafeAreaViewContext>
-    </BackgroundPattern>
+    </ScreenBackground>
   );
 }
 
@@ -231,10 +213,13 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '500',
     textAlign: 'center',
     marginVertical: 16,
   },
@@ -260,7 +245,8 @@ const styles = StyleSheet.create({
   },
   retryText: {
     fontSize: 16,
-    color: '#7E4EFF',
-    fontWeight: '600',
+    color: Colors.text,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
 }); 

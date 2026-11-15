@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/constants/Colors';
 
 interface RegisterFormProps {
   onLoginPress?: () => void;
@@ -90,22 +91,23 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.title}>Create account</Text>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Full Name</Text>
+            <Text style={styles.inputLabel}>Full name</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter your full name"
               value={fullName}
               onChangeText={setFullName}
               autoCapitalize="words"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={Colors.textMuted}
+              keyboardAppearance="dark"
             />
           </View>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email Address</Text>
+            <Text style={styles.inputLabel}>Email address</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter your email"
@@ -113,7 +115,8 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={Colors.textMuted}
+              keyboardAppearance="dark"
             />
           </View>
           
@@ -126,7 +129,8 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                placeholderTextColor="#aaa"
+                placeholderTextColor={Colors.textMuted}
+              keyboardAppearance="dark"
                 textContentType="oneTimeCode"
               />
               <TouchableOpacity 
@@ -135,8 +139,8 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
               >
                 <Ionicons 
                   name={showPassword ? "eye-off" : "eye"} 
-                  size={24} 
-                  color="#666" 
+                  size={22} 
+                  color={Colors.textMuted} 
                 />
               </TouchableOpacity>
             </View>
@@ -148,7 +152,7 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
           </View>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Confirm Password</Text>
+            <Text style={styles.inputLabel}>Confirm password</Text>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
@@ -156,7 +160,8 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
-                placeholderTextColor="#aaa"
+                placeholderTextColor={Colors.textMuted}
+              keyboardAppearance="dark"
                 textContentType="oneTimeCode"
               />
               <TouchableOpacity 
@@ -165,8 +170,8 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
               >
                 <Ionicons 
                   name={showConfirmPassword ? "eye-off" : "eye"} 
-                  size={24} 
-                  color="#666" 
+                  size={22} 
+                  color={Colors.textMuted} 
                 />
               </TouchableOpacity>
             </View>
@@ -178,7 +183,7 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={Colors.onPrimary} />
             ) : (
               <Text style={styles.buttonText}>Register</Text>
             )}
@@ -189,7 +194,7 @@ export function RegisterForm({ onLoginPress }: RegisterFormProps) {
             onPress={navigateToLogin}
           >
             <Text style={styles.linkButtonText}>
-              Already have an account? Sign in
+              Already have an account? <Text style={styles.linkButtonEmphasis}>Sign in</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -205,48 +210,52 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 16,
+    padding: 20,
   },
   formContainer: {
     width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 24,
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '500',
+    marginBottom: 28,
     textAlign: 'center',
+    color: Colors.text,
   },
   inputContainer: {
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 6,
-    color: '#333',
+    fontWeight: '500',
+    marginBottom: 8,
+    color: Colors.textSecondary,
   },
   input: {
-    backgroundColor: '#f2f2f2',
+    backgroundColor: Colors.cardRaised,
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 14,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    color: '#000',
+    borderColor: Colors.border,
+    color: Colors.text,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f2f2f2',
-    borderRadius: 8,
+    backgroundColor: Colors.cardRaised,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: Colors.border,
   },
   passwordInput: {
     flex: 1,
     padding: 16,
     fontSize: 16,
-    color: '#000',
+    color: Colors.text,
   },
   eyeIcon: {
     padding: 10,
@@ -254,20 +263,21 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 12,
-    color: '#666',
-    marginTop: 4,
+    color: Colors.textMuted,
+    marginTop: 6,
   },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: Colors.primary,
+    minHeight: 54,
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: Colors.onPrimary,
+    fontWeight: '500',
     fontSize: 16,
   },
   linkButton: {
@@ -275,7 +285,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkButtonText: {
-    color: '#007bff',
-    fontSize: 16,
+    color: Colors.textSecondary,
+    fontSize: 15,
+  },
+  linkButtonEmphasis: {
+    color: Colors.text,
+    fontWeight: '500',
   },
 }); 

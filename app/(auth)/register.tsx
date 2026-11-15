@@ -1,9 +1,11 @@
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { RegisterForm } from '../../components/auth/RegisterForm';
 import { StatusBar } from 'expo-status-bar';
-import { BackgroundPattern } from '../../components/BackgroundPattern';
+import { ScreenBackground } from '@/components/ScreenBackground';
+import { ThemedText } from '@/components/ThemedText';
+import { AuraAvatar } from '@/components/AuraAvatar';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -13,19 +15,17 @@ export default function RegisterScreen() {
   };
 
   return (
-    <BackgroundPattern>
+    <ScreenBackground>
       <SafeAreaView style={styles.container}>
-        <StatusBar style="dark" />
+        <StatusBar style="light" />
         <View style={styles.logoContainer}>
-          <Image 
-            source={require('../../assets/images/icon.png')} 
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <ThemedText type="wordmark" style={styles.wordmark}>ANIMATCH</ThemedText>
+          <AuraAvatar animalName="Fox" size="medium" />
+          <ThemedText type="secondary" style={styles.tagline}>What&apos;s your aura?</ThemedText>
         </View>
         <RegisterForm onLoginPress={handleLoginPress} />
       </SafeAreaView>
-    </BackgroundPattern>
+    </ScreenBackground>
   );
 }
 
@@ -35,11 +35,13 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 60,
-    marginBottom: 20,
+    marginTop: 48,
+    marginBottom: 8,
   },
-  logo: {
-    width: 150,
-    height: 150,
+  wordmark: {
+    marginBottom: 24,
+  },
+  tagline: {
+    marginTop: 12,
   },
 }); 

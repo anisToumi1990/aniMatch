@@ -162,6 +162,22 @@ export async function fetchAnimalAura(auraId: number): Promise<AnimalAura> {
   return data;
 }
 
+// Fetch an animal aura by its name (case-insensitive). Returns null if none matches.
+export async function fetchAnimalAuraByName(name: string): Promise<AnimalAura | null> {
+  const { data, error } = await supabase
+    .from<AnimalAura>('animal_auras')
+    .select('*')
+    .ilike('name', name)
+    .limit(1);
+
+  if (error) {
+    console.error(`Error fetching animal aura "${name}":`, error);
+    throw error;
+  }
+
+  return data?.[0] ?? null;
+}
+
 // Fetch user's latest quiz result
 export async function fetchLatestQuizResult(userId: string): Promise<QuizResult | null> {
   const { data, error } = await supabase

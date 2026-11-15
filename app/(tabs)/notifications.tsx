@@ -7,7 +7,10 @@ import { supabase } from '../../lib/supabase';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Stack } from 'expo-router';
-import { BackgroundPattern } from '../../components/BackgroundPattern';
+import { ScreenBackground } from '@/components/ScreenBackground';
+import { AuraButton } from '@/components/AuraButton';
+import { Colors } from '@/constants/Colors';
+import { transparentHeaderOptions } from '@/constants/Theme';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Notification {
@@ -133,86 +136,66 @@ export default function NotificationsScreen() {
 
   if (isLoading) {
     return (
-      <BackgroundPattern>
+      <ScreenBackground>
         <SafeAreaView style={styles.container}>
           <Stack.Screen
             options={{
+              ...transparentHeaderOptions,
               title: 'Notifications',
-              headerShown: true,
-              headerStyle: {
-                backgroundColor: 'transparent',
-              },
-              headerTransparent: true,
-              headerTintColor: '#2E7D32',
             }}
           />
           <View style={styles.centerContent}>
-            <ActivityIndicator size="large"/>
+            <ActivityIndicator size="large" color={Colors.textSecondary} />
           </View>
         </SafeAreaView>
-      </BackgroundPattern>
+      </ScreenBackground>
     );
   }
 
   if (error) {
     return (
-      <BackgroundPattern>
+      <ScreenBackground>
         <SafeAreaView style={styles.container}>
           <Stack.Screen
             options={{
+              ...transparentHeaderOptions,
               title: 'Notifications',
-              headerShown: true,
-              headerStyle: {
-                backgroundColor: 'transparent',
-              },
-              headerTransparent: true,
-              headerTintColor: '#2E7D32',
             }}
           />
           <View style={styles.centerContent}>
             <ThemedText type="subtitle" style={styles.errorText}>{error}</ThemedText>
           </View>
         </SafeAreaView>
-      </BackgroundPattern>
+      </ScreenBackground>
     );
   }
 
   if (notifications.length === 0) {
     return (
-      <BackgroundPattern>
+      <ScreenBackground>
         <SafeAreaView style={styles.container}>
           <Stack.Screen
             options={{
+              ...transparentHeaderOptions,
               title: 'Notifications',
-              headerShown: true,
-              headerStyle: {
-                backgroundColor: 'transparent',
-              },
-              headerTransparent: true,
-              headerTintColor: '#2E7D32',
             }}
           />
           <View style={styles.centerContent}>
-            <ThemedText type="subtitle" style={styles.noResultsText}>No pending notifications</ThemedText>
-            <ThemedText style={styles.noResultsText}>You'll see new notifications here when you receive them.</ThemedText>
+            <ThemedText type="subtitle" style={styles.noResultsTitle}>No pending notifications</ThemedText>
+            <ThemedText type="secondary" style={styles.noResultsText}>You'll see new notifications here when you receive them.</ThemedText>
           </View>
         </SafeAreaView>
-      </BackgroundPattern>
+      </ScreenBackground>
     );
   }
 
   return (
-    <BackgroundPattern>
+    <ScreenBackground>
       <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
+            ...transparentHeaderOptions,
             title: 'Notifications',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: 'transparent',
-            },
-            headerTransparent: true,
-            headerTintColor: '#2E7D32',
           }}
         />
         <FlatList
@@ -223,26 +206,25 @@ export default function NotificationsScreen() {
             <ThemedView style={[styles.notificationItem]}>
               <View style={styles.notificationHeader}>
                 <ThemedText type="subtitle" style={styles.notificationTitle}>{item.title}</ThemedText>
-                <ThemedText style={styles.timestamp}>
+                <ThemedText type="muted" style={styles.timestamp}>
                   {new Date(item.created_at).toLocaleDateString()}
                 </ThemedText>
               </View>
-              <ThemedText style={styles.notificationMessage}>{item.message}</ThemedText>
+              <ThemedText type="secondary" style={styles.notificationMessage}>{item.message}</ThemedText>
               
               {item.invite_id && !item.is_read && (
                 <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={[styles.button, styles.acceptButton]}
-                    onPress={() => handleAcceptPress(item.id, item.invite_id!)}
-                  >
-                    <ThemedText style={styles.buttonText}>Accept</ThemedText>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.button, styles.refuseButton]}
+                  <AuraButton
+                    label="Reject"
+                    variant="secondary"
                     onPress={() => handleInvitationResponse(item.id, item.invite_id!, false)}
-                  >
-                    <ThemedText style={styles.buttonText}>Reject</ThemedText>
-                  </TouchableOpacity>
+                    style={styles.button}
+                  />
+                  <AuraButton
+                    label="Accept"
+                    onPress={() => handleAcceptPress(item.id, item.invite_id!)}
+                    style={styles.button}
+                  />
                 </View>
               )}
             </ThemedView>
@@ -277,9 +259,9 @@ export default function NotificationsScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Close relationship type modal"
                 >
-                  <Ionicons name="close" size={28} color="#2E7D32" />
+                  <Ionicons name="close" size={26} color={Colors.text} />
                 </TouchableOpacity>
-                <ThemedText type="subtitle" style={styles.modalTitle}>Select Relationship Type</ThemedText>
+                <ThemedText type="subtitle" style={styles.modalTitle}>Select relationship type</ThemedText>
                 <TouchableOpacity
                   style={styles.relationshipButton}
                   onPress={() => handleRelationshipSelect('lover')}
@@ -290,7 +272,7 @@ export default function NotificationsScreen() {
                   style={styles.relationshipButton}
                   onPress={() => handleRelationshipSelect('business_partner')}
                 >
-                  <ThemedText style={styles.relationshipButtonText}>Business Partner</ThemedText>
+                  <ThemedText style={styles.relationshipButtonText}>Business partner</ThemedText>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.relationshipButton}
@@ -303,7 +285,7 @@ export default function NotificationsScreen() {
           </TouchableWithoutFeedback>
         </Modal>
       </SafeAreaView>
-    </BackgroundPattern>
+    </ScreenBackground>
   );
 }
 
@@ -316,122 +298,107 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
   errorText: {
-    color: 'red',
+    color: Colors.danger,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     marginBottom: 20,
+    textAlign: 'center',
   },
-  scrollContent: {
-    padding: 20,
+  noResultsTitle: {
+    textAlign: 'center',
+    marginBottom: 8,
   },
   noResultsText: {
     textAlign: 'center',
-    fontSize: 16,
-    color: '#666',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   listContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 24,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   notificationItem: {
     padding: 20,
-    marginBottom: 20,
-    marginHorizontal: 20,
-    marginVertical: 20,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    marginBottom: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.card,
   },
   notificationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    gap: 12,
   },
   notificationTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    lineHeight: 24,
+    flexShrink: 1,
   },
   notificationMessage: {
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 22,
-    color: '#374151',
   },
   timestamp: {
     fontSize: 12,
-    color: '#6b7280',
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 16,
-    gap: 12,
+    gap: 10,
   },
   button: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    minWidth: 100,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  acceptButton: {
-    backgroundColor: '#388e3c',
-  },
-  refuseButton: {
-    backgroundColor: '#f44336',
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    minWidth: 104,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: Colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    width: '80%',
+    backgroundColor: Colors.card,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 24,
+    paddingTop: 28,
+    width: '85%',
     maxWidth: 400,
     position: 'relative',
   },
   modalTitle: {
     textAlign: 'center',
     marginBottom: 20,
+    paddingHorizontal: 28,
   },
   modalCloseButton: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 14,
+    right: 14,
     padding: 4,
     zIndex: 1,
   },
   relationshipButton: {
-    padding: 15,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.cardRaised,
     marginBottom: 10,
   },
   relationshipButtonText: {
     textAlign: 'center',
     fontSize: 16,
+    fontWeight: '500',
   },
 });

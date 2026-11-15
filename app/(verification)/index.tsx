@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Colors } from '@/constants/Colors';
 
 export default function VerificationScreen() {
   const { signOut } = useAuth();
@@ -14,9 +15,9 @@ export default function VerificationScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <View style={styles.content}>
-        <Text style={styles.title}>Email Verification Required</Text>
+        <Text style={styles.title}>Email verification required</Text>
         <Text style={styles.message}>
           Please check your email and click the verification link to activate your account.
         </Text>
@@ -24,7 +25,7 @@ export default function VerificationScreen() {
           If you don't see the email, check your spam folder.
         </Text>
         <TouchableOpacity style={styles.button} onPress={handleSignOut}>
-          <Text style={styles.buttonText}>Sign Out</Text>
+          <Text style={styles.buttonText}>Sign out</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -34,42 +35,50 @@ export default function VerificationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '500',
     marginBottom: 20,
     textAlign: 'center',
+    color: Colors.text,
   },
   message: {
     fontSize: 16,
     marginBottom: 10,
     textAlign: 'center',
     lineHeight: 24,
+    color: Colors.textSecondary,
   },
   subMessage: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.textMuted,
     marginBottom: 30,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 999,
     width: '100%',
     alignItems: 'center',
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: Colors.text,
+    fontWeight: '500',
     fontSize: 16,
   },
 }); 

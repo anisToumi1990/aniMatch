@@ -8,8 +8,41 @@ import { ThemedText } from '@/components/ThemedText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { AnimalIcon } from '@/components/AnimalIcon';
-import { BackgroundPattern } from '../../components/BackgroundPattern';
+import { AuraAvatar } from '@/components/AuraAvatar';
+import { ScreenBackground } from '@/components/ScreenBackground';
+import { Colors, MatchLevelColors, getAuraColor, withAlpha } from '@/constants/Colors';
+import { transparentHeaderOptions } from '@/constants/Theme';
+
+/** "business_partner" -> "Business partner" */
+function formatRelationshipType(relationshipType: string): string {
+  const words = relationshipType.replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const RELATIONSHIP_ICONS: Record<string, IoniconName> = {
+  lover: 'heart',
+  family: 'home',
+  friend: 'people',
+  business_partner: 'briefcase',
+};
+
+function getRelationshipIcon(relationshipType: string): IoniconName {
+  return RELATIONSHIP_ICONS[relationshipType] ?? 'people';
+}
+
+interface MatchLevel {
+  label: string;
+  color: string;
+}
+
+/** 75-100: strong, 50-74: good, under 50: needs effort. */
+function getMatchLevel(score: number): MatchLevel {
+  if (score >= 75) return { label: 'Strong match', color: MatchLevelColors.strong };
+  if (score >= 50) return { label: 'Good match', color: MatchLevelColors.good };
+  return { label: 'Needs effort', color: MatchLevelColors.needsEffort };
+}
 
 interface CompatibilityResult {
   id: string;
@@ -56,7 +89,33 @@ export default function CompatibilityScreen() {
   const [auraA, setAuraA] = useState<AnimalAura | null>(null);
   const [auraB, setAuraB] = useState<AnimalAura | null>(null);
   const [isAuraLoading, setIsAuraLoading] = useState(false);
+  const [auraNamesById, setAuraNamesById] = useState<Record<number, string>>({});
   const router = useRouter();
+
+  // Aura names for the avatars on each card (read-only, loaded once).
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadAuraNames() {
+      try {
+        const { data, error } = await supabase.from('animal_auras').select('id, name');
+        if (error) throw error;
+        if (isCancelled) return;
+        const names: Record<number, string> = {};
+        (data ?? []).forEach((aura: { id: number; name: string }) => {
+          names[aura.id] = aura.name;
+        });
+        setAuraNamesById(names);
+      } catch (loadError) {
+        console.error('Error loading aura names:', loadError);
+      }
+    }
+
+    loadAuraNames();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const fetchCompatibilityResults = useCallback(async () => {
     if (!user?.id) return;
@@ -149,25 +208,67 @@ export default function CompatibilityScreen() {
     fetchAuras(item);
   };
 
-  const renderCompatibilityItem = ({ item }: { item: CompatibilityResult }) => (
-    <Pressable
-      onPress={() => handleResultPress(item)}
-      accessibilityRole="button"
-      accessibilityLabel={`View details for match with ${getOtherUserName(item)}`}
-      style={({ pressed }) => [styles.resultCard, pressed && { opacity: 0.85 }]}
-    >
-      <ThemedText style={styles.userName}>
-        Match with {getOtherUserName(item)}
-      </ThemedText>
-      <ThemedText style={styles.relationshipType}>
-        {item.relationship_type.replace('_', ' ').toUpperCase()}
-      </ThemedText>
-      <View style={styles.scoreContainer}>
-        <ThemedText style={styles.scoreLabel}>Compatibility Score</ThemedText>
-        <ThemedText style={styles.scoreValue}>{Math.round(item.compatibility_score)}%</ThemedText>
-      </View>
-    </Pressable>
-  );
+  const renderCompatibilityItem = ({ item }: { item: CompatibilityResult }) => {
+    const isCurrentUserA = user?.id === item.user_a_id;
+    const myAuraName = auraNamesById[isCurrentUserA ? item.user_a_aura_id : item.user_b_aura_id] ?? '';
+    const otherAuraName = auraNamesById[isCurrentUserA ? item.user_b_aura_id : item.user_a_aura_id] ?? '';
+    const otherAuraColor = getAuraColor(otherAuraName);
+    const score = Math.round(item.compatibility_score);
+    const level = getMatchLevel(score);
+    const otherName = getOtherUserName(item);
+
+    return (
+      <Pressable
+        onPress={() => handleResultPress(item)}
+        accessibilityRole="button"
+        accessibilityLabel={`View details for match with ${otherName}`}
+        style={({ pressed }) => [styles.resultCard, pressed && { opacity: 0.85 }]}
+      >
+        <View style={styles.resultCardHeader}>
+          <View style={styles.avatarPair}>
+            <AuraAvatar animalName={myAuraName} size="small" />
+            <AuraAvatar animalName={otherAuraName} size="small" style={styles.avatarOverlap} />
+          </View>
+          <View style={styles.resultCardText}>
+            <ThemedText style={[styles.userName, { color: otherAuraColor }]} numberOfLines={1}>
+              {otherName}
+            </ThemedText>
+            <View style={styles.metaRow}>
+              {otherAuraName ? (
+                <ThemedText type="muted" style={styles.animalName}>{otherAuraName}</ThemedText>
+              ) : null}
+              <View
+                style={[
+                  styles.relationshipTag,
+                  { borderColor: withAlpha(otherAuraColor, 0.45), backgroundColor: withAlpha(otherAuraColor, 0.12) },
+                ]}
+              >
+                <Ionicons name={getRelationshipIcon(item.relationship_type)} size={11} color={otherAuraColor} />
+                <ThemedText style={[styles.relationshipTagText, { color: otherAuraColor }]}>
+                  {formatRelationshipType(item.relationship_type)}
+                </ThemedText>
+              </View>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+        </View>
+        <View style={styles.scoreContainer}>
+          <View style={styles.scoreRow}>
+            <ThemedText style={[styles.scoreValue, { color: level.color }]}>{score}%</ThemedText>
+            <ThemedText style={[styles.scoreLevel, { color: level.color }]}>{level.label}</ThemedText>
+          </View>
+          <View style={styles.scoreTrack}>
+            <View
+              style={[
+                styles.scoreFill,
+                { width: `${Math.min(Math.max(score, 0), 100)}%`, backgroundColor: level.color },
+              ]}
+            />
+          </View>
+        </View>
+      </Pressable>
+    );
+  };
 
   function renderTextList(text: string[] | string) {
     const sentences = Array.isArray(text)
@@ -177,40 +278,64 @@ export default function CompatibilityScreen() {
       : [];
 
     return sentences.map((sentence, idx) => (
-      <ThemedText key={idx}>{sentence.trim()}</ThemedText>
+      <ThemedText key={idx} type="secondary" style={styles.listItem}>{sentence.trim()}</ThemedText>
     ));
   }
 
 
   function renderDetailView(result: CompatibilityResult) {
     const isCurrentUserA = user?.id === result.user_a_id;
-    const leftAura = isCurrentUserA ? auraA : auraB; // connected user
-    const rightAura = isCurrentUserA ? auraB : auraA; // current user
+    // auraA belongs to user_a, auraB to user_b.
+    const leftAura = isCurrentUserA ? auraB : auraA; // connected user
+    const rightAura = isCurrentUserA ? auraA : auraB; // current user
 
     return (
       <SafeAreaView style={styles.container}  edges={['left', 'right']}>
         <ScrollView contentContainerStyle={styles.detailScrollContent}>
           <View style={[styles.detailContent, styles.auraCard]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              {isAuraLoading ? <ActivityIndicator size="large" /> : leftAura && <AnimalIcon animalName={leftAura.name} width={120} height={120} />}
-              <ThemedText style={styles.auraArrow}>⇄</ThemedText>
-              {isAuraLoading ? <ActivityIndicator size="large" /> : rightAura && <AnimalIcon animalName={rightAura.name} width={120} height={120} />}
+            <View style={styles.aurasRow}>
+              <View style={styles.auraColumn}>
+                {isAuraLoading ? (
+                  <ActivityIndicator size="large" color={Colors.textSecondary} style={styles.auraLoader} />
+                ) : leftAura ? (
+                  <AuraAvatar animalName={leftAura.name} size="medium" />
+                ) : null}
+                <ThemedText style={styles.auraPersonName} numberOfLines={1}>{getOtherUserName(result)}</ThemedText>
+                {leftAura ? <ThemedText type="muted" style={styles.auraName}>{leftAura.name}</ThemedText> : null}
+              </View>
+              <View style={styles.auraLink}>
+                <Ionicons name="swap-horizontal" size={20} color={Colors.textMuted} />
+              </View>
+              <View style={styles.auraColumn}>
+                {isAuraLoading ? (
+                  <ActivityIndicator size="large" color={Colors.textSecondary} style={styles.auraLoader} />
+                ) : rightAura ? (
+                  <AuraAvatar animalName={rightAura.name} size="medium" />
+                ) : null}
+                <ThemedText style={styles.auraPersonName} numberOfLines={1}>You</ThemedText>
+                {rightAura ? <ThemedText type="muted" style={styles.auraName}>{rightAura.name}</ThemedText> : null}
+              </View>
             </View>
-            <ThemedText style={styles.detailUserName}>
-              Match with : {getOtherUserName(result)}
-            </ThemedText>
-            <ThemedText style={styles.detailRelationshipType}>
-              {result.relationship_type.replace('_', ' ').toUpperCase()}
-            </ThemedText>
-            <View style={styles.detailScoreContainer}>
-              <ThemedText style={styles.detailScoreValue}>{Math.round(result.compatibility_score)}%</ThemedText>
+            <View style={styles.detailSummary}>
+              <ThemedText style={[styles.detailScoreValue, { color: getMatchLevel(Math.round(result.compatibility_score)).color }]}>
+                {Math.round(result.compatibility_score)}%
+              </ThemedText>
+              <ThemedText style={[styles.detailScoreLevel, { color: getMatchLevel(Math.round(result.compatibility_score)).color }]}>
+                {getMatchLevel(Math.round(result.compatibility_score)).label}
+              </ThemedText>
+              <ThemedText type="secondary" style={styles.detailUserName}>
+                Match with {getOtherUserName(result)}
+              </ThemedText>
+              <ThemedText type="muted" style={styles.detailRelationshipType}>
+                {formatRelationshipType(result.relationship_type)}
+              </ThemedText>
             </View>
             {isInsightLoading ? (
-              <View style={{ marginTop: 24 }}>
-                <ActivityIndicator size="small" />
+              <View style={{ marginTop: 24, alignSelf: 'center' }}>
+                <ActivityIndicator size="small" color={Colors.textSecondary} />
               </View>
             ) : insightError ? (
-              <ThemedText style={{ color: '#FF3B30', marginTop: 24 }}>{insightError}</ThemedText>
+              <ThemedText style={styles.errorText}>{insightError}</ThemedText>
             ) : insight ? (
               <>
                 <View style={styles.sectionContainer}>
@@ -222,7 +347,7 @@ export default function CompatibilityScreen() {
                   {renderTextList(insight.challenges)}
                 </View>
                 <View style={styles.sectionContainer}>
-                  <ThemedText style={styles.sectionTitle}>Tips for Improvement</ThemedText>
+                  <ThemedText style={styles.sectionTitle}>Tips for improvement</ThemedText>
                   {renderTextList(insight.tips)}
                 </View>
               </>
@@ -234,17 +359,12 @@ export default function CompatibilityScreen() {
   }
 
   return (
-    <BackgroundPattern>
+    <ScreenBackground>
       <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
-            title: selectedResult ? 'Relationship Details' : 'Compatibility',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: 'transparent',
-            },
-            headerTransparent: true,
-            headerTintColor: '#2E7D32',
+            ...transparentHeaderOptions,
+            title: selectedResult ? 'Relationship details' : 'Compatibility',
             headerLeft: () => selectedResult ? (
               <Pressable
                 onPress={() => setSelectedResult(null)}
@@ -253,7 +373,7 @@ export default function CompatibilityScreen() {
                   pressed && { opacity: 0.7 }
                 ]}
               >
-                <Ionicons name="arrow-back" size={25} color="#2E7D32" />
+                <Ionicons name="arrow-back" size={24} color={Colors.text} />
               </Pressable>
             ) : null,
           }}
@@ -264,7 +384,7 @@ export default function CompatibilityScreen() {
           <View style={styles.container}>
             {isLoading ? (
               <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" />
+                <ActivityIndicator size="large" color={Colors.textSecondary} />
               </View>
             ) : error ? (
               <View style={styles.centerContainer}>
@@ -272,10 +392,10 @@ export default function CompatibilityScreen() {
               </View>
             ) : compatibilityResults.length === 0 ? (
               <View style={styles.centerContainer}>
-                <ThemedText type="subtitle" style={styles.noResultsText}>
+                <ThemedText type="subtitle" style={styles.noResultsTitle}>
                   No compatibility results
                 </ThemedText>
-                <ThemedText style={styles.noResultsText}>
+                <ThemedText type="secondary" style={styles.noResultsText}>
                   Invite someone to take the quiz or take the quiz yourself!
                 </ThemedText>
               </View>
@@ -290,7 +410,7 @@ export default function CompatibilityScreen() {
           </View>
         )}
       </SafeAreaView>
-    </BackgroundPattern>
+    </ScreenBackground>
   );
 }
 
@@ -303,67 +423,111 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
   listContainer: {
     padding: 20,
+    paddingTop: 40,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   resultCard: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 14,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  resultCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  },
+  avatarPair: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarOverlap: {
+    marginLeft: -18,
+  },
+  resultCardText: {
+    flex: 1,
+    minWidth: 0,
   },
   userName: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '500',
+    marginBottom: 4,
   },
-  relationshipType: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  scoreContainer: {
+  metaRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'FFFFFF',
-    padding: 12,
-    borderRadius: 8,
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  scoreLabel: {
-    fontSize: 16,
+  animalName: {
+    fontSize: 14,
+  },
+  relationshipTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+  },
+  relationshipTagText: {
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
   },
+  scoreContainer: {
+    backgroundColor: Colors.cardRaised,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 10,
+  },
   scoreValue: {
-    fontSize: 25,
-    fontWeight: '700',
-    color: '#38B6FF',
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '500',
+  },
+  scoreLevel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  scoreTrack: {
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: Colors.border,
+    overflow: 'hidden',
+  },
+  scoreFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   errorText: {
-    color: '#FF3B30',
+    color: Colors.danger,
     textAlign: 'center',
+    marginTop: 24,
+  },
+  noResultsTitle: {
+    textAlign: 'center',
+    marginBottom: 8,
   },
   noResultsText: {
     textAlign: 'center',
-    fontSize: 16,
-    color: '#666',
-  },
-  detailHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#fff',
   },
   backButton: {
     marginRight: 12,
@@ -373,88 +537,95 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  detailTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    flex: 1,
-  },
   detailScrollContent: {
     flexGrow: 1,
+    paddingTop: 40,
     paddingBottom: 50,
+    paddingHorizontal: 20,
   },
   detailContent: {
     flex: 1,
     padding: 24,
     alignItems: 'flex-start',
   },
+  aurasRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
+    marginBottom: 24,
+  },
+  auraColumn: {
+    flex: 1,
+    alignItems: 'center',
+    maxWidth: 160,
+  },
+  auraLoader: {
+    height: 96,
+  },
+  auraLink: {
+    height: 96,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  auraPersonName: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  auraName: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  detailSummary: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    paddingBottom: 24,
+    marginBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
   detailUserName: {
-    fontSize: 22,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: 16,
+    marginBottom: 2,
   },
   detailRelationshipType: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom:5,
-  },
-  detailScoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  detailScoreLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginRight: 8,
+    fontSize: 14,
   },
   detailScoreValue: {
-    fontSize: 45,
-    fontWeight: '700',
-    color: '#38B6FF',
-    lineHeight: 50,
+    fontSize: 44,
+    lineHeight: 52,
+    fontWeight: '500',
   },
-  detailDate: {
+  detailScoreLevel: {
     fontSize: 14,
-    color: '#888',
-    marginTop: 12,
+    fontWeight: '500',
+    marginBottom: 8,
   },
   sectionContainer: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 22,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '500',
     marginBottom: 8,
   },
-  sectionContent: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  auraArrow: {
-    fontSize: 25,
-    fontWeight: '900',
-    color: '#222',
-  },
-  auraName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 4,
-    textAlign: 'center',
+  listItem: {
+    fontSize: 15,
+    lineHeight: 23,
   },
   auraCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 16,
+    backgroundColor: Colors.card,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: 20,
-    marginHorizontal: 20,
     marginVertical: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
     alignItems: 'center',
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
   },
-}); 
+});
