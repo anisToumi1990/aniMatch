@@ -1,18 +1,19 @@
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { useQuiz } from '../../context/QuizContext';
 
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { BackgroundPattern } from '../../components/BackgroundPattern';
+import { ScreenBackground } from '@/components/ScreenBackground';
 import { AccountModal } from '@/components/AccountModal';
 import { AuraDetailsModal } from '@/components/AuraDetailsModal';
+import { AuraAvatar } from '@/components/AuraAvatar';
+import { AuraButton } from '@/components/AuraButton';
 import { AURA_IMAGES, AuraImage } from '@/constants/AuraImages';
+import { Colors } from '@/constants/Colors';
+import { transparentHeaderOptions } from '@/constants/Theme';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -25,7 +26,7 @@ export default function HomeScreen() {
 
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [selectedAura, setSelectedAura] = useState<AuraImage | null>(null);
-  
+
   function handleStartQuiz() {
     if (isQuizComplete) {
       router.push('/(tabs)/results');
@@ -35,83 +36,71 @@ export default function HomeScreen() {
   }
 
   return (
-    <BackgroundPattern>
+    <ScreenBackground>
       <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
+            ...transparentHeaderOptions,
             title: 'AniMatch',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: 'transparent',
-            },
-            headerTransparent: true,
-            headerTintColor: '#2E7D32',
+            headerTitle: () => <ThemedText type="wordmark">ANIMATCH</ThemedText>,
             headerRight: () => (
               <TouchableOpacity
-                style={styles.userInitialButton}
+                style={styles.accountButton}
                 onPress={() => setShowAccountModal(true)}
                 accessibilityRole="button"
                 accessibilityLabel="Open account menu"
               >
-                <Image source={require('../../assets/images/avatar.png')} style={styles.avatarImage} resizeMode="cover" />
+                <ThemedText style={styles.accountInitial}>{userInitial}</ThemedText>
               </TouchableOpacity>
             ),
           }}
         />
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.auraCard}>
-            <View style={styles.titleContainer}>
-              <ThemedText type="title" style={{ textAlign: 'center' }}>
-                Welcome to{'\n'}
-                🐾 AniMatch 🐾
-              </ThemedText>
-            </View>
-            
-            <View style={styles.descriptionContainer}>
-              <ThemedText style={styles.descriptionText}>
-                Discover your unique animal aura and unlock deeper connections.
-              </ThemedText>
-              <ThemedText style={styles.descriptionText}>
-                Take our quick 10-question quiz to find out which animal reflects your personality – and explore how you vibe with others.
-              </ThemedText>
-            </View>
-
-            <View style={styles.carouselContainer}>
-              <ThemedText type="subtitle" style={styles.carouselTitle}>👇 Meet the Auras 👇</ThemedText>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.carouselContent}
-              >
-                {AURA_IMAGES.map(aura => (
-                  <TouchableOpacity
-                    key={aura.name}
-                    onPress={() => setSelectedAura(aura)}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={`See the ${aura.name} aura's personality`}
-                  >
-                    <Image
-                      source={aura.source}
-                      style={styles.carouselImage}
-                      resizeMode="contain"
-                    />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-            <View style={styles.quizButtonContainer}>
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={handleStartQuiz}
-                style={styles.quizButton}
-              >
-                <Text style={styles.quizButtonText}>Start the Quiz</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.hero}>
+            <ThemedText type="title" style={styles.heroTitle}>
+              What&apos;s your aura?
+            </ThemedText>
+            <ThemedText type="secondary" style={styles.heroSubtitle}>
+              Take a quick 10-question quiz to find the animal that reflects your personality, and see how you connect with others.
+            </ThemedText>
           </View>
+
+          <View style={styles.carouselCard}>
+            <View style={styles.carouselHeader}>
+              <ThemedText type="subtitle" style={styles.carouselTitle}>Meet the auras</ThemedText>
+              <ThemedText type="muted">Tap one to explore its personality</ThemedText>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContent}
+            >
+              {AURA_IMAGES.map(aura => (
+                <TouchableOpacity
+                  key={aura.name}
+                  onPress={() => setSelectedAura(aura)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`See the ${aura.name} aura's personality`}
+                  style={styles.carouselItem}
+                >
+                  <AuraAvatar animalName={aura.name} size="medium" />
+                  <ThemedText type="muted" style={styles.carouselName}>{aura.name}</ThemedText>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          <AuraButton
+            label="Start the quiz"
+            onPress={handleStartQuiz}
+            size="large"
+            icon="arrow-forward"
+            iconPosition="right"
+            style={styles.quizButton}
+          />
         </ScrollView>
-        <AccountModal 
+        <AccountModal
           visible={showAccountModal}
           onClose={() => setShowAccountModal(false)}
         />
@@ -120,7 +109,7 @@ export default function HomeScreen() {
           onClose={() => setSelectedAura(null)}
         />
       </SafeAreaView>
-    </BackgroundPattern>
+    </ScreenBackground>
   );
 }
 
@@ -131,86 +120,72 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 48,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
-  auraCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  hero: {
+    alignItems: 'center',
+    marginBottom: 40,
   },
-  titleContainer: {
-    marginBottom: 20,
-  },
-  descriptionContainer: {
-    marginBottom: 24,
-  },
-  descriptionText: {
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 12,
-  },
-  carouselContainer: {
-    marginTop: 16,
-  },
-  carouselTitle: {
+  heroTitle: {
+    fontSize: 36,
+    lineHeight: 44,
     textAlign: 'center',
     marginBottom: 16,
+  },
+  heroSubtitle: {
+    textAlign: 'center',
+    maxWidth: 420,
+  },
+  carouselCard: {
+    backgroundColor: Colors.card,
+    borderColor: Colors.border,
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingVertical: 24,
+    marginBottom: 40,
+  },
+  carouselHeader: {
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    gap: 4,
+  },
+  carouselTitle: {
     fontSize: 18,
   },
   carouselContent: {
-    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
-  carouselImage: {
-    width: 80,
-    height: 80,
-    marginHorizontal: 8,
-    borderRadius: 30,
+  carouselItem: {
+    alignItems: 'center',
+    marginHorizontal: 4,
   },
-  userInitialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  carouselName: {
+    marginTop: 6,
+    fontSize: 13,
+  },
+  accountButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.card,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
-  avatarImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 5,
-  },
-  quizButtonContainer: {
-    marginTop: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
+  accountInitial: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '500',
   },
   quizButton: {
-    backgroundColor: '#388e3c',
-    borderRadius: 32,
-    paddingVertical: 18,
-    paddingHorizontal: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
+    alignSelf: 'center',
     minWidth: 260,
-  },
-  quizButtonText: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
   },
 });

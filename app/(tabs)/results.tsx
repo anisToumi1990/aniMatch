@@ -1,13 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Share, Platform, Image, Modal, TextInput, ActivityIndicator, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, StyleSheet, ScrollView, Share, Platform, Image, Modal, TextInput, ActivityIndicator, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useQuiz } from '@/context/QuizContext';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { Ionicons } from '@expo/vector-icons';
-import { AnimalIcon } from '@/components/AnimalIcon';
+import { AuraAvatar } from '@/components/AuraAvatar';
+import { AuraButton } from '@/components/AuraButton';
+import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
+import { transparentHeaderOptions } from '@/constants/Theme';
 import { captureRef } from 'react-native-view-shot';
-import { BackgroundPattern } from '../../components/BackgroundPattern';
+import { ScreenBackground } from '@/components/ScreenBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ResultsScreen() {
@@ -26,11 +28,11 @@ export default function ResultsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ 
-          title: 'Animal Aura',
-          headerShown: true
+          ...transparentHeaderOptions,
+          title: 'Animal aura',
         }} />
         <ThemedView style={styles.loadingContainer}>
-          <ThemedText>Loading your result...</ThemedText>
+          <ThemedText type="secondary">Loading your result...</ThemedText>
         </ThemedView>
       </SafeAreaView>
     );
@@ -85,32 +87,16 @@ export default function ResultsScreen() {
     resetQuiz();
   };
 
-  // Function to get category color
-  const getCategoryColor = () => {
-    switch (animalAura.category) {
-      case 'Extroverted/Social':
-        return '#FFB74D'; // Orange
-      case 'Balanced/Adaptive':
-        return '#64B5F6'; // Blue
-      case 'Introverted/Strategic':
-        return '#81C784'; // Green
-      default:
-        return '#7E4EFF'; // Purple (default)
-    }
-  };
+  // Accent color for this aura, used for the badge, section markers and traits
+  const auraColor = getAuraColor(animalAura.name);
 
   return (
-    <BackgroundPattern>
+    <ScreenBackground>
       <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
-            title: 'Animal Aura',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: 'transparent',
-            },
-            headerTransparent: true,
-            headerTintColor: '#2E7D32',
+            ...transparentHeaderOptions,
+            title: 'Animal aura',
           }}
         />
         
@@ -127,56 +113,66 @@ export default function ResultsScreen() {
             
             <View 
               ref={viewShotRef}
-              style={[styles.auraCard]}
+              style={[styles.auraCard, { borderColor: withAlpha(auraColor, 0.35) }]}
             >
-              <View style={styles.iconWrapper}>
-                <AnimalIcon 
-                  animalName={animalAura.name}
-                  width={100}
-                  height={100}
-                />
-              </View>
+              <ThemedText type="wordmark" style={styles.cardEyebrow}>YOUR AURA</ThemedText>
+
+              <AuraAvatar animalName={animalAura.name} size="large" style={styles.avatar} />
               
               <ThemedText style={styles.auraName}>
                 {animalAura.name}
               </ThemedText>
               
-              <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor() }]}>
-                <ThemedText style={styles.categoryText}>
+              <View
+                style={[
+                  styles.categoryBadge,
+                  { borderColor: withAlpha(auraColor, 0.5), backgroundColor: withAlpha(auraColor, 0.12) },
+                ]}
+              >
+                <ThemedText style={[styles.categoryText, { color: auraColor }]}>
                   {animalAura.category.split('/')[0]}
                 </ThemedText>
               </View>
               
-              <ThemedText style={styles.auraDescription}>
+              <ThemedText type="secondary" style={styles.auraDescription}>
                 {animalAura.description}
               </ThemedText>
               
               <View style={styles.sectionContainer}>
-                <ThemedText style={styles.sectionTitle}>Strengths</ThemedText>
-                <ThemedText style={styles.sectionContent}>
+                <View style={styles.sectionHeader}>
+                  <View style={[styles.sectionMarker, { backgroundColor: auraColor }]} />
+                  <ThemedText style={styles.sectionTitle}>Strengths</ThemedText>
+                </View>
+                <ThemedText type="secondary" style={styles.sectionContent}>
                   {animalAura.strengths}
                 </ThemedText>
               </View>
               
               <View style={styles.sectionContainer}>
-                <ThemedText style={styles.sectionTitle}>Challenges</ThemedText>
-                <ThemedText style={styles.sectionContent}>
+                <View style={styles.sectionHeader}>
+                  <View style={[styles.sectionMarker, { backgroundColor: auraColor }]} />
+                  <ThemedText style={styles.sectionTitle}>Challenges</ThemedText>
+                </View>
+                <ThemedText type="secondary" style={styles.sectionContent}>
                   {animalAura.challenges}
                 </ThemedText>
               </View>
               
               <View style={styles.sectionContainer}>
-                <ThemedText style={styles.sectionTitle}>Key Traits</ThemedText>
+                <View style={styles.sectionHeader}>
+                  <View style={[styles.sectionMarker, { backgroundColor: auraColor }]} />
+                  <ThemedText style={styles.sectionTitle}>Key traits</ThemedText>
+                </View>
                 <View style={styles.traitsContainer}>
                   {animalAura.traits.split(',').map((trait, index) => (
                     <View 
                       key={index} 
                       style={[
                         styles.traitBadge, 
-                        { backgroundColor: '#F2F2F7' }
+                        { borderColor: withAlpha(auraColor, 0.45), backgroundColor: withAlpha(auraColor, 0.1) }
                       ]}
                     >
-                      <ThemedText style={styles.traitText}>
+                      <ThemedText style={[styles.traitText, { color: auraColor }]}>
                         {trait.trim()}
                       </ThemedText>
                     </View>
@@ -186,31 +182,29 @@ export default function ResultsScreen() {
               
               {/* Add AniMatch branding */}
               <View style={styles.brandingContainer}>
-                <ThemedText style={styles.brandingText}>AniMatch</ThemedText>
+                <ThemedText type="wordmark">ANIMATCH</ThemedText>
               </View>
             </View>
             
             <View style={styles.actionButtons}>
-              <TouchableOpacity 
-                style={[styles.button, styles.shareButton]} 
+              <AuraButton
+                label="Share result"
+                icon="share-outline"
                 onPress={handleShare}
-              >
-                <Ionicons name="share-outline" size={20} color="#FFFFFF" />
-                <ThemedText style={styles.buttonText}>Share Result</ThemedText>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.button, styles.retakeButton]} 
+                style={styles.button}
+              />
+              <AuraButton
+                label="Retake quiz"
+                icon="refresh-outline"
+                variant="secondary"
                 onPress={handleRetakeQuiz}
-              >
-                <Ionicons name="refresh-outline" size={20} color="#FFFFFF" />
-                <ThemedText style={styles.buttonText}>Retake Quiz</ThemedText>
-              </TouchableOpacity>
+                style={styles.button}
+              />
             </View>
           </View>
         </ScrollView>
       </SafeAreaView>
-    </BackgroundPattern>
+    </ScreenBackground>
   );
 }
 
@@ -229,138 +223,125 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    fontSize: 25,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 10,
-  },
   auraCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: Colors.card,
+    borderRadius: 24,
+    borderWidth: 1,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 20,
     alignItems: 'center',
   },
-  iconWrapper: {
+  cardEyebrow: {
     marginBottom: 20,
   },
-  auraIcon: {
-    width: 70,
-    height: 70,
+  avatar: {
+    marginBottom: 20,
   },
   auraName: {
-    fontSize: 25,
-    fontWeight: '700',
-    marginBottom: 8,
+    fontSize: 30,
+    lineHeight: 38,
+    fontWeight: '500',
+    marginBottom: 10,
     textAlign: 'center',
   },
   categoryBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 16,
-    marginBottom: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+    marginBottom: 20,
   },
   categoryText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   auraDescription: {
-    fontSize: 16,
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 24,
+    marginBottom: 28,
   },
   sectionContainer: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 22,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
+  sectionMarker: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 10,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '500',
+  },
   sectionContent: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 23,
   },
   traitsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 0,
+    gap: 8,
   },
   traitBadge: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 16,
-    margin: 5,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   traitText: {
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 24,
     marginBottom: 16,
+    gap: 12,
   },
   button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 24,
     flex: 1,
-    marginHorizontal: 8,
-  },
-  shareButton: {
-    backgroundColor: '#38B6FF',
-  },
-  retakeButton: {
-    backgroundColor: '#7E4EFF',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: '600',
-    marginLeft: 8,
+    paddingHorizontal: 12,
   },
   brandingContainer: {
-    marginTop: 10,
-    paddingTop: 10,
+    marginTop: 8,
+    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#DDD',
+    borderTopColor: Colors.border,
     width: '100%',
     alignItems: 'center',
-  },
-  brandingText: {
-    fontSize: 16,
-    fontWeight: '600',
-    opacity: 0.7,
   },
   welcomeBackBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     marginBottom: 16,
-    borderRadius: 8,
-    backgroundColor: '#7E4EFF20', // Purple with 20% opacity
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.cardRaised,
     justifyContent: 'center',
   },
   welcomeBackText: {
     fontSize: 14,
     fontWeight: '500',
-    marginLeft: 8,
+    color: Colors.textSecondary,
   },
-}); 
+});

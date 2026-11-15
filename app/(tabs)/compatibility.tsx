@@ -8,8 +8,16 @@ import { ThemedText } from '@/components/ThemedText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { AnimalIcon } from '@/components/AnimalIcon';
-import { BackgroundPattern } from '../../components/BackgroundPattern';
+import { AuraAvatar } from '@/components/AuraAvatar';
+import { ScreenBackground } from '@/components/ScreenBackground';
+import { Colors } from '@/constants/Colors';
+import { transparentHeaderOptions } from '@/constants/Theme';
+
+/** "business_partner" -> "Business partner" */
+function formatRelationshipType(relationshipType: string): string {
+  const words = relationshipType.replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 
 interface CompatibilityResult {
   id: string;
@@ -156,14 +164,19 @@ export default function CompatibilityScreen() {
       accessibilityLabel={`View details for match with ${getOtherUserName(item)}`}
       style={({ pressed }) => [styles.resultCard, pressed && { opacity: 0.85 }]}
     >
-      <ThemedText style={styles.userName}>
-        Match with {getOtherUserName(item)}
-      </ThemedText>
-      <ThemedText style={styles.relationshipType}>
-        {item.relationship_type.replace('_', ' ').toUpperCase()}
-      </ThemedText>
+      <View style={styles.resultCardHeader}>
+        <View style={styles.resultCardText}>
+          <ThemedText style={styles.userName}>
+            Match with {getOtherUserName(item)}
+          </ThemedText>
+          <ThemedText type="muted" style={styles.relationshipType}>
+            {formatRelationshipType(item.relationship_type)}
+          </ThemedText>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+      </View>
       <View style={styles.scoreContainer}>
-        <ThemedText style={styles.scoreLabel}>Compatibility Score</ThemedText>
+        <ThemedText type="secondary" style={styles.scoreLabel}>Compatibility score</ThemedText>
         <ThemedText style={styles.scoreValue}>{Math.round(item.compatibility_score)}%</ThemedText>
       </View>
     </Pressable>
@@ -177,7 +190,7 @@ export default function CompatibilityScreen() {
       : [];
 
     return sentences.map((sentence, idx) => (
-      <ThemedText key={idx}>{sentence.trim()}</ThemedText>
+      <ThemedText key={idx} type="secondary" style={styles.listItem}>{sentence.trim()}</ThemedText>
     ));
   }
 
@@ -191,26 +204,44 @@ export default function CompatibilityScreen() {
       <SafeAreaView style={styles.container}  edges={['left', 'right']}>
         <ScrollView contentContainerStyle={styles.detailScrollContent}>
           <View style={[styles.detailContent, styles.auraCard]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              {isAuraLoading ? <ActivityIndicator size="large" /> : leftAura && <AnimalIcon animalName={leftAura.name} width={120} height={120} />}
-              <ThemedText style={styles.auraArrow}>⇄</ThemedText>
-              {isAuraLoading ? <ActivityIndicator size="large" /> : rightAura && <AnimalIcon animalName={rightAura.name} width={120} height={120} />}
+            <View style={styles.aurasRow}>
+              <View style={styles.auraColumn}>
+                {isAuraLoading ? (
+                  <ActivityIndicator size="large" color={Colors.textSecondary} style={styles.auraLoader} />
+                ) : leftAura ? (
+                  <AuraAvatar animalName={leftAura.name} size="medium" />
+                ) : null}
+                <ThemedText style={styles.auraPersonName} numberOfLines={1}>{getOtherUserName(result)}</ThemedText>
+                {leftAura ? <ThemedText type="muted" style={styles.auraName}>{leftAura.name}</ThemedText> : null}
+              </View>
+              <View style={styles.auraLink}>
+                <Ionicons name="swap-horizontal" size={20} color={Colors.textMuted} />
+              </View>
+              <View style={styles.auraColumn}>
+                {isAuraLoading ? (
+                  <ActivityIndicator size="large" color={Colors.textSecondary} style={styles.auraLoader} />
+                ) : rightAura ? (
+                  <AuraAvatar animalName={rightAura.name} size="medium" />
+                ) : null}
+                <ThemedText style={styles.auraPersonName} numberOfLines={1}>You</ThemedText>
+                {rightAura ? <ThemedText type="muted" style={styles.auraName}>{rightAura.name}</ThemedText> : null}
+              </View>
             </View>
-            <ThemedText style={styles.detailUserName}>
-              Match with : {getOtherUserName(result)}
-            </ThemedText>
-            <ThemedText style={styles.detailRelationshipType}>
-              {result.relationship_type.replace('_', ' ').toUpperCase()}
-            </ThemedText>
-            <View style={styles.detailScoreContainer}>
+            <View style={styles.detailSummary}>
               <ThemedText style={styles.detailScoreValue}>{Math.round(result.compatibility_score)}%</ThemedText>
+              <ThemedText type="secondary" style={styles.detailUserName}>
+                Match with {getOtherUserName(result)}
+              </ThemedText>
+              <ThemedText type="muted" style={styles.detailRelationshipType}>
+                {formatRelationshipType(result.relationship_type)}
+              </ThemedText>
             </View>
             {isInsightLoading ? (
-              <View style={{ marginTop: 24 }}>
-                <ActivityIndicator size="small" />
+              <View style={{ marginTop: 24, alignSelf: 'center' }}>
+                <ActivityIndicator size="small" color={Colors.textSecondary} />
               </View>
             ) : insightError ? (
-              <ThemedText style={{ color: '#FF3B30', marginTop: 24 }}>{insightError}</ThemedText>
+              <ThemedText style={styles.errorText}>{insightError}</ThemedText>
             ) : insight ? (
               <>
                 <View style={styles.sectionContainer}>
@@ -222,7 +253,7 @@ export default function CompatibilityScreen() {
                   {renderTextList(insight.challenges)}
                 </View>
                 <View style={styles.sectionContainer}>
-                  <ThemedText style={styles.sectionTitle}>Tips for Improvement</ThemedText>
+                  <ThemedText style={styles.sectionTitle}>Tips for improvement</ThemedText>
                   {renderTextList(insight.tips)}
                 </View>
               </>
@@ -234,17 +265,12 @@ export default function CompatibilityScreen() {
   }
 
   return (
-    <BackgroundPattern>
+    <ScreenBackground>
       <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
-            title: selectedResult ? 'Relationship Details' : 'Compatibility',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: 'transparent',
-            },
-            headerTransparent: true,
-            headerTintColor: '#2E7D32',
+            ...transparentHeaderOptions,
+            title: selectedResult ? 'Relationship details' : 'Compatibility',
             headerLeft: () => selectedResult ? (
               <Pressable
                 onPress={() => setSelectedResult(null)}
@@ -253,7 +279,7 @@ export default function CompatibilityScreen() {
                   pressed && { opacity: 0.7 }
                 ]}
               >
-                <Ionicons name="arrow-back" size={25} color="#2E7D32" />
+                <Ionicons name="arrow-back" size={24} color={Colors.text} />
               </Pressable>
             ) : null,
           }}
@@ -264,7 +290,7 @@ export default function CompatibilityScreen() {
           <View style={styles.container}>
             {isLoading ? (
               <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" />
+                <ActivityIndicator size="large" color={Colors.textSecondary} />
               </View>
             ) : error ? (
               <View style={styles.centerContainer}>
@@ -272,10 +298,10 @@ export default function CompatibilityScreen() {
               </View>
             ) : compatibilityResults.length === 0 ? (
               <View style={styles.centerContainer}>
-                <ThemedText type="subtitle" style={styles.noResultsText}>
+                <ThemedText type="subtitle" style={styles.noResultsTitle}>
                   No compatibility results
                 </ThemedText>
-                <ThemedText style={styles.noResultsText}>
+                <ThemedText type="secondary" style={styles.noResultsText}>
                   Invite someone to take the quiz or take the quiz yourself!
                 </ThemedText>
               </View>
@@ -290,7 +316,7 @@ export default function CompatibilityScreen() {
           </View>
         )}
       </SafeAreaView>
-    </BackgroundPattern>
+    </ScreenBackground>
   );
 }
 
@@ -303,67 +329,67 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
   listContainer: {
     padding: 20,
+    paddingTop: 40,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   resultCard: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 14,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  resultCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  resultCardText: {
+    flex: 1,
   },
   userName: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: 17,
+    fontWeight: '500',
+    marginBottom: 2,
   },
   relationshipType: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
   },
   scoreContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'FFFFFF',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: Colors.cardRaised,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
   },
   scoreLabel: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 15,
   },
   scoreValue: {
-    fontSize: 25,
-    fontWeight: '700',
-    color: '#38B6FF',
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '500',
   },
   errorText: {
-    color: '#FF3B30',
+    color: Colors.danger,
     textAlign: 'center',
+    marginTop: 24,
+  },
+  noResultsTitle: {
+    textAlign: 'center',
+    marginBottom: 8,
   },
   noResultsText: {
     textAlign: 'center',
-    fontSize: 16,
-    color: '#666',
-  },
-  detailHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#fff',
   },
   backButton: {
     marginRight: 12,
@@ -373,88 +399,91 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  detailTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    flex: 1,
-  },
   detailScrollContent: {
     flexGrow: 1,
+    paddingTop: 40,
     paddingBottom: 50,
+    paddingHorizontal: 20,
   },
   detailContent: {
     flex: 1,
     padding: 24,
     alignItems: 'flex-start',
   },
+  aurasRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
+    marginBottom: 24,
+  },
+  auraColumn: {
+    flex: 1,
+    alignItems: 'center',
+    maxWidth: 160,
+  },
+  auraLoader: {
+    height: 96,
+  },
+  auraLink: {
+    height: 96,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  auraPersonName: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  auraName: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  detailSummary: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    paddingBottom: 24,
+    marginBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
   detailUserName: {
-    fontSize: 22,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: 16,
+    marginBottom: 2,
   },
   detailRelationshipType: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom:5,
-  },
-  detailScoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  detailScoreLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginRight: 8,
+    fontSize: 14,
   },
   detailScoreValue: {
-    fontSize: 45,
-    fontWeight: '700',
-    color: '#38B6FF',
-    lineHeight: 50,
-  },
-  detailDate: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 12,
+    fontSize: 44,
+    lineHeight: 52,
+    fontWeight: '500',
+    marginBottom: 4,
   },
   sectionContainer: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 22,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '500',
     marginBottom: 8,
   },
-  sectionContent: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  auraArrow: {
-    fontSize: 25,
-    fontWeight: '900',
-    color: '#222',
-  },
-  auraName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 4,
-    textAlign: 'center',
+  listItem: {
+    fontSize: 15,
+    lineHeight: 23,
   },
   auraCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 16,
+    backgroundColor: Colors.card,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: 20,
-    marginHorizontal: 20,
     marginVertical: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
     alignItems: 'center',
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
   },
-}); 
+});

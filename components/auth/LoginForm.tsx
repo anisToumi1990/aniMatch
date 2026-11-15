@@ -16,6 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigation, useRouter } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/constants/Colors';
 
 interface LoginFormProps {
   onRegisterPress?: () => void;
@@ -89,10 +90,10 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Sign In</Text>
+          <Text style={styles.title}>Sign in</Text>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email Address</Text>
+            <Text style={styles.inputLabel}>Email address</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter your email"
@@ -100,7 +101,8 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={Colors.textMuted}
+              keyboardAppearance="dark"
             />
           </View>
           
@@ -113,7 +115,8 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                placeholderTextColor="#aaa"
+                placeholderTextColor={Colors.textMuted}
+              keyboardAppearance="dark"
                 textContentType="oneTimeCode"
               />
               <TouchableOpacity 
@@ -122,8 +125,8 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
               >
                 <Ionicons 
                   name={showPassword ? "eye-off" : "eye"} 
-                  size={24} 
-                  color="#666" 
+                  size={22} 
+                  color={Colors.textMuted} 
                 />
               </TouchableOpacity>
             </View>
@@ -135,7 +138,7 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={Colors.onPrimary} />
             ) : (
               <Text style={styles.buttonText}>Login</Text>
             )}
@@ -154,10 +157,10 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
               disabled={!!socialLoading}
             >
               {socialLoading === 'google' ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={Colors.text} />
               ) : (
                 <>
-                  <AntDesign name="google" size={18} color="#fff" />
+                  <AntDesign name="google" size={18} color={Colors.text} />
                   <Text style={styles.socialButtonText}>Google</Text>
                 </>
               )}
@@ -169,10 +172,10 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
               disabled={!!socialLoading}
             >
               {socialLoading === 'apple' ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={Colors.text} />
               ) : (
                 <>
-                  <AntDesign name="apple1" size={18} color="#fff" />
+                  <AntDesign name="apple1" size={18} color={Colors.text} />
                   <Text style={styles.socialButtonText}>Apple</Text>
                 </>
               )}
@@ -184,7 +187,7 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
             onPress={navigateToRegister}
           >
             <Text style={styles.linkButtonText}>
-              Don't have an account? Sign up
+              Don&apos;t have an account? <Text style={styles.linkButtonEmphasis}>Sign up</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -200,63 +203,69 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 16,
+    padding: 20,
   },
   formContainer: {
     width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 24,
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '500',
+    marginBottom: 28,
     textAlign: 'center',
+    color: Colors.text,
   },
   inputContainer: {
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 6,
-    color: '#333',
+    fontWeight: '500',
+    marginBottom: 8,
+    color: Colors.textSecondary,
   },
   input: {
-    backgroundColor: '#f2f2f2',
+    backgroundColor: Colors.cardRaised,
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 14,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    color: '#000',
+    borderColor: Colors.border,
+    color: Colors.text,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f2f2f2',
-    borderRadius: 8,
+    backgroundColor: Colors.cardRaised,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: Colors.border,
   },
   passwordInput: {
     flex: 1,
     padding: 16,
     fontSize: 16,
-    color: '#000',
+    color: Colors.text,
   },
   eyeIcon: {
     padding: 10,
     marginRight: 10,
   },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: Colors.primary,
+    minHeight: 54,
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 8,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: Colors.onPrimary,
+    fontWeight: '500',
     fontSize: 16,
   },
   divider: {
@@ -267,11 +276,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: Colors.border,
   },
   dividerText: {
-    marginHorizontal: 10,
-    color: '#666',
+    marginHorizontal: 12,
+    color: Colors.textMuted,
+    fontSize: 13,
   },
   socialButtonsContainer: {
     flexDirection: 'row',
@@ -282,19 +292,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 50,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: Colors.border,
     flex: 0.48,
   },
   googleButton: {
-    backgroundColor: '#DB4437',
+    backgroundColor: 'transparent',
   },
   appleButton: {
-    backgroundColor: '#000',
+    backgroundColor: 'transparent',
   },
   socialButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: Colors.text,
+    fontWeight: '500',
     marginLeft: 8,
   },
   linkButton: {
@@ -302,6 +315,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkButtonText: {
-    color: '#007bff',
+    color: Colors.textSecondary,
+    fontSize: 15,
+  },
+  linkButtonEmphasis: {
+    color: Colors.text,
+    fontWeight: '500',
   },
 }); 

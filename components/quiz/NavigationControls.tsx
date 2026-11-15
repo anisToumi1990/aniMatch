@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { AuraButton } from '@/components/AuraButton';
+import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 
 interface NavigationControlsProps {
@@ -23,54 +24,36 @@ export function NavigationControls({
   isLoading,
   allQuestionsAnswered,
 }: NavigationControlsProps) {
-  const primaryColor = '#7E4EFF';
-  const disabledColor = '#E5E5EA';
-  const textColor = '#FFFFFF';
+  const isNextDisabled = (isLastQuestion && !allQuestionsAnswered) || !canGoForward;
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={[
           styles.backButton,
-          { opacity: canGoBack ? 1 : 0.5 }
+          { opacity: canGoBack ? 1 : 0.4 }
         ]}
         onPress={onPrevious}
         disabled={!canGoBack}
+        accessibilityRole="button"
       >
         <Ionicons 
           name="chevron-back" 
-          size={24} 
-          color="#000000" 
+          size={20} 
+          color={Colors.textSecondary} 
         />
-        <ThemedText style={styles.backButtonText}>Back</ThemedText>
+        <ThemedText type="secondary" style={styles.backButtonText}>Back</ThemedText>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[
-          styles.primaryButton,
-          {
-            backgroundColor: 
-              (isLastQuestion && !allQuestionsAnswered) || !canGoForward
-                ? disabledColor
-                : primaryColor,
-          },
-        ]}
+      <AuraButton
+        label={isLastQuestion ? 'Finish quiz' : 'Next'}
         onPress={onNext}
-        disabled={isLoading || !canGoForward || (isLastQuestion && !allQuestionsAnswered)}
-      >
-        {isLoading ? (
-          <ActivityIndicator color={textColor} />
-        ) : (
-          <>
-            <ThemedText style={styles.primaryButtonText}>
-              {isLastQuestion ? 'Finish Quiz' : 'Next'}
-            </ThemedText>
-            {!isLastQuestion && (
-              <Ionicons name="chevron-forward" size={24} color={textColor} />
-            )}
-          </>
-        )}
-      </TouchableOpacity>
+        disabled={isNextDisabled}
+        isLoading={isLoading}
+        icon={isLastQuestion ? undefined : 'chevron-forward'}
+        iconPosition="right"
+        style={styles.primaryButton}
+      />
     </View>
   );
 }
@@ -90,22 +73,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   backButtonText: {
-    fontSize: 16,
     marginLeft: 4,
   },
   primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 24,
-    minWidth: 120,
+    minWidth: 128,
   },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginRight: 4,
-  },
-}); 
+});

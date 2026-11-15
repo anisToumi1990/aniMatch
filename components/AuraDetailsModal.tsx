@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   ImageSourcePropType,
   Modal,
   ScrollView,
@@ -14,6 +13,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { AuraAvatar } from './AuraAvatar';
+import { AuraButton } from './AuraButton';
+import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { AnimalAura, fetchAnimalAuraByName } from '@/lib/supabase/quiz';
 
 interface AuraDetailsModalProps {
@@ -60,8 +62,8 @@ export function AuraDetailsModal({ aura, onClose }: AuraDetailsModalProps) {
   const [reloadCount, setReloadCount] = useState(0);
   const insets = useSafeAreaInsets();
   const textColor = useThemeColor({}, 'text');
-  const tintColor = useThemeColor({}, 'tint');
   const auraName = aura?.name ?? null;
+  const auraColor = getAuraColor(auraName);
 
   useEffect(() => {
     if (!auraName) return;
@@ -105,7 +107,7 @@ export function AuraDetailsModal({ aura, onClose }: AuraDetailsModalProps) {
           { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
         ]}
       >
-        <ThemedView style={styles.modalContent}>
+        <ThemedView style={[styles.modalContent, { borderColor: withAlpha(auraColor, 0.35) }]}>
           <TouchableOpacity
             style={styles.modalCloseButton}
             onPress={onClose}
@@ -123,22 +125,20 @@ export function AuraDetailsModal({ aura, onClose }: AuraDetailsModalProps) {
           >
             {aura && (
               <View style={styles.header}>
-                <View style={styles.imageContainer}>
-                  <Image source={aura.source} style={styles.image} resizeMode="contain" />
-                </View>
+                <AuraAvatar animalName={aura.name} size="large" style={styles.avatar} />
                 <ThemedText style={styles.nameText} accessibilityRole="header">
                   {state.details?.name ?? aura.name}
                 </ThemedText>
                 {state.details?.category ? (
-                  <ThemedText style={styles.categoryText}>{state.details.category}</ThemedText>
+                  <ThemedText style={[styles.categoryText, { color: auraColor }]}>{state.details.category}</ThemedText>
                 ) : null}
               </View>
             )}
 
             {state.isLoading && (
               <View style={styles.statusContainer}>
-                <ActivityIndicator size="large" color={tintColor} />
-                <ThemedText style={styles.statusText}>Loading personality…</ThemedText>
+                <ActivityIndicator size="large" color={Colors.textSecondary} />
+                <ThemedText type="secondary" style={styles.statusText}>Loading personality…</ThemedText>
               </View>
             )}
 
@@ -147,39 +147,48 @@ export function AuraDetailsModal({ aura, onClose }: AuraDetailsModalProps) {
                 <ThemedText style={styles.errorText} accessibilityRole="alert">
                   We couldn&apos;t load this aura right now. Please check your connection and try again.
                 </ThemedText>
-                <TouchableOpacity
-                  style={styles.retryButton}
-                  onPress={handleRetry}
-                  accessibilityRole="button"
-                >
-                  <ThemedText style={styles.retryText}>Try again</ThemedText>
-                </TouchableOpacity>
+                <AuraButton label="Try again" variant="secondary" onPress={handleRetry} />
               </View>
             )}
 
             {state.details && (
               <>
-                <ThemedText style={styles.description}>{state.details.description}</ThemedText>
+                <ThemedText type="secondary" style={styles.description}>{state.details.description}</ThemedText>
 
                 <View style={styles.section}>
-                  <ThemedText style={styles.sectionTitle}>Traits</ThemedText>
+                  <View style={styles.sectionHeader}>
+                    <View style={[styles.sectionMarker, { backgroundColor: auraColor }]} />
+                    <ThemedText style={styles.sectionTitle}>Traits</ThemedText>
+                  </View>
                   <View style={styles.traitsContainer}>
                     {splitTraits(state.details.traits).map(trait => (
-                      <View key={trait} style={styles.traitBadge}>
-                        <ThemedText style={styles.traitText}>{trait}</ThemedText>
+                      <View
+                        key={trait}
+                        style={[
+                          styles.traitBadge,
+                          { borderColor: withAlpha(auraColor, 0.45), backgroundColor: withAlpha(auraColor, 0.1) },
+                        ]}
+                      >
+                        <ThemedText style={[styles.traitText, { color: auraColor }]}>{trait}</ThemedText>
                       </View>
                     ))}
                   </View>
                 </View>
 
                 <View style={styles.section}>
-                  <ThemedText style={styles.sectionTitle}>Strengths</ThemedText>
-                  <ThemedText style={styles.sectionContent}>{state.details.strengths}</ThemedText>
+                  <View style={styles.sectionHeader}>
+                    <View style={[styles.sectionMarker, { backgroundColor: auraColor }]} />
+                    <ThemedText style={styles.sectionTitle}>Strengths</ThemedText>
+                  </View>
+                  <ThemedText type="secondary" style={styles.sectionContent}>{state.details.strengths}</ThemedText>
                 </View>
 
                 <View style={styles.section}>
-                  <ThemedText style={styles.sectionTitle}>Challenges</ThemedText>
-                  <ThemedText style={styles.sectionContent}>{state.details.challenges}</ThemedText>
+                  <View style={styles.sectionHeader}>
+                    <View style={[styles.sectionMarker, { backgroundColor: auraColor }]} />
+                    <ThemedText style={styles.sectionTitle}>Challenges</ThemedText>
+                  </View>
+                  <ThemedText type="secondary" style={styles.sectionContent}>{state.details.challenges}</ThemedText>
                 </View>
               </>
             )}
@@ -195,20 +204,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: Colors.overlay,
   },
   modalContent: {
-    borderRadius: 20,
+    borderRadius: 24,
+    borderWidth: 1,
     width: '90%',
-    maxWidth: 400,
+    maxWidth: 420,
     maxHeight: '100%',
     marginHorizontal: 20,
     overflow: 'hidden',
+    backgroundColor: Colors.card,
   },
   modalCloseButton: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 14,
+    right: 14,
     padding: 4,
     zIndex: 1,
   },
@@ -217,78 +228,68 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
+    paddingTop: 32,
   },
   header: {
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  avatar: {
     marginBottom: 16,
   },
-  imageContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    padding: 12,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
   nameText: {
-    fontSize: 24,
-    fontWeight: '600',
-    lineHeight: 30,
+    fontSize: 26,
+    fontWeight: '500',
+    lineHeight: 32,
   },
   categoryText: {
     marginTop: 4,
-    fontSize: 14,
-    opacity: 0.6,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '500',
   },
   statusContainer: {
     alignItems: 'center',
     paddingVertical: 24,
-    gap: 12,
+    gap: 14,
   },
   statusText: {
-    fontSize: 16,
-    opacity: 0.7,
+    fontSize: 15,
   },
   errorText: {
-    color: '#ef4444',
-    fontSize: 16,
+    color: Colors.danger,
+    fontSize: 15,
+    lineHeight: 22,
     textAlign: 'center',
   },
-  retryButton: {
-    backgroundColor: '#4f46e5',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-  },
-  retryText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   description: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 23,
     textAlign: 'center',
     marginBottom: 8,
   },
   section: {
     width: '100%',
-    marginTop: 16,
+    marginTop: 20,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
+  sectionMarker: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 10,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '500',
+  },
   sectionContent: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 23,
   },
   traitsContainer: {
     flexDirection: 'row',
@@ -296,16 +297,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   traitBadge: {
-    borderRadius: 16,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#4f46e5',
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
-    paddingVertical: 6,
+    paddingVertical: 5,
     paddingHorizontal: 12,
   },
   traitText: {
-    color: '#4f46e5',
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: '500',
   },
 });

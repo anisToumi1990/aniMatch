@@ -7,6 +7,11 @@ import { supabase } from '@/lib/supabase';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { Colors, withAlpha } from '@/constants/Colors';
+
+// The app is dark-only for now ("Aura glow"), so the light/dark toggle is hidden.
+// Flip this back on once light mode exists.
+const SHOW_THEME_TOGGLE = false;
 
 interface State {
   email: string;
@@ -344,8 +349,8 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
         }}
         accessible={false}
       >
-        <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
-          <ThemedView style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { backgroundColor: Colors.overlay }]}>
+          <ThemedView style={[styles.modalContent, { backgroundColor: Colors.card }]}>
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => {
@@ -372,7 +377,8 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
                     value={state.fullName}
                     onChangeText={handleFullNameChange}
                     placeholder="Enter your name"
-                    placeholderTextColor="#6b7280"
+                    placeholderTextColor={Colors.textMuted}
+                    keyboardAppearance="dark"
                     autoFocus
                   />
                   <TouchableOpacity
@@ -380,7 +386,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
                     onPress={handleNameSave}
                     disabled={state.isLoading}
                   >
-                    <Ionicons name="checkmark" size={24} color="#fff" />
+                    <Ionicons name="checkmark" size={22} color={Colors.onPrimary} />
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -406,49 +412,52 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
               </View>
             </View>
 
-            <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>Theme</ThemedText>
-              <View style={styles.themeOptions}>
-                <TouchableOpacity
-                  style={[
-                    styles.themeOption,
-                    !isDarkMode && styles.selectedThemeOption,
-                  ]}
-                  onPress={() => setIsDarkMode(false)}
-                >
-                  <Ionicons name="sunny" size={24} color={!isDarkMode ? '#4f46e5' : textColor} />
-                  <ThemedText style={[
-                    styles.themeOptionText,
-                    !isDarkMode && styles.selectedThemeText,
-                  ]}>
-                    Light
-                  </ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.themeOption,
-                    isDarkMode && styles.selectedThemeOption,
-                  ]}
-                  onPress={() => setIsDarkMode(true)}
-                >
-                  <Ionicons name="moon" size={24} color={isDarkMode ? '#4f46e5' : textColor} />
-                  <ThemedText style={[
-                    styles.themeOptionText,
-                    isDarkMode && styles.selectedThemeText,
-                  ]}>
-                    Dark
-                  </ThemedText>
-                </TouchableOpacity>
+            {SHOW_THEME_TOGGLE && (
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>Theme</ThemedText>
+                <View style={styles.themeOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.themeOption,
+                      !isDarkMode && styles.selectedThemeOption,
+                    ]}
+                    onPress={() => setIsDarkMode(false)}
+                  >
+                    <Ionicons name="sunny" size={24} color={!isDarkMode ? Colors.text : Colors.textMuted} />
+                    <ThemedText style={[
+                      styles.themeOptionText,
+                      !isDarkMode && styles.selectedThemeText,
+                    ]}>
+                      Light
+                    </ThemedText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.themeOption,
+                      isDarkMode && styles.selectedThemeOption,
+                    ]}
+                    onPress={() => setIsDarkMode(true)}
+                  >
+                    <Ionicons name="moon" size={24} color={isDarkMode ? Colors.text : Colors.textMuted} />
+                    <ThemedText style={[
+                      styles.themeOptionText,
+                      isDarkMode && styles.selectedThemeText,
+                    ]}>
+                      Dark
+                    </ThemedText>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            )}
 
             <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>Invite Friends</ThemedText>
+              <ThemedText style={styles.sectionTitle}>Invite friends</ThemedText>
               <View style={styles.inviteContainer}>
                 <TextInput
                   style={[styles.input, { color: textColor }]}
                   placeholder="Enter email address"
-                  placeholderTextColor="#6b7280"
+                  placeholderTextColor={Colors.textMuted}
+                  keyboardAppearance="dark"
                   autoCapitalize="none"
                   autoCorrect={false}
                   keyboardType="email-address"
@@ -463,7 +472,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
                   onPress={handleInvitePress}
                   disabled={state.isLoading}
                 >
-                  <Ionicons name="send" size={24} color="#fff" />
+                  <Ionicons name="send" size={20} color={Colors.onPrimary} />
                 </TouchableOpacity>
               </View>
               <View style={styles.messageContainer}>
@@ -484,8 +493,8 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
               style={styles.signOutButton}
               onPress={handleSignOut}
             >
-              <Ionicons name="log-out-outline" size={24} color="#ef4444" />
-              <ThemedText style={styles.signOutText}>Sign Out</ThemedText>
+              <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
+              <ThemedText style={styles.signOutText}>Sign out</ThemedText>
             </TouchableOpacity>
           </ThemedView>
         </View>
@@ -502,7 +511,9 @@ const styles = StyleSheet.create({
     paddingTop: 125,
   },
   modalContent: {
-    borderRadius: 20,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: 24,
     width: '90%',
     maxWidth: 400,
@@ -524,7 +535,9 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4f46e5',
+    backgroundColor: Colors.cardRaised,
+    borderWidth: 1,
+    borderColor: Colors.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -532,8 +545,8 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 36,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: '500',
+    color: Colors.text,
     lineHeight: 36,
     textAlignVertical: 'center',
     includeFontPadding: false,
@@ -545,7 +558,7 @@ const styles = StyleSheet.create({
   },
   nameText: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '500',
     marginRight: 8,
   },
   editIcon: {
@@ -558,15 +571,15 @@ const styles = StyleSheet.create({
   },
   nameInput: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '500',
     borderBottomWidth: 1,
-    borderBottomColor: '#4f46e5',
+    borderBottomColor: Colors.textSecondary,
     paddingVertical: 4,
     marginRight: 8,
     minWidth: 150,
   },
   saveButton: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: Colors.primary,
     borderRadius: 20,
     padding: 8,
   },
@@ -576,7 +589,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '500',
     marginBottom: 12,
   },
   themeOptions: {
@@ -594,19 +607,19 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: Colors.border,
   },
   selectedThemeOption: {
-    borderColor: '#4f46e5',
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+    borderColor: Colors.text,
+    backgroundColor: withAlpha(Colors.text, 0.06),
   },
   themeOptionText: {
     fontSize: 16,
     fontWeight: '500',
   },
   selectedThemeText: {
-    color: '#4f46e5',
-    fontWeight: '600',
+    color: Colors.text,
+    fontWeight: '500',
   },
   inviteContainer: {
     flexDirection: 'row',
@@ -615,15 +628,17 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
+    borderColor: Colors.border,
+    backgroundColor: Colors.cardRaised,
+    borderRadius: 999,
+    paddingHorizontal: 18,
     padding: 12,
     fontSize: 16,
     marginRight: 8,
   },
   inviteButton: {
-    backgroundColor: '#4f46e5',
-    borderRadius: 8,
+    backgroundColor: Colors.primary,
+    borderRadius: 999,
     padding: 12,
   },
   messageContainer: {
@@ -632,24 +647,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   errorText: {
-    color: '#ef4444',
+    color: Colors.danger,
     fontSize: 14,
   },
   successText: {
-    color: '#22c55e',
+    color: Colors.success,
     fontSize: 14,
   },
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 8,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 999,
+    justifyContent: 'center',
+    alignSelf: 'stretch',
   },
   signOutText: {
-    color: '#ef4444',
+    color: Colors.danger,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     marginLeft: 8,
   },
 }); 

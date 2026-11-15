@@ -1,4 +1,4 @@
-import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -12,6 +12,8 @@ import 'react-native-url-polyfill/auto';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Colors } from '@/constants/Colors';
+import { NavigationTheme } from '@/constants/Theme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -43,7 +45,10 @@ export default function RootLayout() {
       <AuthProvider>
         <QuizProvider>
           <NotificationsProvider>
-            <AuthGuard />
+            <ThemeProvider value={NavigationTheme}>
+              <StatusBar style="light" />
+              <AuthGuard />
+            </ThemeProvider>
           </NotificationsProvider>
         </QuizProvider>
       </AuthProvider>
@@ -90,9 +95,9 @@ function EmailVerificationScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <View style={styles.content}>
-        <Text style={styles.title}>Email Verification Required</Text>
+        <Text style={styles.title}>Email verification required</Text>
         <Text style={styles.message}>
           Please check your email and click the verification link to activate your account.
         </Text>
@@ -100,7 +105,7 @@ function EmailVerificationScreen() {
           If you don't see the email, check your spam folder.
         </Text>
         <TouchableOpacity style={styles.button} onPress={handleSignOut}>
-          <Text style={styles.buttonText}>Sign Out</Text>
+          <Text style={styles.buttonText}>Sign out</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -115,7 +120,7 @@ export function VerificationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background,
   },
   content: {
     flex: 1,
@@ -125,32 +130,34 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '500',
     marginBottom: 20,
     textAlign: 'center',
+    color: Colors.text,
   },
   message: {
     fontSize: 16,
     marginBottom: 10,
     textAlign: 'center',
     lineHeight: 24,
+    color: Colors.text,
   },
   subMessage: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.textSecondary,
     marginBottom: 30,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: Colors.primary,
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 999,
     width: '100%',
     alignItems: 'center',
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: Colors.onPrimary,
+    fontWeight: '500',
     fontSize: 16,
   },
 });

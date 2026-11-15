@@ -24,3 +24,10 @@ export const AURA_IMAGES: AuraImage[] = [
   { name: 'Unicorn', source: require('../assets/auras/png/unicorn.png') },
   { name: 'Wolf', source: require('../assets/auras/png/wolf.png') },
 ];
+
+/** The image for an animal name (case-insensitive), or null if there isn't one. */
+export function getAuraImage(animalName: string | null | undefined): ImageSourcePropType | null {
+  if (!animalName) return null;
+  const key = animalName.trim().toLowerCase();
+  return AURA_IMAGES.find(aura => aura.name.toLowerCase() === key)?.source ?? null;
+}

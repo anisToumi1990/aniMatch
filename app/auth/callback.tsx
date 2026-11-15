@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Text, View, ActivityIndicator, StyleSheet } from 'react-native';
+import { Colors } from '@/constants/Colors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 
@@ -32,7 +33,7 @@ export default function AuthCallback() {
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#007bff" />
+      <ActivityIndicator size="large" color={Colors.textSecondary} />
       <Text style={styles.text}>Completing authentication...</Text>
     </View>
   );
@@ -44,10 +45,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: Colors.background,
   },
   text: {
     marginTop: 20,
     fontSize: 16,
     textAlign: 'center',
+    color: Colors.textSecondary,
   },
 }); 
