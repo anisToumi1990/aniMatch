@@ -10,13 +10,38 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { AuraAvatar } from '@/components/AuraAvatar';
 import { ScreenBackground } from '@/components/ScreenBackground';
-import { Colors } from '@/constants/Colors';
+import { Colors, MatchLevelColors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { transparentHeaderOptions } from '@/constants/Theme';
 
 /** "business_partner" -> "Business partner" */
 function formatRelationshipType(relationshipType: string): string {
   const words = relationshipType.replace(/_/g, ' ');
   return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const RELATIONSHIP_ICONS: Record<string, IoniconName> = {
+  lover: 'heart',
+  family: 'home',
+  friend: 'people',
+  business_partner: 'briefcase',
+};
+
+function getRelationshipIcon(relationshipType: string): IoniconName {
+  return RELATIONSHIP_ICONS[relationshipType] ?? 'people';
+}
+
+interface MatchLevel {
+  label: string;
+  color: string;
+}
+
+/** 75-100: strong, 50-74: good, under 50: needs effort. */
+function getMatchLevel(score: number): MatchLevel {
+  if (score >= 75) return { label: 'Strong match', color: MatchLevelColors.strong };
+  if (score >= 50) return { label: 'Good match', color: MatchLevelColors.good };
+  return { label: 'Needs effort', color: MatchLevelColors.needsEffort };
 }
 
 interface CompatibilityResult {
@@ -64,7 +89,33 @@ export default function CompatibilityScreen() {
   const [auraA, setAuraA] = useState<AnimalAura | null>(null);
   const [auraB, setAuraB] = useState<AnimalAura | null>(null);
   const [isAuraLoading, setIsAuraLoading] = useState(false);
+  const [auraNamesById, setAuraNamesById] = useState<Record<number, string>>({});
   const router = useRouter();
+
+  // Aura names for the avatars on each card (read-only, loaded once).
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadAuraNames() {
+      try {
+        const { data, error } = await supabase.from('animal_auras').select('id, name');
+        if (error) throw error;
+        if (isCancelled) return;
+        const names: Record<number, string> = {};
+        (data ?? []).forEach((aura: { id: number; name: string }) => {
+          names[aura.id] = aura.name;
+        });
+        setAuraNamesById(names);
+      } catch (loadError) {
+        console.error('Error loading aura names:', loadError);
+      }
+    }
+
+    loadAuraNames();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const fetchCompatibilityResults = useCallback(async () => {
     if (!user?.id) return;
@@ -157,30 +208,67 @@ export default function CompatibilityScreen() {
     fetchAuras(item);
   };
 
-  const renderCompatibilityItem = ({ item }: { item: CompatibilityResult }) => (
-    <Pressable
-      onPress={() => handleResultPress(item)}
-      accessibilityRole="button"
-      accessibilityLabel={`View details for match with ${getOtherUserName(item)}`}
-      style={({ pressed }) => [styles.resultCard, pressed && { opacity: 0.85 }]}
-    >
-      <View style={styles.resultCardHeader}>
-        <View style={styles.resultCardText}>
-          <ThemedText style={styles.userName}>
-            Match with {getOtherUserName(item)}
-          </ThemedText>
-          <ThemedText type="muted" style={styles.relationshipType}>
-            {formatRelationshipType(item.relationship_type)}
-          </ThemedText>
+  const renderCompatibilityItem = ({ item }: { item: CompatibilityResult }) => {
+    const isCurrentUserA = user?.id === item.user_a_id;
+    const myAuraName = auraNamesById[isCurrentUserA ? item.user_a_aura_id : item.user_b_aura_id] ?? '';
+    const otherAuraName = auraNamesById[isCurrentUserA ? item.user_b_aura_id : item.user_a_aura_id] ?? '';
+    const otherAuraColor = getAuraColor(otherAuraName);
+    const score = Math.round(item.compatibility_score);
+    const level = getMatchLevel(score);
+    const otherName = getOtherUserName(item);
+
+    return (
+      <Pressable
+        onPress={() => handleResultPress(item)}
+        accessibilityRole="button"
+        accessibilityLabel={`View details for match with ${otherName}`}
+        style={({ pressed }) => [styles.resultCard, pressed && { opacity: 0.85 }]}
+      >
+        <View style={styles.resultCardHeader}>
+          <View style={styles.avatarPair}>
+            <AuraAvatar animalName={myAuraName} size="small" />
+            <AuraAvatar animalName={otherAuraName} size="small" style={styles.avatarOverlap} />
+          </View>
+          <View style={styles.resultCardText}>
+            <ThemedText style={[styles.userName, { color: otherAuraColor }]} numberOfLines={1}>
+              {otherName}
+            </ThemedText>
+            <View style={styles.metaRow}>
+              {otherAuraName ? (
+                <ThemedText type="muted" style={styles.animalName}>{otherAuraName}</ThemedText>
+              ) : null}
+              <View
+                style={[
+                  styles.relationshipTag,
+                  { borderColor: withAlpha(otherAuraColor, 0.45), backgroundColor: withAlpha(otherAuraColor, 0.12) },
+                ]}
+              >
+                <Ionicons name={getRelationshipIcon(item.relationship_type)} size={11} color={otherAuraColor} />
+                <ThemedText style={[styles.relationshipTagText, { color: otherAuraColor }]}>
+                  {formatRelationshipType(item.relationship_type)}
+                </ThemedText>
+              </View>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
         </View>
-        <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
-      </View>
-      <View style={styles.scoreContainer}>
-        <ThemedText type="secondary" style={styles.scoreLabel}>Compatibility score</ThemedText>
-        <ThemedText style={styles.scoreValue}>{Math.round(item.compatibility_score)}%</ThemedText>
-      </View>
-    </Pressable>
-  );
+        <View style={styles.scoreContainer}>
+          <View style={styles.scoreRow}>
+            <ThemedText style={[styles.scoreValue, { color: level.color }]}>{score}%</ThemedText>
+            <ThemedText style={[styles.scoreLevel, { color: level.color }]}>{level.label}</ThemedText>
+          </View>
+          <View style={styles.scoreTrack}>
+            <View
+              style={[
+                styles.scoreFill,
+                { width: `${Math.min(Math.max(score, 0), 100)}%`, backgroundColor: level.color },
+              ]}
+            />
+          </View>
+        </View>
+      </Pressable>
+    );
+  };
 
   function renderTextList(text: string[] | string) {
     const sentences = Array.isArray(text)
@@ -197,8 +285,9 @@ export default function CompatibilityScreen() {
 
   function renderDetailView(result: CompatibilityResult) {
     const isCurrentUserA = user?.id === result.user_a_id;
-    const leftAura = isCurrentUserA ? auraA : auraB; // connected user
-    const rightAura = isCurrentUserA ? auraB : auraA; // current user
+    // auraA belongs to user_a, auraB to user_b.
+    const leftAura = isCurrentUserA ? auraB : auraA; // connected user
+    const rightAura = isCurrentUserA ? auraA : auraB; // current user
 
     return (
       <SafeAreaView style={styles.container}  edges={['left', 'right']}>
@@ -228,7 +317,12 @@ export default function CompatibilityScreen() {
               </View>
             </View>
             <View style={styles.detailSummary}>
-              <ThemedText style={styles.detailScoreValue}>{Math.round(result.compatibility_score)}%</ThemedText>
+              <ThemedText style={[styles.detailScoreValue, { color: getMatchLevel(Math.round(result.compatibility_score)).color }]}>
+                {Math.round(result.compatibility_score)}%
+              </ThemedText>
+              <ThemedText style={[styles.detailScoreLevel, { color: getMatchLevel(Math.round(result.compatibility_score)).color }]}>
+                {getMatchLevel(Math.round(result.compatibility_score)).label}
+              </ThemedText>
               <ThemedText type="secondary" style={styles.detailUserName}>
                 Match with {getOtherUserName(result)}
               </ThemedText>
@@ -349,35 +443,79 @@ const styles = StyleSheet.create({
   resultCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
+  },
+  avatarPair: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarOverlap: {
+    marginLeft: -18,
   },
   resultCardText: {
     flex: 1,
+    minWidth: 0,
   },
   userName: {
-    fontSize: 17,
+    fontSize: 20,
+    lineHeight: 26,
     fontWeight: '500',
-    marginBottom: 2,
+    marginBottom: 4,
   },
-  relationshipType: {
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  animalName: {
     fontSize: 14,
   },
-  scoreContainer: {
+  relationshipTag: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+  },
+  relationshipTagText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+  },
+  scoreContainer: {
     backgroundColor: Colors.cardRaised,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 14,
   },
-  scoreLabel: {
-    fontSize: 15,
+  scoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 10,
   },
   scoreValue: {
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 32,
+    lineHeight: 38,
     fontWeight: '500',
+  },
+  scoreLevel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  scoreTrack: {
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: Colors.border,
+    overflow: 'hidden',
+  },
+  scoreFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   errorText: {
     color: Colors.danger,
@@ -459,7 +597,11 @@ const styles = StyleSheet.create({
     fontSize: 44,
     lineHeight: 52,
     fontWeight: '500',
-    marginBottom: 4,
+  },
+  detailScoreLevel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 8,
   },
   sectionContainer: {
     width: '100%',

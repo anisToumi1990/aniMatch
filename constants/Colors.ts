@@ -86,3 +86,10 @@ export function withAlpha(hexColor: string, opacity: number): string {
   const blue = parseInt(hex.slice(4, 6), 16);
   return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }
+
+/** Compatibility score levels: 75-100 strong, 50-74 good, under 50 needs effort. */
+export const MatchLevelColors = {
+  strong: '#4CC38A',
+  good: '#EF9F27',
+  needsEffort: '#E5626A',
+};
