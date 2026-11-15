@@ -11,6 +11,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { BackgroundPattern } from '../../components/BackgroundPattern';
 import { AccountModal } from '@/components/AccountModal';
+import { AuraDetailsModal } from '@/components/AuraDetailsModal';
+import { AURA_IMAGES, AuraImage } from '@/constants/AuraImages';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -22,6 +24,7 @@ export default function HomeScreen() {
   const userInitial = fullName.charAt(0).toUpperCase();
 
   const [showAccountModal, setShowAccountModal] = useState(false);
+  const [selectedAura, setSelectedAura] = useState<AuraImage | null>(null);
   
   function handleStartQuiz() {
     if (isQuizComplete) {
@@ -80,81 +83,21 @@ export default function HomeScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.carouselContent}
               >
-                <Image 
-                  source={require('../../assets/auras/png/bear.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/cat.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/deer.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/dolphin.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/eagle.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/elephant.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/fox.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/lion.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/otter.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/owl.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/parrot.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/peacock.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/snake.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/unicorn.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                />
-                <Image 
-                  source={require('../../assets/auras/png/wolf.png')} 
-                  style={styles.carouselImage}
-                  resizeMode="contain"
-                /> 
+                {AURA_IMAGES.map(aura => (
+                  <TouchableOpacity
+                    key={aura.name}
+                    onPress={() => setSelectedAura(aura)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`See the ${aura.name} aura's personality`}
+                  >
+                    <Image
+                      source={aura.source}
+                      style={styles.carouselImage}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                ))}
               </ScrollView>
             </View>
             <View style={styles.quizButtonContainer}>
@@ -171,6 +114,10 @@ export default function HomeScreen() {
         <AccountModal 
           visible={showAccountModal}
           onClose={() => setShowAccountModal(false)}
+        />
+        <AuraDetailsModal
+          aura={selectedAura}
+          onClose={() => setSelectedAura(null)}
         />
       </SafeAreaView>
     </BackgroundPattern>
