@@ -13,8 +13,33 @@ import { Colors, withAlpha } from '@/constants/Colors';
 // Flip this back on once light mode exists.
 const SHOW_THEME_TOGGLE = false;
 
+type InviteNoticeKind = 'connected' | 'invitedByMe' | 'invitedMe';
+
+/** Information (not an error) shown when an invite already exists with this person. */
+interface InviteNotice {
+  kind: InviteNoticeKind;
+  /** The other person's full name, or their email if they have no name. */
+  name: string;
+}
+
+interface ExistingInvite {
+  inviter_user_id: string;
+  recipient_user_id: string | null;
+  status: string;
+}
+
+/** Accepted wins over pending; then a pending invite I sent, then one they sent. */
+function getInviteNoticeKind(invites: ExistingInvite[], currentUserId: string): InviteNoticeKind | null {
+  if (invites.some(invite => invite.status === 'accepted')) return 'connected';
+  const pending = invites.filter(invite => invite.status === 'pending');
+  if (pending.some(invite => invite.inviter_user_id === currentUserId)) return 'invitedByMe';
+  if (pending.length > 0) return 'invitedMe';
+  return null;
+}
+
 interface State {
   email: string;
+  inviteNotice: InviteNotice | null;
   fullName: string;
   isLoading: boolean;
   hasError: boolean;
@@ -35,6 +60,7 @@ type Action =
   | { type: 'SUBMIT_START' }
   | { type: 'SUBMIT_SUCCESS'; message?: string }
   | { type: 'SUBMIT_ERROR'; errorMessage: string }
+  | { type: 'SUBMIT_NOTICE'; notice: InviteNotice }
   | { type: 'NAME_SUBMIT_SUCCESS'; message: string }
   | { type: 'NAME_SUBMIT_ERROR'; errorMessage: string }
   | { type: 'RESET' }
@@ -43,13 +69,13 @@ type Action =
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SET_EMAIL':
-      return { ...state, email: action.email, hasError: false, errorMessage: '', isSuccess: false, successMessage: '' };
+      return { ...state, email: action.email, hasError: false, errorMessage: '', isSuccess: false, successMessage: '', inviteNotice: null };
     case 'SET_FULL_NAME':
       return { ...state, fullName: action.fullName };
     case 'SET_EDITING_NAME':
       return { ...state, isEditingName: action.isEditing };
     case 'SUBMIT_START':
-      return { ...state, isLoading: true, hasError: false, errorMessage: '', isSuccess: false, successMessage: '' };
+      return { ...state, isLoading: true, hasError: false, errorMessage: '', isSuccess: false, successMessage: '', inviteNotice: null };
     case 'SUBMIT_SUCCESS':
       return { 
         ...state, 
@@ -58,6 +84,16 @@ function reducer(state: State, action: Action): State {
         hasError: false, 
         errorMessage: '',
         successMessage: action.message || 'Operation successful'
+      };
+    case 'SUBMIT_NOTICE':
+      return {
+        ...state,
+        isLoading: false,
+        hasError: false,
+        errorMessage: '',
+        isSuccess: false,
+        successMessage: '',
+        inviteNotice: action.notice,
       };
     case 'SUBMIT_ERROR':
       return { 
@@ -98,7 +134,8 @@ function reducer(state: State, action: Action): State {
         nameHasError: false,
         nameErrorMessage: '',
         nameIsSuccess: false,
-        nameSuccessMessage: ''
+        nameSuccessMessage: '',
+        inviteNotice: null,
       };
     case 'RESET_EMAIL':
       return { ...state, email: '' };
@@ -121,6 +158,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
   const router = useRouter();
   const [state, dispatch] = React.useReducer(reducer, {
     email: '',
+    inviteNotice: null,
     fullName: user?.user_metadata?.full_name || '',
     isLoading: false,
     hasError: false,
@@ -237,7 +275,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
     // Check if the email belongs to an existing user
     const { data: existingUser, error: userCheckError } = await supabase
       .from('profiles')
-      .select('id, email')
+      .select('id, email, full_name')
       .eq('email', state.email.toLowerCase())
       .single();
 
@@ -262,6 +300,14 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
       }
 
       if (bidirectionalInvites && bidirectionalInvites.length > 0) {
+        const noticeKind = getInviteNoticeKind(bidirectionalInvites, user.id);
+        if (noticeKind) {
+          const otherName = existingUser.full_name?.trim() || existingUser.email || state.email;
+          dispatch({ type: 'SUBMIT_NOTICE', notice: { kind: noticeKind, name: otherName } });
+          setMessageTimeout('email');
+          return;
+        }
+        // The query only returns pending/accepted invites, so this is a fallback.
         dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'An invitation already exists between you and this user.' });
         setMessageTimeout('email');
         return;
@@ -309,6 +355,52 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
       dispatch({ type: 'SUBMIT_ERROR', errorMessage: err.message || 'Failed to send invite.' });
       setMessageTimeout('email');
     }
+  }
+
+  // Close the popup first, then switch tabs.
+  function handleOpenTab(route: '/(tabs)/compatibility' | '/(tabs)/notifications') {
+    clearMessageTimeouts();
+    onClose();
+    dispatch({ type: 'RESET' });
+    router.navigate(route);
+  }
+
+  function renderInviteNotice(notice: InviteNotice) {
+    if (notice.kind === 'connected') {
+      return (
+        <ThemedText style={styles.noticeText} accessibilityLiveRegion="polite">
+          You&apos;re already connected with {notice.name}. See your match in{' '}
+          <ThemedText
+            style={styles.noticeLink}
+            onPress={() => handleOpenTab('/(tabs)/compatibility')}
+            accessibilityRole="link"
+          >
+            Compatibility
+          </ThemedText>
+          .
+        </ThemedText>
+      );
+    }
+    if (notice.kind === 'invitedByMe') {
+      return (
+        <ThemedText style={styles.noticeText} accessibilityLiveRegion="polite">
+          You already invited {notice.name}. Waiting for them to accept.
+        </ThemedText>
+      );
+    }
+    return (
+      <ThemedText style={styles.noticeText} accessibilityLiveRegion="polite">
+        {notice.name} already invited you. Check your{' '}
+        <ThemedText
+          style={styles.noticeLink}
+          onPress={() => handleOpenTab('/(tabs)/notifications')}
+          accessibilityRole="link"
+        >
+          notifications
+        </ThemedText>
+        .
+      </ThemedText>
+    );
   }
 
   const handleSignOut = async () => {
@@ -471,6 +563,8 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
                   style={styles.inviteButton}
                   onPress={handleInvitePress}
                   disabled={state.isLoading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send invite"
                 >
                   <Ionicons name="send" size={20} color={Colors.onPrimary} />
                 </TouchableOpacity>
@@ -481,6 +575,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
                     {state.errorMessage}
                   </ThemedText>
                 )}
+                {state.inviteNotice && renderInviteNotice(state.inviteNotice)}
                 {state.isSuccess && (
                   <ThemedText style={styles.successText}>
                     {state.successMessage}
@@ -642,13 +737,25 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   messageContainer: {
-    height: 24,
+    minHeight: 24,
     marginTop: 4,
     justifyContent: 'center',
   },
   errorText: {
     color: Colors.danger,
     fontSize: 14,
+  },
+  noticeText: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  noticeLink: {
+    color: Colors.text,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
   successText: {
     color: Colors.success,
