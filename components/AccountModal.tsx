@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Keyboard, TouchableWithoutFeedback, Switch } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Keyboard, TouchableWithoutFeedback, Switch, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'expo-router';
@@ -331,7 +331,12 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
     >
       <TouchableWithoutFeedback
         onPress={event => {
-          Keyboard.dismiss();
+          // On web, Keyboard.dismiss() blurs the focused input, so pressing the
+          // email field would immediately lose focus. Web has no soft keyboard
+          // to dismiss anyway, so only do this on native.
+          if (Platform.OS !== 'web') {
+            Keyboard.dismiss();
+          }
           if (event.target === event.currentTarget) {
             onClose();
             dispatch({ type: 'RESET' });
