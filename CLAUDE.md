@@ -38,7 +38,7 @@ Any new top-level route group has to be accounted for in `AuthGuard`, or users w
 1. `AccountModal` inserts a row into `invites` with `recipient_email`, plus `recipient_user_id` if a profile with that email already exists.
 2. The app never inserts `notifications` rows; something on the database side (presumably a trigger) creates them. Nothing sends an email to invitees who don't have an account.
 3. In `notifications.tsx`, accepting an invite sets its `status` and `relationship_type`, then calls the RPC `create_compatibility_results(invite_id)`.
-4. Retaking the quiz calls `updateUserCompatibilityResults`, which runs the RPC `update_user_compatibility_results`, or creates results for every accepted invite if the user has none yet.
+4. After every quiz, `updateUserCompatibilityResults` runs the RPC `update_user_compatibility_results` if the user already has results, then calls `create_compatibility_results` for each accepted invite that has no `compatibility_results` row yet (matched by user pair in either order plus `relationship_type`). This also covers invites accepted before the other person took the quiz, since `create_compatibility_results` only inserts once both users have a result. Errors are logged, not thrown.
 5. `compatibility.tsx` reads `compatibility_results` and matches up text from `compatibility_insight_templates` by score and relationship type.
 
 The invite screens treat notifications for invites that are no longer `pending` as handled, and both the list and the unread badge hide them.
