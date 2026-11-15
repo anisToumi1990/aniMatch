@@ -5,7 +5,6 @@ import {
   TouchableOpacity, 
   Text, 
   StyleSheet, 
-  Alert, 
   ActivityIndicator, 
   KeyboardAvoidingView, 
   ScrollView, 
@@ -17,6 +16,8 @@ import { useNavigation, useRouter } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
+import { SHOW_SOCIAL_LOGIN } from '@/constants/Config';
+import { FormMessage, FormMessageState } from './FormMessage';
 
 interface LoginFormProps {
   onRegisterPress?: () => void;
@@ -28,16 +29,28 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState<FormMessageState | null>(null);
   const { signIn, signInWithGoogle, signInWithApple } = useAuth();
+
+  function handleEmailChange(text: string) {
+    setEmail(text);
+    setMessage(null);
+  }
+
+  function handlePasswordChange(text: string) {
+    setPassword(text);
+    setMessage(null);
+  }
   const navigation = useNavigation();
   const router = useRouter();
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+      setMessage({ type: 'error', text: 'Please enter both email and password.' });
       return;
     }
 
+    setMessage(null);
     setIsLoading(true);
     try {
       const { error } = await signIn(email, password);
@@ -46,7 +59,7 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
       // Explicitly redirect to tabs after successful login
       router.replace("/(tabs)");
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'An error occurred during login');
+      setMessage({ type: 'error', text: error.message || 'An error occurred during login.' });
     } finally {
       setIsLoading(false);
     }
@@ -54,6 +67,7 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
+      setMessage(null);
       setSocialLoading(provider);
       if (provider === 'google') {
         await signInWithGoogle();
@@ -61,10 +75,10 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
         await signInWithApple();
       }
     } catch (error: any) {
-      Alert.alert(
-        `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`, 
-        error.message || `Login with ${provider} failed. Please try again.`
-      );
+      setMessage({
+        type: 'error',
+        text: error.message || `Login with ${provider} failed. Please try again.`,
+      });
     } finally {
       setSocialLoading(null);
     }
@@ -98,7 +112,7 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
               style={styles.input}
               placeholder="Enter your email"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={handleEmailChange}
               autoCapitalize="none"
               keyboardType="email-address"
               placeholderTextColor={Colors.textMuted}
@@ -113,7 +127,7 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
                 style={styles.passwordInput}
                 placeholder="Enter your password"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
                 placeholderTextColor={Colors.textMuted}
               keyboardAppearance="dark"
@@ -144,44 +158,50 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
             )}
           </TouchableOpacity>
           
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OR</Text>
-            <View style={styles.dividerLine} />
-          </View>
+          <FormMessage message={message} />
+
+          {SHOW_SOCIAL_LOGIN && (
+            <>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
           
-          <View style={styles.socialButtonsContainer}>
-            <TouchableOpacity
-              style={[styles.socialButton, styles.googleButton]}
-              onPress={() => handleSocialLogin('google')}
-              disabled={!!socialLoading}
-            >
-              {socialLoading === 'google' ? (
-                <ActivityIndicator size="small" color={Colors.text} />
-              ) : (
-                <>
-                  <AntDesign name="google" size={18} color={Colors.text} />
-                  <Text style={styles.socialButtonText}>Google</Text>
-                </>
-              )}
-            </TouchableOpacity>
+              <View style={styles.socialButtonsContainer}>
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.googleButton]}
+                  onPress={() => handleSocialLogin('google')}
+                  disabled={!!socialLoading}
+                >
+                  {socialLoading === 'google' ? (
+                    <ActivityIndicator size="small" color={Colors.text} />
+                  ) : (
+                    <>
+                      <AntDesign name="google" size={18} color={Colors.text} />
+                      <Text style={styles.socialButtonText}>Google</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
             
-            <TouchableOpacity
-              style={[styles.socialButton, styles.appleButton]}
-              onPress={() => handleSocialLogin('apple')}
-              disabled={!!socialLoading}
-            >
-              {socialLoading === 'apple' ? (
-                <ActivityIndicator size="small" color={Colors.text} />
-              ) : (
-                <>
-                  <AntDesign name="apple1" size={18} color={Colors.text} />
-                  <Text style={styles.socialButtonText}>Apple</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-          
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.appleButton]}
+                  onPress={() => handleSocialLogin('apple')}
+                  disabled={!!socialLoading}
+                >
+                  {socialLoading === 'apple' ? (
+                    <ActivityIndicator size="small" color={Colors.text} />
+                  ) : (
+                    <>
+                      <AntDesign name="apple1" size={18} color={Colors.text} />
+                      <Text style={styles.socialButtonText}>Apple</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
           <TouchableOpacity 
             style={styles.linkButton}
             onPress={navigateToRegister}

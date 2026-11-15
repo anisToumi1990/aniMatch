@@ -9,8 +9,15 @@ interface AuthContextProps {
   user: User | null;
   isLoading: boolean;
   isEmailConfirmed: boolean;
-  checkEmailExists: (email: string) => Promise<boolean>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any | null }>;
+  /**
+   * `needsEmailConfirmation` is true when Supabase created the user but returned
+   * no session (email confirmation is on), so the user can't be signed in yet.
+   */
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string
+  ) => Promise<{ error: any | null; needsEmailConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
   signOut: () => Promise<{ error: any | null }>;
   refreshSession: () => Promise<void>;
@@ -23,8 +30,7 @@ const AuthContext = createContext<AuthContextProps>({
   user: null,
   isLoading: true,
   isEmailConfirmed: false,
-  checkEmailExists: async () => false,
-  signUp: async () => ({ error: null }),
+  signUp: async () => ({ error: null, needsEmailConfirmation: false }),
   signIn: async () => ({ error: null }),
   signOut: async () => ({ error: null }),
   refreshSession: async () => {},
@@ -110,35 +116,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     refreshSession,
     signInWithGoogle,
     signInWithApple,
-    checkEmailExists: async (email: string) => {
-      try {
-        const { error } = await supabase.auth.signIn({
-          email,
-          password: 'dummy-password-for-check',
-        });
-        if (error) {
-          if (error.message && 
-              (error.message.toLowerCase().includes('invalid login credentials') ||
-               error.message.toLowerCase().includes('invalid email or password'))) return true
-          if (error.message && 
-              (error.message.toLowerCase().includes('user not found') || 
-               error.message.toLowerCase().includes('no user found'))) return false
-        }
-        console.log("Trying fallback email check method");
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: `Temp${Math.random().toString(36).slice(2, 10)}!`,
-        });
-        if (signUpError && signUpError.message.includes('already registered')) return true
-        return false;
-      } catch (error) {
-        console.error('Error checking email:', error);
-        return false;
-      }
-    },
     signUp: async (email: string, password: string, fullName: string) => {
       try {
-        const { error } = await supabase.auth.signUp({ 
+        const { session: newSession, error } = await supabase.auth.signUp({ 
           email, 
           password,
         }, {
@@ -152,13 +132,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return { 
             error: { 
               message: 'Email already registered. Please sign in or use a different email.'
-            } 
+            },
+            needsEmailConfirmation: false,
           };
         }
         if (!error) await refreshSession();
-        return { error };
+        return { error, needsEmailConfirmation: !error && !newSession };
       } catch (error) {
-        return { error };
+        return { error, needsEmailConfirmation: false };
       }
     },
     signIn: async (email: string, password: string) => {
