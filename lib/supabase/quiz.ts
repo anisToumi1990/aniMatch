@@ -185,47 +185,84 @@ export async function fetchLatestQuizResult(userId: string): Promise<QuizResult 
 }
 
 // Update all compatibility results for a user after quiz retake
+interface AcceptedInviteRow {
+  id: string;
+  inviter_user_id: string;
+  recipient_user_id: string | null;
+  relationship_type: string | null;
+  status: string;
+}
+
+interface CompatibilityPairRow {
+  user_a_id: string;
+  user_b_id: string;
+  relationship_type: string | null;
+}
+
+function getPairKey(userIdA: string, userIdB: string, relationshipType: string | null): string {
+  const [first, second] = [userIdA, userIdB].sort();
+  return `${first}|${second}|${relationshipType ?? ''}`;
+}
+
+/**
+ * Keeps the user's compatibility results in sync after they finish the quiz:
+ * 1. Recomputes the results they already have with their new aura.
+ * 2. Creates results for accepted invites that don't have one yet, e.g. an
+ *    invite accepted before the other person had taken the quiz.
+ *
+ * The quiz result is already saved when this runs, so failures are logged
+ * instead of thrown and the quiz flow can continue.
+ */
 export async function updateUserCompatibilityResults(userId: string, newAuraId: number): Promise<void> {
-  // First check if user has any existing compatibility results
-  const { data: existingResults, error: checkError } = await supabase
-    .from('compatibility_results')
-    .select('id')
-    .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
-    .limit(1);
+  const { data: existingResults, error: existingError } = await supabase
+    .from<CompatibilityPairRow>('compatibility_results')
+    .select('user_a_id, user_b_id, relationship_type')
+    .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
 
-  if (checkError) {
-    console.error('Error checking existing compatibility results:', checkError);
-    throw checkError;
-  }
-
-  // If user has existing results, just update them
-  if (existingResults && existingResults.length > 0) {
-    const { error } = await supabase.rpc('update_user_compatibility_results', {
-      user_id: userId,
-      new_aura_id: newAuraId,
-    });
-    if (error) {
-      console.error('Error updating compatibility results:', error);
-      throw error;
-    }
+  if (existingError) {
+    console.error('Error fetching existing compatibility results:', existingError);
     return;
   }
 
-  // If no existing results, create new ones for all accepted invites
-  const { data: acceptedInvites, error: invitesError } = await supabase
-    .from('invites')
-    .select('id')
-    .or(`inviter_user_id.eq.${userId},recipient_user_id.eq.${userId}`)
-    .eq('status', 'accepted');
-  
-  if (invitesError) throw invitesError;
+  const existingRows = existingResults ?? [];
 
-  // Create compatibility results for each accepted invite
-  if (acceptedInvites) {
-    for (const invite of acceptedInvites) {
-      await supabase.rpc('create_compatibility_results', {
-        invite_id: invite.id
-      });
+  if (existingRows.length > 0) {
+    const { error: updateError } = await supabase.rpc('update_user_compatibility_results', {
+      user_id: userId,
+      new_aura_id: newAuraId,
+    });
+    if (updateError) {
+      console.error('Error updating compatibility results:', updateError);
     }
   }
-} 
+
+  const { data: acceptedInvites, error: invitesError } = await supabase
+    .from<AcceptedInviteRow>('invites')
+    .select('id, inviter_user_id, recipient_user_id, relationship_type')
+    .or(`inviter_user_id.eq.${userId},recipient_user_id.eq.${userId}`)
+    .eq('status', 'accepted');
+
+  if (invitesError) {
+    console.error('Error fetching accepted invites:', invitesError);
+    return;
+  }
+
+  const existingPairKeys = new Set(
+    existingRows.map(row => getPairKey(row.user_a_id, row.user_b_id, row.relationship_type))
+  );
+
+  const invitesMissingResults = (acceptedInvites ?? []).filter(invite => {
+    if (!invite.recipient_user_id) return false;
+    const key = getPairKey(invite.inviter_user_id, invite.recipient_user_id, invite.relationship_type);
+    return !existingPairKeys.has(key);
+  });
+
+  for (const invite of invitesMissingResults) {
+    const { error: createError } = await supabase.rpc('create_compatibility_results', {
+      invite_id: invite.id,
+    });
+    if (createError) {
+      console.error(`Error creating compatibility results for invite ${invite.id}:`, createError);
+    }
+  }
+}
