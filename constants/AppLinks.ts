@@ -2,7 +2,7 @@
 export const APP_PUBLIC_URL = 'https://dynamic-boba-43fdd9.netlify.app';
 
 /** Where a shared link came from, so visits can be attributed later. */
-export type ShareRef = 'share-aura' | 'share-match';
+export type ShareRef = 'share-aura' | 'share-match' | 'share-daily';
 
 /** The app link with a `?ref=` tag, e.g. https://…/?ref=share-aura */
 export function buildShareUrl(ref: ShareRef): string {

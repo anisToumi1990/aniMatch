@@ -2,7 +2,7 @@ import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useQuiz } from '../../context/QuizContext';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -16,6 +16,13 @@ import { AuraButton } from '@/components/AuraButton';
 import { AURA_IMAGES, AuraImage } from '@/constants/AuraImages';
 import { Colors } from '@/constants/Colors';
 import { transparentHeaderOptions } from '@/constants/Theme';
+import { DailyAuraCard } from '@/components/DailyAuraCard';
+import { useDailyAura } from '@/hooks/useDailyAura';
+import { ShareCardHost } from '@/components/share/ShareCardHost';
+import { DailyAuraShareCard } from '@/components/share/DailyAuraShareCard';
+import { shareCardImage } from '@/lib/share/shareCardImage';
+import { waitForNextPaint } from '@/lib/share/shareCardTypes';
+import { buildShareUrl } from '@/constants/AppLinks';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -28,6 +35,32 @@ export default function HomeScreen() {
 
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [selectedAura, setSelectedAura] = useState<AuraImage | null>(null);
+  const { state: dailyAura, retry: retryDailyAura } = useDailyAura();
+  const shareCardRef = useRef<View>(null);
+  const [isSharingDaily, setIsSharingDaily] = useState(false);
+  const [dailyShareFeedback, setDailyShareFeedback] = useState<{ kind: 'info' | 'error'; text: string } | null>(null);
+
+  async function handleShareDaily() {
+    if (dailyAura.status !== 'ready' || isSharingDaily) return;
+    setIsSharingDaily(true);
+    setDailyShareFeedback(null);
+    try {
+      await waitForNextPaint();
+      if (!shareCardRef.current) throw new Error('Share card is not ready.');
+      const outcome = await shareCardImage(shareCardRef.current, {
+        fileName: 'animatch-today.png',
+        title: "Today's aura",
+        message: `Today's ${dailyAura.aura.name} aura: "${dailyAura.message.message}" What's yours?`,
+        url: buildShareUrl('share-daily'),
+      });
+      if (outcome === 'downloaded') setDailyShareFeedback({ kind: 'info', text: 'Saved as an image. Post it to your story!' });
+    } catch (error) {
+      console.error('Error sharing daily aura:', error);
+      setDailyShareFeedback({ kind: 'error', text: "Couldn't create the image. Try again." });
+    } finally {
+      setIsSharingDaily(false);
+    }
+  }
 
   function handleStartQuiz() {
     if (isQuizComplete) {
@@ -61,6 +94,17 @@ export default function HomeScreen() {
           }}
         />
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.dailyAura}>
+            {/* A future "Today with {name}" pair tip goes inside as a child section. */}
+            <DailyAuraCard
+              state={dailyAura}
+              onRetry={retryDailyAura}
+              onTakeQuiz={() => router.push('/(tabs)/quiz')}
+              onShare={handleShareDaily}
+              isSharing={isSharingDaily}
+              shareFeedback={dailyShareFeedback}
+            />
+          </View>
           <View style={styles.hero}>
             <ThemedText type="title" style={styles.heroTitle}>
               What&apos;s your aura?
@@ -105,6 +149,16 @@ export default function HomeScreen() {
             style={styles.quizButton}
           />
         </ScrollView>
+        {dailyAura.status === 'ready' ? (
+          <ShareCardHost ref={shareCardRef}>
+            <DailyAuraShareCard
+              animalName={dailyAura.aura.name}
+              message={dailyAura.message.message}
+              doText={dailyAura.message.doText}
+              dontText={dailyAura.message.dontText}
+            />
+          </ShareCardHost>
+        ) : null}
         <AccountModal
           visible={showAccountModal}
           onClose={() => setShowAccountModal(false)}
@@ -136,6 +190,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 640,
     alignSelf: 'center',
+  },
+  dailyAura: {
+    marginBottom: 32,
   },
   hero: {
     alignItems: 'center',
