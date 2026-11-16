@@ -7,6 +7,11 @@
  * other clients. If you change a text here, change it there too.
  */
 
+import { FALLBACK_NAME } from '@/lib/names';
+import { getAuraEmoji } from '@/constants/AuraEmoji';
+
+export { AURA_EMOJI } from '@/constants/AuraEmoji';
+
 export type NotificationType = 'invite_received' | 'invite_accepted' | 'match_ready';
 
 /** Values the triggers store in notifications.data. All optional. */
@@ -25,32 +30,6 @@ export interface NotificationData {
 export interface NotificationText {
   title: string;
   body: string;
-}
-
-/** Each aura animal's emoji, keyed by lowercase name. */
-export const AURA_EMOJI: Record<string, string> = {
-  bear: '🐻',
-  cat: '🐱',
-  deer: '🦌',
-  dolphin: '🐬',
-  eagle: '🦅',
-  elephant: '🐘',
-  fox: '🦊',
-  lion: '🦁',
-  otter: '🦦',
-  owl: '🦉',
-  parrot: '🦜',
-  peacock: '🦚',
-  snake: '🐍',
-  unicorn: '🦄',
-  wolf: '🐺',
-};
-
-import { FALLBACK_NAME } from '@/lib/names';
-
-function getAuraEmoji(animal: string | null | undefined): string {
-  if (!animal) return '✨';
-  return AURA_EMOJI[animal.trim().toLowerCase()] ?? '✨';
 }
 
 /** "a Fox", "an Owl" */

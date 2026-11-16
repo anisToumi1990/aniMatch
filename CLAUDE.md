@@ -62,6 +62,11 @@ The Invites tab only lists invite notifications (`invite_id` set) whose invite i
 - Push: store Expo push tokens per user (e.g. a `push_tokens` table), then have an Edge Function or cron send rows `where push_sent_at is null` through the Expo push API and set `push_sent_at`.
 - Email: same pattern with Resend for rows `where email_sent_at is null`, setting `email_sent_at`. Reuse `constants/notificationCopy.ts` for the texts.
 
+## Daily aura
+
+- Home's card reads `daily_aura_messages` / `daily_aura_settings`; day N of the current season shows the Nth active row by `day_index` (`lib/dailyAuraSchedule.ts`, pure, local date, cached per day in `lib/supabase/dailyAura.ts`).
+- Content drop, no app release: add `supabase/content/daily-aura/season-<n>/*.json`, run `node scripts/build-daily-aura-seed.js <n> <migration-file>.sql`, run that SQL, then `update daily_aura_settings set current_season = <n>, season_start_date = '<launch date>'`.
+
 ## Roadmap docs
 
 `plan.md` covers auth, `plan2.md` the quiz, and `plan3.md` invites and compatibility. `plan3.md` describes invite emails and an invitee onboarding flow (sign up → pick relationship type → quiz) that isn't fully built yet.
