@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from './ThemedView';
+import { splitTraits } from '@/lib/traits';
 import { ThemedText } from './ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { AuraAvatar } from './AuraAvatar';
@@ -48,13 +49,6 @@ function reducer(state: State, action: Action): State {
     default:
       return state;
   }
-}
-
-function splitTraits(traits: string): string[] {
-  return traits
-    .split(',')
-    .map(trait => trait.trim())
-    .filter(Boolean);
 }
 
 export function AuraDetailsModal({ aura, onClose }: AuraDetailsModalProps) {

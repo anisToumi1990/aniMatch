@@ -3,12 +3,12 @@ import { Image, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { getAuraImage } from '@/constants/AuraImages';
 
-export type AuraAvatarSize = 'small' | 'medium' | 'large';
+export type AuraAvatarSize = 'small' | 'medium' | 'large' | 'xlarge';
 
 interface AuraAvatarProps {
   /** Animal name, e.g. "Fox" (case-insensitive). Picks the image and aura color. */
   animalName: string;
-  /** small: lists, medium: carousel, large: results / popup. */
+  /** small: lists, medium: carousel, large: results / popup, xlarge: share cards. */
   size?: AuraAvatarSize;
   style?: StyleProp<ViewStyle>;
 }
@@ -26,6 +26,7 @@ const SIZES: Record<AuraAvatarSize, SizeSpec> = {
   small: { core: 44, ringGap: 4, borderWidth: 1 },
   medium: { core: 68, ringGap: 7, borderWidth: 1.5 },
   large: { core: 120, ringGap: 12, borderWidth: 2 },
+  xlarge: { core: 160, ringGap: 16, borderWidth: 2.5 },
 };
 
 /**

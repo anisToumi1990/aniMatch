@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView, Share, Platform, Image, Modal, TextInput, ActivityIndicator, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useQuiz } from '@/context/QuizContext';
 import { useAuth } from '@/context/AuthContext';
@@ -9,17 +10,33 @@ import { AuraAvatar } from '@/components/AuraAvatar';
 import { AuraButton } from '@/components/AuraButton';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { transparentHeaderOptions } from '@/constants/Theme';
-import { captureRef } from 'react-native-view-shot';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from '@/lib/supabase';
+import { getFirstName } from '@/lib/compatibility';
+import { splitTraits } from '@/lib/traits';
+import { InviteModal } from '@/components/InviteModal';
+import { InviteLinkRoute } from '@/components/InviteForm';
+import { ShareCardHost } from '@/components/share/ShareCardHost';
+import { AuraShareCard } from '@/components/share/AuraShareCard';
+import { shareCardImage } from '@/lib/share/shareCardImage';
+import { waitForNextPaint } from '@/lib/share/shareCardTypes';
+import { buildShareUrl } from '@/constants/AppLinks';
 
 type SavedResultStatus = 'idle' | 'loading' | 'loaded' | 'empty' | 'error';
+
+/** Feedback shown under the buttons after sharing. */
+type ShareFeedback = 'downloaded' | 'error' | null;
 
 export default function ResultsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { animalAura: contextAura, resetQuiz, isPreviousResult } = useQuiz();
-  const viewShotRef = useRef(null);
+  const shareCardRef = useRef<View>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<ShareFeedback>(null);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
 
   // The quiz context only has an aura right after the quiz, or once its own
   // load finishes (and opening the quiz tab clears it). After a page reload,
@@ -63,6 +80,28 @@ export default function ResultsScreen() {
       isCancelled = true;
     };
   }, [hasContextAura, userId, reloadCount]);
+
+  // First name for the share card, from profiles.full_name.
+  useEffect(() => {
+    if (!userId) {
+      setFirstName(null);
+      return;
+    }
+    let isCancelled = false;
+    supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (isCancelled) return;
+        if (error) console.error('Error loading profile name:', error);
+        setFirstName(getFirstName(data?.full_name));
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [userId]);
 
   const handleRetryLoad = useCallback(() => setReloadCount(count => count + 1), []);
   const handleStartQuiz = useCallback(() => router.push('/(tabs)/quiz'), [router]);
@@ -130,48 +169,31 @@ export default function ResultsScreen() {
     );
   }
 
-  const handleShare = async () => {
+  async function handleShare() {
+    if (!animalAura || isSharing) return;
+    setIsSharing(true);
+    setShareFeedback(null);
     try {
-      // Create a more attractive sharing message
-      const shareMessage = `🌟 I discovered my Animal Aura is the ${animalAura.name}! 🌟\n\n${animalAura.description}\n\nMy key traits: ${animalAura.traits}\n\n#AniMatch #AnimalAura`;
-      
-      // Try to capture the result card as an image
-      if (viewShotRef.current) {
-        try {
-          // Capture the view as an image using captureRef
-          const uri = await captureRef(viewShotRef, {
-            format: 'png',
-            quality: 0.8,
-          });
-          
-          // Share the image along with text
-          if (Platform.OS === 'ios' || Platform.OS === 'android') {
-            // Use the Share API which works on both platforms
-            await Share.share({
-              message: shareMessage,
-              url: uri, // iOS will use this
-              title: 'My Animal Aura', // Android will use this as title
-            });
-          } else {
-            // Fallback for web and other platforms
-            await Share.share({
-              message: shareMessage,
-            });
-          }
-          return;
-        } catch (error) {
-          console.error('Error capturing or sharing image:', error);
-        }
-      }
-      
-      // Fallback to simple text sharing
-      await Share.share({
-        message: shareMessage,
+      await waitForNextPaint();
+      if (!shareCardRef.current) throw new Error('Share card is not ready.');
+      const outcome = await shareCardImage(shareCardRef.current, {
+        fileName: 'animatch-my-aura.png',
+        title: 'My Animal Aura',
+        message: `My aura is the ${animalAura.name}. What's yours?`,
+        url: buildShareUrl('share-aura'),
       });
+      if (outcome === 'downloaded') setShareFeedback('downloaded');
     } catch (error) {
-      console.error('Error sharing result:', error);
+      console.error('Error sharing aura card:', error);
+      setShareFeedback('error');
+    } finally {
+      setIsSharing(false);
     }
-  };
+  }
+
+  function handleInviteLinkPress(route: InviteLinkRoute) {
+    router.navigate(route);
+  }
 
   const handleRetakeQuiz = () => {
     // Just reset the quiz, which will trigger the directNavigateToQuiz flag
@@ -198,13 +220,12 @@ export default function ResultsScreen() {
             {showWelcomeBack && (
               <View style={styles.welcomeBackBanner}>
                 <ThemedText style={styles.welcomeBackText}>
-                  Welcome back! Here's your previous result.
+                  Welcome back! Here&apos;s your previous result.
                 </ThemedText>
               </View>
             )}
             
-            <View 
-              ref={viewShotRef}
+            <View
               style={[styles.auraCard, { borderColor: withAlpha(auraColor, 0.35) }]}
             >
               <ThemedText type="wordmark" style={styles.cardEyebrow}>YOUR AURA</ThemedText>
@@ -256,16 +277,16 @@ export default function ResultsScreen() {
                   <ThemedText style={styles.sectionTitle}>Key traits</ThemedText>
                 </View>
                 <View style={styles.traitsContainer}>
-                  {animalAura.traits.split(',').map((trait, index) => (
-                    <View 
-                      key={index} 
+                  {splitTraits(animalAura.traits).map((trait, index) => (
+                    <View
+                      key={index}
                       style={[
                         styles.traitBadge, 
                         { borderColor: withAlpha(auraColor, 0.45), backgroundColor: withAlpha(auraColor, 0.1) }
                       ]}
                     >
                       <ThemedText style={[styles.traitText, { color: auraColor }]}>
-                        {trait.trim()}
+                        {trait}
                       </ThemedText>
                     </View>
                   ))}
@@ -280,21 +301,49 @@ export default function ResultsScreen() {
             
             <View style={styles.actionButtons}>
               <AuraButton
-                label="Share result"
+                label="Share my aura"
                 icon="share-outline"
                 onPress={handleShare}
-                style={styles.button}
+                isLoading={isSharing}
+                accessibilityLabel="Share my aura card"
+                style={[styles.button, styles.shareButton, { shadowColor: auraColor }]}
               />
               <AuraButton
-                label="Retake quiz"
-                icon="refresh-outline"
+                label="Invite someone"
+                icon="person-add-outline"
                 variant="secondary"
-                onPress={handleRetakeQuiz}
+                onPress={() => setIsInviteOpen(true)}
                 style={styles.button}
               />
             </View>
+            {shareFeedback ? (
+              <ThemedText
+                style={[styles.shareFeedback, shareFeedback === 'error' && styles.shareFeedbackError]}
+                accessibilityLiveRegion="polite"
+              >
+                {shareFeedback === 'downloaded'
+                  ? 'Your aura card was saved as an image. Post it to your story!'
+                  : "We couldn't create your aura card. Please try again."}
+              </ThemedText>
+            ) : null}
+            <Pressable
+              onPress={handleRetakeQuiz}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.retakeButton, pressed && { opacity: 0.7 }]}
+            >
+              <Ionicons name="refresh-outline" size={16} color={Colors.textSecondary} />
+              <ThemedText type="secondary" style={styles.retakeText}>Retake quiz</ThemedText>
+            </Pressable>
           </View>
         </ScrollView>
+        <ShareCardHost ref={shareCardRef}>
+          <AuraShareCard firstName={firstName} animalName={animalAura.name} traits={animalAura.traits} />
+        </ShareCardHost>
+        <InviteModal
+          visible={isInviteOpen}
+          onClose={() => setIsInviteOpen(false)}
+          onLinkPress={handleInviteLinkPress}
+        />
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -455,12 +504,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 24,
-    marginBottom: 16,
+    marginBottom: 8,
     gap: 12,
   },
   button: {
     flex: 1,
     paddingHorizontal: 12,
+  },
+  // Soft glow in the aura color (shadow* props also render on web).
+  shareButton: {
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 18,
+  },
+  shareFeedback: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    color: Colors.success,
+    marginTop: 4,
+  },
+  shareFeedbackError: {
+    color: Colors.danger,
+  },
+  retakeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  retakeText: {
+    fontSize: 15,
   },
   brandingContainer: {
     marginTop: 8,
