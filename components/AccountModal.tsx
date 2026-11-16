@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Keyboard, TouchableWithoutFeedback, Switch, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, TextInput, Keyboard, TouchableWithoutFeedback, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'expo-router';
@@ -8,45 +8,16 @@ import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Colors, withAlpha } from '@/constants/Colors';
+import { InviteForm, InviteLinkRoute } from './InviteForm';
 
 // The app is dark-only for now ("Aura glow"), so the light/dark toggle is hidden.
 // Flip this back on once light mode exists.
 const SHOW_THEME_TOGGLE = false;
 
-type InviteNoticeKind = 'connected' | 'invitedByMe' | 'invitedMe';
-
-/** Information (not an error) shown when an invite already exists with this person. */
-interface InviteNotice {
-  kind: InviteNoticeKind;
-  /** The other person's full name, or their email if they have no name. */
-  name: string;
-}
-
-interface ExistingInvite {
-  inviter_user_id: string;
-  recipient_user_id: string | null;
-  status: string;
-}
-
-/** Accepted wins over pending; then a pending invite I sent, then one they sent. */
-function getInviteNoticeKind(invites: ExistingInvite[], currentUserId: string): InviteNoticeKind | null {
-  if (invites.some(invite => invite.status === 'accepted')) return 'connected';
-  const pending = invites.filter(invite => invite.status === 'pending');
-  if (pending.some(invite => invite.inviter_user_id === currentUserId)) return 'invitedByMe';
-  if (pending.length > 0) return 'invitedMe';
-  return null;
-}
-
 interface State {
-  email: string;
-  inviteNotice: InviteNotice | null;
   fullName: string;
   isLoading: boolean;
-  hasError: boolean;
-  errorMessage: string;
-  isSuccess: boolean;
   isEditingName: boolean;
-  successMessage: string;
   nameHasError: boolean;
   nameErrorMessage: string;
   nameIsSuccess: boolean;
@@ -54,56 +25,21 @@ interface State {
 }
 
 type Action =
-  | { type: 'SET_EMAIL'; email: string }
   | { type: 'SET_FULL_NAME'; fullName: string }
   | { type: 'SET_EDITING_NAME'; isEditing: boolean }
   | { type: 'SUBMIT_START' }
-  | { type: 'SUBMIT_SUCCESS'; message?: string }
-  | { type: 'SUBMIT_ERROR'; errorMessage: string }
-  | { type: 'SUBMIT_NOTICE'; notice: InviteNotice }
   | { type: 'NAME_SUBMIT_SUCCESS'; message: string }
   | { type: 'NAME_SUBMIT_ERROR'; errorMessage: string }
-  | { type: 'RESET' }
-  | { type: 'RESET_EMAIL' };
+  | { type: 'RESET' };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case 'SET_EMAIL':
-      return { ...state, email: action.email, hasError: false, errorMessage: '', isSuccess: false, successMessage: '', inviteNotice: null };
     case 'SET_FULL_NAME':
       return { ...state, fullName: action.fullName };
     case 'SET_EDITING_NAME':
       return { ...state, isEditingName: action.isEditing };
     case 'SUBMIT_START':
-      return { ...state, isLoading: true, hasError: false, errorMessage: '', isSuccess: false, successMessage: '', inviteNotice: null };
-    case 'SUBMIT_SUCCESS':
-      return { 
-        ...state, 
-        isLoading: false, 
-        isSuccess: true, 
-        hasError: false, 
-        errorMessage: '',
-        successMessage: action.message || 'Operation successful'
-      };
-    case 'SUBMIT_NOTICE':
-      return {
-        ...state,
-        isLoading: false,
-        hasError: false,
-        errorMessage: '',
-        isSuccess: false,
-        successMessage: '',
-        inviteNotice: action.notice,
-      };
-    case 'SUBMIT_ERROR':
-      return { 
-        ...state, 
-        isLoading: false, 
-        hasError: true, 
-        errorMessage: action.errorMessage, 
-        isSuccess: false,
-        successMessage: ''
-      };
+      return { ...state, isLoading: true };
     case 'NAME_SUBMIT_SUCCESS':
       return {
         ...state,
@@ -123,29 +59,17 @@ function reducer(state: State, action: Action): State {
         nameSuccessMessage: ''
       };
     case 'RESET':
-      return { 
-        ...state, 
-        email: '', 
-        isLoading: false, 
-        hasError: false, 
-        errorMessage: '', 
-        isSuccess: false,
-        successMessage: '',
+      return {
+        ...state,
+        isLoading: false,
         nameHasError: false,
         nameErrorMessage: '',
         nameIsSuccess: false,
         nameSuccessMessage: '',
-        inviteNotice: null,
       };
-    case 'RESET_EMAIL':
-      return { ...state, email: '' };
     default:
       return state;
   }
-}
-
-function isValidEmail(email: string): boolean {
-  return /\S+@\S+\.\S+/.test(email);
 }
 
 interface AccountModalProps {
@@ -157,49 +81,33 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [state, dispatch] = React.useReducer(reducer, {
-    email: '',
-    inviteNotice: null,
     fullName: user?.user_metadata?.full_name || '',
     isLoading: false,
-    hasError: false,
-    errorMessage: '',
-    isSuccess: false,
     isEditingName: false,
-    successMessage: '',
     nameHasError: false,
     nameErrorMessage: '',
     nameIsSuccess: false,
     nameSuccessMessage: ''
   });
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const backgroundColor = useThemeColor({}, 'background');
+  // Bumped when the popup closes so the invite form remounts empty.
+  const [inviteFormKey, setInviteFormKey] = useState(0);
   const textColor = useThemeColor({}, 'text');
 
-  // Add timeout refs
-  const messageTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
-  const nameMessageTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const nameMessageTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Cleanup function for timeouts
   const clearMessageTimeouts = () => {
-    if (messageTimeoutRef.current) {
-      clearTimeout(messageTimeoutRef.current);
-    }
     if (nameMessageTimeoutRef.current) {
       clearTimeout(nameMessageTimeoutRef.current);
     }
   };
 
-  // Clear messages after 5 seconds
-  const setMessageTimeout = (type: 'email' | 'name') => {
+  // Clear name messages after 5 seconds
+  const setNameMessageTimeout = () => {
     clearMessageTimeouts();
-    const timeoutRef = type === 'email' ? messageTimeoutRef : nameMessageTimeoutRef;
-    timeoutRef.current = setTimeout(() => {
-      if (type === 'email') {
-        dispatch({ type: 'RESET' });
-      } else {
-        dispatch({ type: 'NAME_SUBMIT_SUCCESS', message: ' ' });
-        dispatch({ type: 'NAME_SUBMIT_ERROR', errorMessage: ' ' });
-      }
+    nameMessageTimeoutRef.current = setTimeout(() => {
+      dispatch({ type: 'NAME_SUBMIT_SUCCESS', message: ' ' });
+      dispatch({ type: 'NAME_SUBMIT_ERROR', errorMessage: ' ' });
     }, 5000);
   };
 
@@ -209,10 +117,6 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
       clearMessageTimeouts();
     };
   }, []);
-
-  function handleEmailChange(text: string) {
-    dispatch({ type: 'SET_EMAIL', email: text });
-  }
 
   function handleFullNameChange(text: string) {
     dispatch({ type: 'SET_FULL_NAME', fullName: text });
@@ -224,7 +128,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
     // Validate name is not empty
     if (!state.fullName.trim()) {
       dispatch({ type: 'NAME_SUBMIT_ERROR', errorMessage: 'Name cannot be empty' });
-      setMessageTimeout('name');
+      setNameMessageTimeout();
       return;
     }
     
@@ -247,160 +151,24 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
       
       dispatch({ type: 'SET_EDITING_NAME', isEditing: false });
       dispatch({ type: 'NAME_SUBMIT_SUCCESS', message: 'Name updated successfully' });
-      setMessageTimeout('name');
+      setNameMessageTimeout();
     } catch (err: any) {
       dispatch({ type: 'NAME_SUBMIT_ERROR', errorMessage: err.message || 'Failed to update name' });
-      setMessageTimeout('name');
-    }
-  }
-
-  async function handleInvitePress() {
-    dispatch({ type: 'RESET' });
-    if (!isValidEmail(state.email)) {
-      dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Please enter a valid email address.' });
-      setMessageTimeout('email');
-      return;
-    }
-    if (!user?.id) {
-      dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You must be logged in to send an invite.' });
-      setMessageTimeout('email');
-      return;
-    }
-    if (state.email.toLowerCase() === user.email?.toLowerCase()) {
-      dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You cannot send an invitation to your own email address.' });
-      setMessageTimeout('email');
-      return;
-    }
-    
-    // Check if the email belongs to an existing user
-    const { data: existingUser, error: userCheckError } = await supabase
-      .from('profiles')
-      .select('id, email, full_name')
-      .eq('email', state.email.toLowerCase())
-      .single();
-
-    if (userCheckError && userCheckError.code !== 'PGRST116') {
-      dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing users.' });
-      setMessageTimeout('email');
-      return;
-    }
-
-    if (existingUser?.id) {
-      // Check for any invite in either direction with status 'pending' or 'accepted'
-      const { data: bidirectionalInvites, error: bidirectionalError } = await supabase
-        .from('invites')
-        .select('id, inviter_user_id, recipient_user_id, status')
-        .or(`and(inviter_user_id.eq.${user.id},recipient_user_id.eq.${existingUser.id}),and(inviter_user_id.eq.${existingUser.id},recipient_user_id.eq.${user.id})`)
-        .in('status', ['pending', 'accepted']);
-
-      if (bidirectionalError) {
-        dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing invitations.' });
-        setMessageTimeout('email');
-        return;
-      }
-
-      if (bidirectionalInvites && bidirectionalInvites.length > 0) {
-        const noticeKind = getInviteNoticeKind(bidirectionalInvites, user.id);
-        if (noticeKind) {
-          const otherName = existingUser.full_name?.trim() || existingUser.email || state.email;
-          dispatch({ type: 'SUBMIT_NOTICE', notice: { kind: noticeKind, name: otherName } });
-          setMessageTimeout('email');
-          return;
-        }
-        // The query only returns pending/accepted invites, so this is a fallback.
-        dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'An invitation already exists between you and this user.' });
-        setMessageTimeout('email');
-        return;
-      }
-    } else {
-      // If recipient is not registered, only check for invites sent to this email
-      const { data: existingInvite, error: checkError } = await supabase
-        .from('invites')
-        .select('id')
-        .eq('inviter_user_id', user.id)
-        .eq('recipient_email', state.email.toLowerCase())
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'Failed to check existing invitations.' });
-        setMessageTimeout('email');
-        return;
-      }
-
-      if (existingInvite) {
-        dispatch({ type: 'SUBMIT_ERROR', errorMessage: 'You have already sent an invitation to this email address.' });
-        setMessageTimeout('email');
-        return;
-      }
-    }
-
-    dispatch({ type: 'SUBMIT_START' });
-    try {
-      const { error } = await supabase.from('invites').insert({
-        inviter_user_id: user.id,
-        recipient_email: state.email.toLowerCase(),
-        recipient_user_id: existingUser?.id || null,
-        status: 'pending',
-      });
-      Keyboard.dismiss();
-      if (error) {
-        dispatch({ type: 'SUBMIT_ERROR', errorMessage: error.message || 'Failed to send invite.' });
-        setMessageTimeout('email');
-        return;
-      }
-      dispatch({ type: 'SUBMIT_SUCCESS', message: 'Invitation sent successfully!' });
-      setMessageTimeout('email');
-    } catch (err: any) {
-      Keyboard.dismiss();
-      dispatch({ type: 'SUBMIT_ERROR', errorMessage: err.message || 'Failed to send invite.' });
-      setMessageTimeout('email');
+      setNameMessageTimeout();
     }
   }
 
   // Close the popup first, then switch tabs.
-  function handleOpenTab(route: '/(tabs)/compatibility' | '/(tabs)/notifications') {
-    clearMessageTimeouts();
-    onClose();
-    dispatch({ type: 'RESET' });
+  function handleOpenTab(route: InviteLinkRoute) {
+    handleClose();
     router.navigate(route);
   }
 
-  function renderInviteNotice(notice: InviteNotice) {
-    if (notice.kind === 'connected') {
-      return (
-        <ThemedText style={styles.noticeText} accessibilityLiveRegion="polite">
-          You&apos;re already connected with {notice.name}. See your match in{' '}
-          <ThemedText
-            style={styles.noticeLink}
-            onPress={() => handleOpenTab('/(tabs)/compatibility')}
-            accessibilityRole="link"
-          >
-            Compatibility
-          </ThemedText>
-          .
-        </ThemedText>
-      );
-    }
-    if (notice.kind === 'invitedByMe') {
-      return (
-        <ThemedText style={styles.noticeText} accessibilityLiveRegion="polite">
-          You already invited {notice.name}. Waiting for them to accept.
-        </ThemedText>
-      );
-    }
-    return (
-      <ThemedText style={styles.noticeText} accessibilityLiveRegion="polite">
-        {notice.name} already invited you. Check your{' '}
-        <ThemedText
-          style={styles.noticeLink}
-          onPress={() => handleOpenTab('/(tabs)/notifications')}
-          accessibilityRole="link"
-        >
-          notifications
-        </ThemedText>
-        .
-      </ThemedText>
-    );
+  function handleClose() {
+    clearMessageTimeouts();
+    onClose();
+    dispatch({ type: 'RESET' });
+    setInviteFormKey(key => key + 1);
   }
 
   const handleSignOut = async () => {
@@ -421,10 +189,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={() => {
-        onClose();
-        dispatch({ type: 'RESET' });
-      }}
+      onRequestClose={handleClose}
     >
       <TouchableWithoutFeedback
         onPress={event => {
@@ -435,8 +200,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
             Keyboard.dismiss();
           }
           if (event.target === event.currentTarget) {
-            onClose();
-            dispatch({ type: 'RESET' });
+            handleClose();
           }
         }}
         accessible={false}
@@ -445,10 +209,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
           <ThemedView style={[styles.modalContent, { backgroundColor: Colors.card }]}>
             <TouchableOpacity
               style={styles.modalCloseButton}
-              onPress={() => {
-                onClose();
-                dispatch({ type: 'RESET' });
-              }}
+              onPress={handleClose}
               accessibilityRole="button"
               accessibilityLabel="Close account modal"
             >
@@ -544,44 +305,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
 
             <View style={styles.section}>
               <ThemedText style={styles.sectionTitle}>Invite friends</ThemedText>
-              <View style={styles.inviteContainer}>
-                <TextInput
-                  style={[styles.input, { color: textColor }]}
-                  placeholder="Enter email address"
-                  placeholderTextColor={Colors.textMuted}
-                  keyboardAppearance="dark"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="email-address"
-                  value={state.email}
-                  onChangeText={handleEmailChange}
-                  accessible
-                  accessibilityLabel="Email address input"
-                  returnKeyType="done"
-                />
-                <TouchableOpacity
-                  style={styles.inviteButton}
-                  onPress={handleInvitePress}
-                  disabled={state.isLoading}
-                  accessibilityRole="button"
-                  accessibilityLabel="Send invite"
-                >
-                  <Ionicons name="send" size={20} color={Colors.onPrimary} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.messageContainer}>
-                {state.hasError && (
-                  <ThemedText style={styles.errorText} accessibilityRole="alert">
-                    {state.errorMessage}
-                  </ThemedText>
-                )}
-                {state.inviteNotice && renderInviteNotice(state.inviteNotice)}
-                {state.isSuccess && (
-                  <ThemedText style={styles.successText}>
-                    {state.successMessage}
-                  </ThemedText>
-                )}
-              </View>
+              <InviteForm key={inviteFormKey} onLinkPress={handleOpenTab} />
             </View>
 
             <TouchableOpacity
@@ -716,26 +440,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontWeight: '500',
   },
-  inviteContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.cardRaised,
-    borderRadius: 999,
-    paddingHorizontal: 18,
-    padding: 12,
-    fontSize: 16,
-    marginRight: 8,
-  },
-  inviteButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 999,
-    padding: 12,
-  },
   messageContainer: {
     minHeight: 24,
     marginTop: 4,
@@ -744,18 +448,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: Colors.danger,
     fontSize: 14,
-  },
-  noticeText: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  noticeLink: {
-    color: Colors.text,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '500',
-    textDecorationLine: 'underline',
   },
   successText: {
     color: Colors.success,
