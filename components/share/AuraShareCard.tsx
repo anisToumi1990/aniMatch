@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { AuraAvatar } from '@/components/AuraAvatar';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
+import { splitTraits } from '@/lib/traits';
 import { ShareCardFrame } from './ShareCardFrame';
 
 interface AuraShareCardProps {
@@ -12,13 +13,9 @@ interface AuraShareCardProps {
   traits: string;
 }
 
-/** Up to 3 trimmed, non-empty traits. */
+/** The first 3 traits, capitalized. */
 function getTopTraits(traits: string): string[] {
-  return traits
-    .split(',')
-    .map(trait => trait.trim())
-    .filter(Boolean)
-    .slice(0, 3);
+  return splitTraits(traits).slice(0, 3);
 }
 
 /** "My aura" story card. */

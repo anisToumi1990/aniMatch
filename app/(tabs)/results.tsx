@@ -14,6 +14,7 @@ import { ScreenBackground } from '@/components/ScreenBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
 import { getFirstName } from '@/lib/compatibility';
+import { splitTraits } from '@/lib/traits';
 import { InviteModal } from '@/components/InviteModal';
 import { InviteLinkRoute } from '@/components/InviteForm';
 import { ShareCardHost } from '@/components/share/ShareCardHost';
@@ -276,16 +277,16 @@ export default function ResultsScreen() {
                   <ThemedText style={styles.sectionTitle}>Key traits</ThemedText>
                 </View>
                 <View style={styles.traitsContainer}>
-                  {animalAura.traits.split(',').map((trait, index) => (
-                    <View 
-                      key={index} 
+                  {splitTraits(animalAura.traits).map((trait, index) => (
+                    <View
+                      key={index}
                       style={[
                         styles.traitBadge, 
                         { borderColor: withAlpha(auraColor, 0.45), backgroundColor: withAlpha(auraColor, 0.1) }
                       ]}
                     >
                       <ThemedText style={[styles.traitText, { color: auraColor }]}>
-                        {trait.trim()}
+                        {trait}
                       </ThemedText>
                     </View>
                   ))}
