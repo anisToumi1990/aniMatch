@@ -12,6 +12,9 @@ import { AuraAvatar } from '@/components/AuraAvatar';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { Colors, MatchLevelColors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { transparentHeaderOptions } from '@/constants/Theme';
+import { AuraButton } from '@/components/AuraButton';
+import { InviteModal } from '@/components/InviteModal';
+import { InviteLinkRoute } from '@/components/InviteForm';
 
 /** "business_partner" -> "Business partner" */
 function formatRelationshipType(relationshipType: string): string {
@@ -90,7 +93,14 @@ export default function CompatibilityScreen() {
   const [auraB, setAuraB] = useState<AnimalAura | null>(null);
   const [isAuraLoading, setIsAuraLoading] = useState(false);
   const [auraNamesById, setAuraNamesById] = useState<Record<number, string>>({});
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
   const router = useRouter();
+
+  // "See your match in Compatibility" just closes the popup: we're already here.
+  function handleInviteLinkPress(route: InviteLinkRoute) {
+    if (route === '/(tabs)/compatibility') return;
+    router.navigate(route);
+  }
 
   // Aura names for the avatars on each card (read-only, loaded once).
   useEffect(() => {
@@ -382,6 +392,14 @@ export default function CompatibilityScreen() {
           renderDetailView(selectedResult)
         ) : (
           <View style={styles.container}>
+            <View style={styles.inviteBar}>
+              <AuraButton
+                label="Invite someone"
+                icon="person-add"
+                onPress={() => setIsInviteOpen(true)}
+                style={styles.inviteButton}
+              />
+            </View>
             {isLoading ? (
               <View style={styles.centerContainer}>
                 <ActivityIndicator size="large" color={Colors.textSecondary} />
@@ -391,12 +409,12 @@ export default function CompatibilityScreen() {
                 <ThemedText style={styles.errorText}>{error}</ThemedText>
               </View>
             ) : compatibilityResults.length === 0 ? (
-              <View style={styles.centerContainer}>
+              <View style={styles.emptyContainer}>
                 <ThemedText type="subtitle" style={styles.noResultsTitle}>
-                  No compatibility results
+                  No matches yet
                 </ThemedText>
                 <ThemedText type="secondary" style={styles.noResultsText}>
-                  Invite someone to take the quiz or take the quiz yourself!
+                  Invite someone to see how your auras match. Once they accept and you&apos;ve both taken the quiz, your match shows up here.
                 </ThemedText>
               </View>
             ) : (
@@ -409,6 +427,11 @@ export default function CompatibilityScreen() {
             )}
           </View>
         )}
+        <InviteModal
+          visible={isInviteOpen}
+          onClose={() => setIsInviteOpen(false)}
+          onLinkPress={handleInviteLinkPress}
+        />
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -425,9 +448,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
+  inviteBar: {
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  // Primary pill with a soft light glow (shadow* props also render on web).
+  inviteButton: {
+    alignSelf: 'stretch',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.28,
+    shadowRadius: 18,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingTop: 48,
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
+  },
   listContainer: {
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 24,
     width: '100%',
     maxWidth: 640,
     alignSelf: 'center',
