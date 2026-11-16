@@ -1,4 +1,5 @@
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
@@ -12,11 +13,11 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { getDisplayName } from '@/lib/names';
 import { AuraDetailsModal } from '@/components/AuraDetailsModal';
 import { AuraAvatar } from '@/components/AuraAvatar';
-import { AuraButton } from '@/components/AuraButton';
 import { AURA_IMAGES, AuraImage } from '@/constants/AuraImages';
 import { Colors } from '@/constants/Colors';
 import { transparentHeaderOptions } from '@/constants/Theme';
 import { DailyAuraCard } from '@/components/DailyAuraCard';
+import { AuraQuizHero } from '@/components/AuraQuizHero';
 import { useDailyAura } from '@/hooks/useDailyAura';
 import { ShareCardHost } from '@/components/share/ShareCardHost';
 import { DailyAuraShareCard } from '@/components/share/DailyAuraShareCard';
@@ -27,7 +28,7 @@ import { buildShareUrl } from '@/constants/AppLinks';
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const { isQuizComplete } = useQuiz();
+  const { resetQuiz } = useQuiz();
 
   // Get the user's full name from user metadata
   const fullName = getDisplayName(user?.user_metadata?.full_name, user?.email);
@@ -62,13 +63,11 @@ export default function HomeScreen() {
     }
   }
 
-  function handleStartQuiz() {
-    if (isQuizComplete) {
-      router.push('/(tabs)/results');
-      return;
-    }
-    router.push('/(tabs)/quiz');
-  }
+  // Retake link only when we know the user has an aura (not while loading or on an unknown error).
+  const hasAura =
+    dailyAura.status === 'ready' ||
+    dailyAura.status === 'empty' ||
+    (dailyAura.status === 'error' && dailyAura.aura !== null);
 
   return (
     <ScreenBackground>
@@ -94,25 +93,20 @@ export default function HomeScreen() {
           }}
         />
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.dailyAura}>
-            {/* A future "Today with {name}" pair tip goes inside as a child section. */}
-            <DailyAuraCard
-              state={dailyAura}
-              onRetry={retryDailyAura}
-              onTakeQuiz={() => router.push('/(tabs)/quiz')}
-              onShare={handleShareDaily}
-              isSharing={isSharingDaily}
-              shareFeedback={dailyShareFeedback}
-            />
-          </View>
-          <View style={styles.hero}>
-            <ThemedText type="title" style={styles.heroTitle}>
-              What&apos;s your aura?
-            </ThemedText>
-            <ThemedText type="secondary" style={styles.heroSubtitle}>
-              Take a quick 10-question quiz to find the animal that reflects your personality, and see how you connect with others.
-            </ThemedText>
-          </View>
+          {dailyAura.status === 'locked' ? (
+            <AuraQuizHero onTakeQuiz={() => router.push('/(tabs)/quiz')} />
+          ) : (
+            <View style={styles.dailyAura}>
+              {/* A future "Today with {name}" pair tip goes inside as a child section. */}
+              <DailyAuraCard
+                state={dailyAura}
+                onRetry={retryDailyAura}
+                onShare={handleShareDaily}
+                isSharing={isSharingDaily}
+                shareFeedback={dailyShareFeedback}
+              />
+            </View>
+          )}
 
           <View style={styles.carouselCard}>
             <View style={styles.carouselHeader}>
@@ -140,14 +134,16 @@ export default function HomeScreen() {
             </ScrollView>
           </View>
 
-          <AuraButton
-            label="Start the quiz"
-            onPress={handleStartQuiz}
-            size="large"
-            icon="arrow-forward"
-            iconPosition="right"
-            style={styles.quizButton}
-          />
+          {hasAura ? (
+            <Pressable
+              onPress={resetQuiz}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.retakeLink, pressed && { opacity: 0.7 }]}
+            >
+              <Ionicons name="refresh-outline" size={15} color={Colors.textMuted} />
+              <ThemedText type="muted" style={styles.retakeText}>Retake the quiz</ThemedText>
+            </Pressable>
+          ) : null}
         </ScrollView>
         {dailyAura.status === 'ready' ? (
           <ShareCardHost ref={shareCardRef}>
@@ -194,20 +190,6 @@ const styles = StyleSheet.create({
   dailyAura: {
     marginBottom: 32,
   },
-  hero: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  heroTitle: {
-    fontSize: 36,
-    lineHeight: 44,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  heroSubtitle: {
-    textAlign: 'center',
-    maxWidth: 420,
-  },
   carouselCard: {
     backgroundColor: Colors.card,
     borderColor: Colors.border,
@@ -251,8 +233,16 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '500',
   },
-  quizButton: {
+  retakeLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'center',
-    minWidth: 260,
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  retakeText: {
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });

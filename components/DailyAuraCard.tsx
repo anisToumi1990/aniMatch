@@ -3,7 +3,6 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { AuraAvatar } from '@/components/AuraAvatar';
-import { AuraButton } from '@/components/AuraButton';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { getAuraEmoji } from '@/constants/AuraEmoji';
 import { DailyAuraState } from '@/hooks/useDailyAura';
@@ -11,7 +10,6 @@ import { DailyAuraState } from '@/hooks/useDailyAura';
 interface DailyAuraCardProps {
   state: DailyAuraState;
   onRetry: () => void;
-  onTakeQuiz: () => void;
   /** Omit to hide the share button. */
   onShare?: () => void;
   isSharing?: boolean;
@@ -25,19 +23,9 @@ interface DailyAuraCardProps {
 }
 
 /** Home's daily aura card, in the Aura glow style. */
-export function DailyAuraCard({ state, onRetry, onTakeQuiz, onShare, isSharing = false, shareFeedback, children }: DailyAuraCardProps) {
-  if (state.status === 'locked') {
-    return (
-      <View style={[styles.card, styles.lockedCard]}>
-        <View style={styles.lockIcon}>
-          <Ionicons name="lock-closed" size={20} color={Colors.textSecondary} />
-        </View>
-        <ThemedText style={styles.lockedTitle}>Your daily aura is locked 🔒</ThemedText>
-        <ThemedText type="secondary" style={styles.lockedText}>Take the quiz to unlock it.</ThemedText>
-        <AuraButton label="Take the quiz" icon="arrow-forward" iconPosition="right" onPress={onTakeQuiz} style={styles.lockedButton} />
-      </View>
-    );
-  }
+export function DailyAuraCard({ state, onRetry, onShare, isSharing = false, shareFeedback, children }: DailyAuraCardProps) {
+  // Users without an aura see AuraQuizHero instead (hero + locked state in one block).
+  if (state.status === 'locked') return null;
 
   const aura = state.status === 'loading' ? null : state.aura;
   const auraColor = aura ? getAuraColor(aura.name) : Colors.textMuted;
@@ -304,34 +292,5 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
-  },
-  lockedCard: {
-    alignItems: 'center',
-    paddingVertical: 28,
-  },
-  lockIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.cardRaised,
-    marginBottom: 14,
-  },
-  lockedTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  lockedText: {
-    textAlign: 'center',
-    marginBottom: 18,
-  },
-  lockedButton: {
-    minWidth: 200,
   },
 });
