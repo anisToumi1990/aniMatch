@@ -13,7 +13,7 @@ import { ScreenBackground } from '@/components/ScreenBackground';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { formatRelationshipType, getMatchLevel } from '@/lib/compatibility';
 import { getDisplayName, getFirstName } from '@/lib/names';
-import { ShareCardHost } from '@/components/share/ShareCardHost';
+import { ShareCardHost, ShareCardRef } from '@/components/share/ShareCardHost';
 import { MatchShareCard } from '@/components/share/MatchShareCard';
 import { shareCardImage } from '@/lib/share/shareCardImage';
 import { waitForNextPaint } from '@/lib/share/shareCardTypes';
@@ -89,7 +89,7 @@ export default function CompatibilityScreen() {
   const [shareTarget, setShareTarget] = useState<CompatibilityResult | null>(null);
   const [sharingId, setSharingId] = useState<string | null>(null);
   const [shareToast, setShareToast] = useState<string | null>(null);
-  const shareCardRef = useRef<View>(null);
+  const shareCardRef = useRef<ShareCardRef>(null);
   const shareToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const router = useRouter();
   // Set when another screen (e.g. Home's pair tips) opens a specific match.

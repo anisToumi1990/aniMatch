@@ -1,5 +1,5 @@
 import html2canvas from 'html2canvas';
-import { View } from 'react-native';
+import type { ShareCardRef } from '@/components/share/ShareCardHost';
 import { SHARE_CARD_EXPORT_WIDTH } from '@/components/share/ShareCardFrame';
 import { ShareCardImageOptions, ShareCardOutcome } from './shareCardTypes';
 
@@ -24,7 +24,7 @@ function downloadBlob(blob: Blob, fileName: string) {
  * Web: renders the card to a 1080px-wide PNG. Uses the Web Share API with the
  * file when the browser can share files, otherwise downloads the PNG.
  */
-export async function shareCardImage(view: View, options: ShareCardImageOptions): Promise<ShareCardOutcome> {
+export async function shareCardImage(view: ShareCardRef, options: ShareCardImageOptions): Promise<ShareCardOutcome> {
   // On web, a react-native-web View ref is the DOM element.
   const element = view as unknown as HTMLElement;
   const canvas = await html2canvas(element, {

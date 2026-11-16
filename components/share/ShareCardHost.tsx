@@ -10,7 +10,10 @@ interface ShareCardHostProps {
  * Renders a share card off screen so it can be captured as an image without
  * being visible. The ref points at the card itself.
  */
-export const ShareCardHost = React.forwardRef<View, ShareCardHostProps>(function ShareCardHost({ children }, ref) {
+/** Ref to the captured card (React Native 0.88 refs use the instance type, not the View component). */
+export type ShareCardRef = React.ComponentRef<typeof View>;
+
+export const ShareCardHost = React.forwardRef<ShareCardRef, ShareCardHostProps>(function ShareCardHost({ children }, ref) {
   return (
     <View
       style={styles.host}

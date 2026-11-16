@@ -1,4 +1,5 @@
-import { Share, View } from 'react-native';
+import { Share } from 'react-native';
+import type { ShareCardRef } from '@/components/share/ShareCardHost';
 import { captureRef } from 'react-native-view-shot';
 import { ShareCardImageOptions, ShareCardOutcome } from './shareCardTypes';
 
@@ -6,7 +7,7 @@ import { ShareCardImageOptions, ShareCardOutcome } from './shareCardTypes';
  * Native (iOS): captures the card as a PNG and opens the share sheet with the
  * image, the message and the app link.
  */
-export async function shareCardImage(view: View, options: ShareCardImageOptions): Promise<ShareCardOutcome> {
+export async function shareCardImage(view: ShareCardRef, options: ShareCardImageOptions): Promise<ShareCardOutcome> {
   const uri = await captureRef(view, {
     format: 'png',
     quality: 1,
