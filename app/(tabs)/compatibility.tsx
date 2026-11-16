@@ -11,7 +11,8 @@ import { useRouter } from 'expo-router';
 import { AuraAvatar } from '@/components/AuraAvatar';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
-import { formatRelationshipType, getFirstName, getMatchLevel } from '@/lib/compatibility';
+import { formatRelationshipType, getMatchLevel } from '@/lib/compatibility';
+import { getDisplayName, getFirstName } from '@/lib/names';
 import { ShareCardHost } from '@/components/share/ShareCardHost';
 import { MatchShareCard } from '@/components/share/MatchShareCard';
 import { shareCardImage } from '@/lib/share/shareCardImage';
@@ -20,6 +21,7 @@ import { buildShareUrl } from '@/constants/AppLinks';
 import { transparentHeaderOptions } from '@/constants/Theme';
 import { AuraButton } from '@/components/AuraButton';
 import { InviteModal } from '@/components/InviteModal';
+import { NotificationBell } from '@/components/NotificationBell';
 import { InviteLinkRoute } from '@/components/InviteForm';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -45,11 +47,13 @@ interface CompatibilityResult {
   relationship_type: 'lover' | 'business_partner' | 'family';
   created_at: string;
   user_a: {
-    full_name: string;
-  };
+    full_name: string | null;
+    email: string | null;
+  } | null;
   user_b: {
-    full_name: string;
-  };
+    full_name: string | null;
+    email: string | null;
+  } | null;
 }
 
 interface CompatibilityInsightTemplate {
@@ -136,8 +140,8 @@ export default function CompatibilityScreen() {
         .from('compatibility_results')
         .select(`
           *,
-          user_a:user_a_id(full_name),
-          user_b:user_b_id(full_name)
+          user_a:user_a_id(full_name, email),
+          user_b:user_b_id(full_name, email)
         `)
         .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`);
       if (error) throw error;
@@ -170,22 +174,18 @@ export default function CompatibilityScreen() {
   }, [user?.id, fetchCompatibilityResults]);
 
   const getOtherUserName = (result: CompatibilityResult) => {
-    if (!user?.id) return 'Unknown User';
-    
-    if (result.user_a_id === user.id) {
-      return result.user_b?.full_name || 'Unknown User';
-    }
-    return result.user_a?.full_name || 'Unknown User';
+    const other = result.user_a_id === user?.id ? result.user_b : result.user_a;
+    return getDisplayName(other?.full_name, other?.email);
   };
 
   /** First names and auras for the share card, with the current user first. */
   function getShareCardProps(result: CompatibilityResult) {
     const isCurrentUserA = user?.id === result.user_a_id;
-    const myName = isCurrentUserA ? result.user_a?.full_name : result.user_b?.full_name;
-    const otherName = isCurrentUserA ? result.user_b?.full_name : result.user_a?.full_name;
+    const me = isCurrentUserA ? result.user_a : result.user_b;
+    const other = isCurrentUserA ? result.user_b : result.user_a;
     return {
-      nameA: getFirstName(myName) ?? 'Me',
-      nameB: getFirstName(otherName) ?? 'Friend',
+      nameA: getFirstName(me?.full_name, me?.email ?? user?.email),
+      nameB: getFirstName(other?.full_name, other?.email),
       animalA: auraNamesById[isCurrentUserA ? result.user_a_aura_id : result.user_b_aura_id] ?? '',
       animalB: auraNamesById[isCurrentUserA ? result.user_b_aura_id : result.user_a_aura_id] ?? '',
       score: result.compatibility_score,
@@ -448,7 +448,12 @@ export default function CompatibilityScreen() {
                 <Ionicons name="arrow-back" size={24} color={Colors.text} />
               </Pressable>
             ) : null,
-            headerRight: () => selectedResult ? renderShareButton(selectedResult, styles.headerShareButton) : null,
+            headerRight: () => (
+              <View style={styles.headerActions}>
+                {selectedResult ? renderShareButton(selectedResult) : null}
+                <NotificationBell />
+              </View>
+            ),
           }}
         />
         {selectedResult ? (
@@ -521,12 +526,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
+  // Fixed above the list. The bottom padding keeps the button's glow out of the
+  // list's scroll area, so cards scroll out of view below it instead of under it.
   inviteBar: {
     width: '100%',
     maxWidth: 640,
     alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 40,
+    paddingBottom: 16,
+    backgroundColor: Colors.background,
+    zIndex: 1,
   },
   // Primary pill with a soft light glow (shadow* props also render on web).
   inviteButton: {
@@ -539,14 +549,14 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     paddingHorizontal: 32,
-    paddingTop: 48,
+    paddingTop: 32,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
   },
   listContainer: {
     padding: 20,
-    paddingTop: 24,
+    paddingTop: 8,
     width: '100%',
     maxWidth: 640,
     alignSelf: 'center',
@@ -659,7 +669,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardRaised,
     marginRight: 8,
   },
-  headerShareButton: {
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginRight: 16,
   },
   toast: {

@@ -8,6 +8,8 @@ import { useQuiz } from '../../context/QuizContext';
 import { ThemedText } from '@/components/ThemedText';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { AccountModal } from '@/components/AccountModal';
+import { NotificationBell } from '@/components/NotificationBell';
+import { getDisplayName } from '@/lib/names';
 import { AuraDetailsModal } from '@/components/AuraDetailsModal';
 import { AuraAvatar } from '@/components/AuraAvatar';
 import { AuraButton } from '@/components/AuraButton';
@@ -21,7 +23,7 @@ export default function HomeScreen() {
   const { isQuizComplete } = useQuiz();
 
   // Get the user's full name from user metadata
-  const fullName = user?.user_metadata?.full_name || user?.email || 'User';
+  const fullName = getDisplayName(user?.user_metadata?.full_name, user?.email);
   const userInitial = fullName.charAt(0).toUpperCase();
 
   const [showAccountModal, setShowAccountModal] = useState(false);
@@ -44,14 +46,17 @@ export default function HomeScreen() {
             title: 'AniMatch',
             headerTitle: () => <ThemedText type="wordmark">ANIMATCH</ThemedText>,
             headerRight: () => (
-              <TouchableOpacity
-                style={styles.accountButton}
-                onPress={() => setShowAccountModal(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Open account menu"
-              >
-                <ThemedText style={styles.accountInitial}>{userInitial}</ThemedText>
-              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                <NotificationBell />
+                <TouchableOpacity
+                  style={styles.accountButton}
+                  onPress={() => setShowAccountModal(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open account menu"
+                >
+                  <ThemedText style={styles.accountInitial}>{userInitial}</ThemedText>
+                </TouchableOpacity>
+              </View>
             ),
           }}
         />
@@ -114,6 +119,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   container: {
     flex: 1,
     paddingTop: 60,
