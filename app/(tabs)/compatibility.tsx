@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator, Pressable, ScrollView } from 'react-native';
 import { Stack } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -10,17 +10,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { AuraAvatar } from '@/components/AuraAvatar';
 import { ScreenBackground } from '@/components/ScreenBackground';
-import { Colors, MatchLevelColors, getAuraColor, withAlpha } from '@/constants/Colors';
+import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
+import { formatRelationshipType, getFirstName, getMatchLevel } from '@/lib/compatibility';
+import { ShareCardHost } from '@/components/share/ShareCardHost';
+import { MatchShareCard } from '@/components/share/MatchShareCard';
+import { shareCardImage } from '@/lib/share/shareCardImage';
+import { waitForNextPaint } from '@/lib/share/shareCardTypes';
+import { buildShareUrl } from '@/constants/AppLinks';
 import { transparentHeaderOptions } from '@/constants/Theme';
 import { AuraButton } from '@/components/AuraButton';
 import { InviteModal } from '@/components/InviteModal';
 import { InviteLinkRoute } from '@/components/InviteForm';
-
-/** "business_partner" -> "Business partner" */
-function formatRelationshipType(relationshipType: string): string {
-  const words = relationshipType.replace(/_/g, ' ');
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -33,18 +33,6 @@ const RELATIONSHIP_ICONS: Record<string, IoniconName> = {
 
 function getRelationshipIcon(relationshipType: string): IoniconName {
   return RELATIONSHIP_ICONS[relationshipType] ?? 'people';
-}
-
-interface MatchLevel {
-  label: string;
-  color: string;
-}
-
-/** 75-100: strong, 50-74: good, under 50: needs effort. */
-function getMatchLevel(score: number): MatchLevel {
-  if (score >= 75) return { label: 'Strong match', color: MatchLevelColors.strong };
-  if (score >= 50) return { label: 'Good match', color: MatchLevelColors.good };
-  return { label: 'Needs effort', color: MatchLevelColors.needsEffort };
 }
 
 interface CompatibilityResult {
@@ -94,7 +82,20 @@ export default function CompatibilityScreen() {
   const [isAuraLoading, setIsAuraLoading] = useState(false);
   const [auraNamesById, setAuraNamesById] = useState<Record<number, string>>({});
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [shareTarget, setShareTarget] = useState<CompatibilityResult | null>(null);
+  const [sharingId, setSharingId] = useState<string | null>(null);
+  const [shareToast, setShareToast] = useState<string | null>(null);
+  const shareCardRef = useRef<View>(null);
+  const shareToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const router = useRouter();
+
+  useEffect(() => () => clearTimeout(shareToastTimeoutRef.current), []);
+
+  function showShareToast(message: string) {
+    clearTimeout(shareToastTimeoutRef.current);
+    setShareToast(message);
+    shareToastTimeoutRef.current = setTimeout(() => setShareToast(null), 4000);
+  }
 
   // "See your match in Compatibility" just closes the popup: we're already here.
   function handleInviteLinkPress(route: InviteLinkRoute) {
@@ -176,6 +177,66 @@ export default function CompatibilityScreen() {
     }
     return result.user_a?.full_name || 'Unknown User';
   };
+
+  /** First names and auras for the share card, with the current user first. */
+  function getShareCardProps(result: CompatibilityResult) {
+    const isCurrentUserA = user?.id === result.user_a_id;
+    const myName = isCurrentUserA ? result.user_a?.full_name : result.user_b?.full_name;
+    const otherName = isCurrentUserA ? result.user_b?.full_name : result.user_a?.full_name;
+    return {
+      nameA: getFirstName(myName) ?? 'Me',
+      nameB: getFirstName(otherName) ?? 'Friend',
+      animalA: auraNamesById[isCurrentUserA ? result.user_a_aura_id : result.user_b_aura_id] ?? '',
+      animalB: auraNamesById[isCurrentUserA ? result.user_b_aura_id : result.user_a_aura_id] ?? '',
+      score: result.compatibility_score,
+      relationshipType: result.relationship_type,
+    };
+  }
+
+  async function handleShareMatch(result: CompatibilityResult) {
+    if (sharingId) return;
+    setSharingId(result.id);
+    setShareTarget(result);
+    try {
+      // Let the off-screen card render this match before capturing it.
+      await waitForNextPaint();
+      if (!shareCardRef.current) throw new Error('Share card is not ready.');
+      const { nameB } = getShareCardProps(result);
+      const outcome = await shareCardImage(shareCardRef.current, {
+        fileName: 'animatch-our-match.png',
+        title: 'Our AniMatch',
+        message: `${nameB} and I are a ${Math.round(result.compatibility_score)}% match on AniMatch. Are you compatible?`,
+        url: buildShareUrl('share-match'),
+      });
+      if (outcome === 'downloaded') showShareToast('Match card saved as an image.');
+    } catch (shareError) {
+      console.error('Error sharing match card:', shareError);
+      showShareToast("We couldn't create the match card. Please try again.");
+    } finally {
+      setSharingId(null);
+    }
+  }
+
+  function renderShareButton(result: CompatibilityResult, style?: object) {
+    const isSharingThis = sharingId === result.id;
+    return (
+      <Pressable
+        onPress={() => handleShareMatch(result)}
+        disabled={sharingId !== null}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={`Share your match with ${getOtherUserName(result)}`}
+        accessibilityState={{ busy: isSharingThis, disabled: sharingId !== null }}
+        style={({ pressed }) => [styles.shareIconButton, style, pressed && { opacity: 0.7 }]}
+      >
+        {isSharingThis ? (
+          <ActivityIndicator size="small" color={Colors.text} />
+        ) : (
+          <Ionicons name="share-outline" size={20} color={Colors.text} />
+        )}
+      </Pressable>
+    );
+  }
 
   async function fetchInsight(result: CompatibilityResult) {
     setIsInsightLoading(true);
@@ -260,6 +321,7 @@ export default function CompatibilityScreen() {
               </View>
             </View>
           </View>
+          {renderShareButton(item)}
           <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
         </View>
         <View style={styles.scoreContainer}>
@@ -386,6 +448,7 @@ export default function CompatibilityScreen() {
                 <Ionicons name="arrow-back" size={24} color={Colors.text} />
               </Pressable>
             ) : null,
+            headerRight: () => selectedResult ? renderShareButton(selectedResult, styles.headerShareButton) : null,
           }}
         />
         {selectedResult ? (
@@ -427,6 +490,16 @@ export default function CompatibilityScreen() {
             )}
           </View>
         )}
+        {shareToast ? (
+          <View style={styles.toast} accessibilityLiveRegion="polite">
+            <ThemedText style={styles.toastText}>{shareToast}</ThemedText>
+          </View>
+        ) : null}
+        {shareTarget ? (
+          <ShareCardHost ref={shareCardRef}>
+            <MatchShareCard {...getShareCardProps(shareTarget)} />
+          </ShareCardHost>
+        ) : null}
         <InviteModal
           visible={isInviteOpen}
           onClose={() => setIsInviteOpen(false)}
@@ -573,6 +646,38 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   noResultsText: {
+    textAlign: 'center',
+  },
+  shareIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.cardRaised,
+    marginRight: 8,
+  },
+  headerShareButton: {
+    marginRight: 16,
+  },
+  toast: {
+    position: 'absolute',
+    pointerEvents: 'none',
+    bottom: 24,
+    alignSelf: 'center',
+    maxWidth: '90%',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.cardRaised,
+  },
+  toastText: {
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: 'center',
   },
   backButton: {
