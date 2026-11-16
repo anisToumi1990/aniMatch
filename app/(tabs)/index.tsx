@@ -8,6 +8,7 @@ import { useQuiz } from '../../context/QuizContext';
 import { ThemedText } from '@/components/ThemedText';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { AccountModal } from '@/components/AccountModal';
+import { NotificationBell } from '@/components/NotificationBell';
 import { AuraDetailsModal } from '@/components/AuraDetailsModal';
 import { AuraAvatar } from '@/components/AuraAvatar';
 import { AuraButton } from '@/components/AuraButton';
@@ -44,14 +45,17 @@ export default function HomeScreen() {
             title: 'AniMatch',
             headerTitle: () => <ThemedText type="wordmark">ANIMATCH</ThemedText>,
             headerRight: () => (
-              <TouchableOpacity
-                style={styles.accountButton}
-                onPress={() => setShowAccountModal(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Open account menu"
-              >
-                <ThemedText style={styles.accountInitial}>{userInitial}</ThemedText>
-              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                <NotificationBell />
+                <TouchableOpacity
+                  style={styles.accountButton}
+                  onPress={() => setShowAccountModal(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open account menu"
+                >
+                  <ThemedText style={styles.accountInitial}>{userInitial}</ThemedText>
+                </TouchableOpacity>
+              </View>
             ),
           }}
         />
@@ -114,6 +118,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   container: {
     flex: 1,
     paddingTop: 60,

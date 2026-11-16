@@ -20,6 +20,7 @@ import { buildShareUrl } from '@/constants/AppLinks';
 import { transparentHeaderOptions } from '@/constants/Theme';
 import { AuraButton } from '@/components/AuraButton';
 import { InviteModal } from '@/components/InviteModal';
+import { NotificationBell } from '@/components/NotificationBell';
 import { InviteLinkRoute } from '@/components/InviteForm';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -448,7 +449,12 @@ export default function CompatibilityScreen() {
                 <Ionicons name="arrow-back" size={24} color={Colors.text} />
               </Pressable>
             ) : null,
-            headerRight: () => selectedResult ? renderShareButton(selectedResult, styles.headerShareButton) : null,
+            headerRight: () => (
+              <View style={styles.headerActions}>
+                {selectedResult ? renderShareButton(selectedResult) : null}
+                <NotificationBell />
+              </View>
+            ),
           }}
         />
         {selectedResult ? (
@@ -659,7 +665,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardRaised,
     marginRight: 8,
   },
-  headerShareButton: {
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginRight: 16,
   },
   toast: {

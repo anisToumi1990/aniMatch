@@ -1,6 +1,7 @@
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { HapticTab } from '@/components/HapticTab';
 import { AuraTab } from '@/components/AuraTab';
@@ -9,17 +10,18 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useQuiz } from '@/context/QuizContext';
 import { useNotifications } from '@/context/NotificationsContext';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export default function TabLayout() {
   const { isQuizComplete, directNavigateToQuiz, setDirectNavigateToQuiz } = useQuiz();
-  const { unreadCount } = useNotifications();
+  const { pendingInviteCount, refreshCount } = useNotifications();
   const pathname = usePathname();
   const router = useRouter();
   
-  // Log the current path for debugging
+  // Refresh the badge counts whenever another tab gets focus (no realtime yet).
   useEffect(() => {
-    console.log('Current path:', pathname);
-  }, [pathname]);
+    refreshCount();
+  }, [pathname, refreshCount]);
   
   // Handle direct navigation to quiz tab
   useEffect(() => {
@@ -36,7 +38,11 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      // Back from the notifications list returns to the tab it was opened from.
+      backBehavior="history"
       screenOptions={{
+        // Default header action on every tab; screens that set their own headerRight include the bell themselves.
+        headerRight: () => <NotificationBell style={styles.headerBell} />,
         tabBarActiveTintColor: Colors.tabIconSelected,
         tabBarInactiveTintColor: Colors.tabIconDefault,
         tabBarLabelStyle: { fontWeight: '500' },
@@ -107,19 +113,27 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="notifications"
+        name="invites"
         options={{
-          title: 'Notifications',
+          title: 'Invites',
           tabBarIcon: ({ color }) => (
             <View>
-              <IconSymbol size={28} name="bell.fill" color={color} />
-              {unreadCount > 0 && (
+              <Ionicons name="person-add" size={26} color={color} />
+              {pendingInviteCount > 0 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{unreadCount}</Text>
+                  <Text style={styles.badgeText}>{pendingInviteCount}</Text>
                 </View>
               )}
             </View>
           ),
+        }}
+      />
+      {/* Opened from the header bell; not shown in the tab bar. */}
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          href: null,
+          title: 'Notifications',
         }}
       />
     </Tabs>
@@ -127,6 +141,9 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  headerBell: {
+    marginRight: 16,
+  },
   badge: {
     position: 'absolute',
     top: -8,

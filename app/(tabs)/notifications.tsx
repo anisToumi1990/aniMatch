@@ -1,191 +1,189 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Modal, Pressable, ScrollView, TouchableWithoutFeedback } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, AppState, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationsContext';
-import { supabase } from '../../lib/supabase';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { Stack } from 'expo-router';
-import { ScreenBackground } from '@/components/ScreenBackground';
-import { AuraButton } from '@/components/AuraButton';
-import { Colors } from '@/constants/Colors';
-import { transparentHeaderOptions } from '@/constants/Theme';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/context/NotificationsContext';
+import { ScreenBackground } from '@/components/ScreenBackground';
+import { ThemedText } from '@/components/ThemedText';
+import { AuraAvatar } from '@/components/AuraAvatar';
+import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
+import { transparentHeaderOptions } from '@/constants/Theme';
+import { formatRelativeTime } from '@/lib/relativeTime';
+import {
+  AppNotification,
+  fetchNotifications,
+  getDisplayText,
+  getNotificationRoute,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from '@/lib/supabase/notifications';
 
-interface Notification {
-  id: string;
-  user_id: string;
-  title: string;
-  message: string;
-  created_at: string;
-  is_read: boolean;
-  read_at: string | null;
-  invite_id: string | null;
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const TYPE_ICONS: Record<string, IoniconName> = {
+  invite_received: 'mail-unread-outline',
+  invite_accepted: 'checkmark-circle-outline',
+  match_ready: 'sparkles-outline',
+};
+
+/** Inline feedback (no Alert.alert, so it works on web). */
+interface InlineMessage {
+  kind: 'error' | 'info';
+  text: string;
 }
-
-type RelationshipType = 'lover' | 'business_partner' | 'family';
 
 export default function NotificationsScreen() {
   const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const router = useRouter();
   const { refreshCount } = useNotifications();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showRelationshipModal, setShowRelationshipModal] = useState(false);
-  const [selectedInvite, setSelectedInvite] = useState<{ notificationId: string; inviteId: string } | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [message, setMessage] = useState<InlineMessage | null>(null);
+  // Re-render every minute so "5m ago" stays current.
+  const [now, setNow] = useState(() => new Date());
+  const loadIdRef = useRef(0);
+
+  const loadNotifications = useCallback(async () => {
+    if (!userId) return;
+    const loadId = ++loadIdRef.current;
+    try {
+      const rows = await fetchNotifications(userId);
+      if (loadId !== loadIdRef.current) return;
+      setNotifications(rows);
+      setMessage(current => (current?.kind === 'error' ? null : current));
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      if (loadId === loadIdRef.current) {
+        setMessage({ kind: 'error', text: "We couldn't load your notifications. Pull to try again." });
+      }
+    } finally {
+      if (loadId === loadIdRef.current) {
+        setIsLoading(false);
+        setNow(new Date());
+      }
+    }
+    refreshCount();
+  }, [userId, refreshCount]);
+
+  // Refresh on focus and when the app comes back to the foreground (no realtime yet).
+  useFocusEffect(
+    useCallback(() => {
+      loadNotifications();
+      const subscription = AppState.addEventListener('change', state => {
+        if (state === 'active') loadNotifications();
+      });
+      return () => subscription.remove();
+    }, [loadNotifications]),
+  );
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!user?.id) return;
+    const interval = setInterval(() => setNow(new Date()), 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-      try {
-        // First, get all notifications for the user
-        const { data: notificationsData, error: notificationsError } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+  const unreadCount = notifications.filter(notification => !notification.read_at).length;
 
-        if (notificationsError) throw notificationsError;
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    await loadNotifications();
+    setIsRefreshing(false);
+  }
 
-        // Then, get all invites to check their status
-        const { data: invitesData, error: invitesError } = await supabase
-          .from('invites')
-          .select('id, status')
-          .in('id', notificationsData?.map(n => n.invite_id).filter(Boolean) || []);
-
-        if (invitesError) throw invitesError;
-
-        // Filter out notifications where the invite is already accepted or refused
-        const pendingNotifications = notificationsData?.filter(notification => {
-          if (!notification.invite_id) return true; // Keep non-invite notifications
-          
-          const invite = invitesData?.find(invite => invite.id === notification.invite_id);
-          return !invite || invite.status === 'pending';
-        }) || [];
-
-        setNotifications(pendingNotifications);
-      } catch (err) {
-        console.error('Error fetching notifications:', err);
-        setError('Failed to load notifications');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchNotifications();
-  }, [user?.id]);
-
-  const handleInvitationResponse = async (notificationId: string, inviteId: string, isAccepted: boolean, relationshipType?: RelationshipType) => {
-    try {
-      // Update notification as read
-      const { error: notificationError } = await supabase
-        .from('notifications')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString()
-        })
-        .eq('id', notificationId);
-
-      if (notificationError) throw notificationError;
-
-      // Update invite status and relationship type if accepted
-      const { error: inviteError } = await supabase
-        .from('invites')
-        .update({
-          status: isAccepted ? 'accepted' : 'rejected',
-          accepted_at: isAccepted ? new Date().toISOString() : null,
-          relationship_type: isAccepted ? relationshipType : null
-        })
-        .eq('id', inviteId);
-
-      if (inviteError) throw inviteError;
-
-        // Call the function to create compatibility results
-      const { error: functionError } = await supabase.rpc('create_compatibility_results', {
-        invite_id: inviteId
-      });
-
-      if (functionError) throw functionError;
-      // Remove the notification from the list
-      setNotifications(prevNotifications =>
-        prevNotifications.filter(notification => notification.id !== notificationId)
+  async function handlePress(notification: AppNotification) {
+    const route = getNotificationRoute(notification);
+    if (!notification.read_at) {
+      // Optimistic: show it as read right away.
+      const readAt = new Date().toISOString();
+      setNotifications(current =>
+        current.map(item => (item.id === notification.id ? { ...item, read_at: readAt } : item)),
       );
-
-      // Refresh the notification count
-      await refreshCount();
-    } catch (err) {
-      console.error('Error handling invitation response:', err);
-      setError('Failed to process your response');
+      try {
+        await markNotificationRead(notification.id);
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+        setNotifications(current =>
+          current.map(item => (item.id === notification.id ? { ...item, read_at: null } : item)),
+        );
+        setMessage({ kind: 'error', text: "Couldn't mark that as read. Try again in a moment." });
+        return;
+      }
+      refreshCount();
     }
-  };
-
-  const handleAcceptPress = (notificationId: string, inviteId: string) => {
-    setSelectedInvite({ notificationId, inviteId });
-    setShowRelationshipModal(true);
-  };
-
-  const handleRelationshipSelect = (relationshipType: RelationshipType) => {
-    if (selectedInvite) {
-      handleInvitationResponse(selectedInvite.notificationId, selectedInvite.inviteId, true, relationshipType);
-      setShowRelationshipModal(false);
-      setSelectedInvite(null);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <ScreenBackground>
-        <SafeAreaView style={styles.container}>
-          <Stack.Screen
-            options={{
-              ...transparentHeaderOptions,
-              title: 'Notifications',
-            }}
-          />
-          <View style={styles.centerContent}>
-            <ActivityIndicator size="large" color={Colors.textSecondary} />
-          </View>
-        </SafeAreaView>
-      </ScreenBackground>
-    );
+    if (route) router.navigate(route);
   }
 
-  if (error) {
-    return (
-      <ScreenBackground>
-        <SafeAreaView style={styles.container}>
-          <Stack.Screen
-            options={{
-              ...transparentHeaderOptions,
-              title: 'Notifications',
-            }}
-          />
-          <View style={styles.centerContent}>
-            <ThemedText type="subtitle" style={styles.errorText}>{error}</ThemedText>
-          </View>
-        </SafeAreaView>
-      </ScreenBackground>
-    );
+  async function handleMarkAllRead() {
+    if (!userId || unreadCount === 0 || isMarkingAll) return;
+    setIsMarkingAll(true);
+    const previous = notifications;
+    const readAt = new Date().toISOString();
+    setNotifications(current => current.map(item => (item.read_at ? item : { ...item, read_at: readAt })));
+    try {
+      await markAllNotificationsRead(userId);
+      setMessage({ kind: 'info', text: 'All caught up. Suspiciously calm in here.' });
+      refreshCount();
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      setNotifications(previous);
+      setMessage({ kind: 'error', text: "Couldn't mark everything as read. Try again in a moment." });
+    } finally {
+      setIsMarkingAll(false);
+    }
   }
 
-  if (notifications.length === 0) {
+  function handleBack() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.navigate('/');
+  }
+
+  function renderItem({ item }: { item: AppNotification }) {
+    const { title, body } = getDisplayText(item);
+    const isUnread = !item.read_at;
+    const animal = item.data?.actor_animal ?? null;
+    const accentColor = animal ? getAuraColor(animal) : Colors.textSecondary;
+    const icon = TYPE_ICONS[item.type ?? ''] ?? 'notifications-outline';
+
     return (
-      <ScreenBackground>
-        <SafeAreaView style={styles.container}>
-          <Stack.Screen
-            options={{
-              ...transparentHeaderOptions,
-              title: 'Notifications',
-            }}
-          />
-          <View style={styles.centerContent}>
-            <ThemedText type="subtitle" style={styles.noResultsTitle}>No pending notifications</ThemedText>
-            <ThemedText type="secondary" style={styles.noResultsText}>You'll see new notifications here when you receive them.</ThemedText>
+      <Pressable
+        onPress={() => handlePress(item)}
+        accessibilityRole="button"
+        accessibilityLabel={`${isUnread ? 'Unread. ' : ''}${title}. ${body}`}
+        style={({ pressed }) => [
+          styles.card,
+          isUnread && { borderColor: withAlpha(accentColor, 0.45), backgroundColor: Colors.cardRaised },
+          pressed && { opacity: 0.85 },
+        ]}
+      >
+        <View style={styles.leading}>
+          {animal ? (
+            <AuraAvatar animalName={animal} size="small" />
+          ) : (
+            <View style={styles.iconCircle}>
+              <Ionicons name={icon} size={20} color={Colors.textSecondary} />
+            </View>
+          )}
+        </View>
+        <View style={styles.texts}>
+          <View style={styles.titleRow}>
+            <ThemedText style={[styles.title, !isUnread && styles.titleRead]} numberOfLines={1}>
+              {title}
+            </ThemedText>
+            <ThemedText type="muted" style={styles.time}>{formatRelativeTime(item.created_at, now)}</ThemedText>
           </View>
-        </SafeAreaView>
-      </ScreenBackground>
+          <ThemedText type="secondary" style={styles.body}>{body}</ThemedText>
+        </View>
+        {isUnread ? (
+          <View style={[styles.unreadDot, { backgroundColor: animal ? accentColor : Colors.danger }]} />
+        ) : null}
+      </Pressable>
     );
   }
 
@@ -196,94 +194,70 @@ export default function NotificationsScreen() {
           options={{
             ...transparentHeaderOptions,
             title: 'Notifications',
+            headerLeft: () => (
+              <Pressable
+                onPress={handleBack}
+                accessibilityRole="button"
+                accessibilityLabel="Back"
+                style={({ pressed }) => [styles.headerButton, pressed && { opacity: 0.7 }]}
+              >
+                <Ionicons name="arrow-back" size={24} color={Colors.text} />
+              </Pressable>
+            ),
+            headerRight: () => (
+              <Pressable
+                onPress={handleMarkAllRead}
+                disabled={unreadCount === 0 || isMarkingAll}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: unreadCount === 0 || isMarkingAll }}
+                style={({ pressed }) => [styles.markAllButton, pressed && { opacity: 0.7 }]}
+              >
+                <ThemedText style={[styles.markAllText, unreadCount === 0 && styles.markAllTextDisabled]}>
+                  Mark all as read
+                </ThemedText>
+              </Pressable>
+            ),
           }}
         />
-        <FlatList
-          data={notifications}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          renderItem={({ item }) => (
-            <ThemedView style={[styles.notificationItem]}>
-              <View style={styles.notificationHeader}>
-                <ThemedText type="subtitle" style={styles.notificationTitle}>{item.title}</ThemedText>
-                <ThemedText type="muted" style={styles.timestamp}>
-                  {new Date(item.created_at).toLocaleDateString()}
+        {message ? (
+          <View
+            style={[styles.message, message.kind === 'error' && styles.messageError]}
+            accessibilityLiveRegion="polite"
+          >
+            <ThemedText style={[styles.messageText, message.kind === 'error' && styles.messageTextError]}>
+              {message.text}
+            </ThemedText>
+            <Pressable onPress={() => setMessage(null)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Dismiss message">
+              <Ionicons name="close" size={16} color={Colors.textSecondary} />
+            </Pressable>
+          </View>
+        ) : null}
+        {isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={Colors.textSecondary} />
+          </View>
+        ) : (
+          <FlatList
+            data={notifications}
+            keyExtractor={item => String(item.id)}
+            renderItem={renderItem}
+            contentContainerStyle={[styles.list, notifications.length === 0 && styles.listEmpty]}
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={Colors.textSecondary} />
+            }
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <View style={styles.emptyIcon}>
+                  <Ionicons name="notifications-off-outline" size={26} color={Colors.textSecondary} />
+                </View>
+                <ThemedText type="subtitle" style={styles.emptyTitle}>Nothing yet</ThemedText>
+                <ThemedText type="secondary" style={styles.emptyText}>
+                  Invite someone and let the drama begin.
                 </ThemedText>
               </View>
-              <ThemedText type="secondary" style={styles.notificationMessage}>{item.message}</ThemedText>
-              
-              {item.invite_id && !item.is_read && (
-                <View style={styles.actionButtons}>
-                  <AuraButton
-                    label="Reject"
-                    variant="secondary"
-                    onPress={() => handleInvitationResponse(item.id, item.invite_id!, false)}
-                    style={styles.button}
-                  />
-                  <AuraButton
-                    label="Accept"
-                    onPress={() => handleAcceptPress(item.id, item.invite_id!)}
-                    style={styles.button}
-                  />
-                </View>
-              )}
-            </ThemedView>
-          )}
-        />
-          <Modal
-          visible={showRelationshipModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => {
-            setShowRelationshipModal(false);
-            setSelectedInvite(null);
-          }}
-          >
-          <TouchableWithoutFeedback
-            onPress={event => {
-              if (event.target === event.currentTarget) {
-                setShowRelationshipModal(false);
-                setSelectedInvite(null);
-              }
-            }}
-            accessible={false}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <TouchableOpacity
-                  style={styles.modalCloseButton}
-                  onPress={() => {
-                    setShowRelationshipModal(false);
-                    setSelectedInvite(null);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close relationship type modal"
-                >
-                  <Ionicons name="close" size={26} color={Colors.text} />
-                </TouchableOpacity>
-                <ThemedText type="subtitle" style={styles.modalTitle}>Select relationship type</ThemedText>
-                <TouchableOpacity
-                  style={styles.relationshipButton}
-                  onPress={() => handleRelationshipSelect('lover')}
-                >
-                  <ThemedText style={styles.relationshipButtonText}>Lover</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.relationshipButton}
-                  onPress={() => handleRelationshipSelect('business_partner')}
-                >
-                  <ThemedText style={styles.relationshipButtonText}>Business partner</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.relationshipButton}
-                  onPress={() => handleRelationshipSelect('family')}
-                >
-                  <ThemedText style={styles.relationshipButtonText}>Family</ThemedText>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
+            }
+          />
+        )}
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -294,111 +268,147 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 60,
   },
-  centerContent: {
+  center: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    justifyContent: 'center',
   },
-  errorText: {
-    color: Colors.danger,
-    fontSize: 16,
+  headerButton: {
+    marginLeft: 4,
+    padding: 10,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markAllButton: {
+    marginRight: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+  },
+  markAllText: {
+    fontSize: 14,
     fontWeight: '500',
-    marginBottom: 20,
-    textAlign: 'center',
+    color: Colors.text,
   },
-  noResultsTitle: {
-    textAlign: 'center',
-    marginBottom: 8,
+  markAllTextDisabled: {
+    color: Colors.textMuted,
   },
-  noResultsText: {
-    textAlign: 'center',
+  message: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 20,
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.cardRaised,
+    maxWidth: 600,
+    alignSelf: 'stretch',
   },
-  listContainer: {
+  messageError: {
+    borderColor: withAlpha(Colors.danger, 0.4),
+  },
+  messageText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.textSecondary,
+  },
+  messageTextError: {
+    color: Colors.danger,
+  },
+  list: {
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 24,
+    paddingTop: 20,
+    paddingBottom: 32,
     width: '100%',
     maxWidth: 640,
     alignSelf: 'center',
   },
-  notificationItem: {
-    padding: 20,
-    marginBottom: 14,
+  listEmpty: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 16,
+    marginBottom: 12,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.card,
   },
-  notificationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  leading: {
+    marginRight: 12,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
-    marginBottom: 8,
-    gap: 12,
-  },
-  notificationTitle: {
-    fontSize: 17,
-    lineHeight: 24,
-    flexShrink: 1,
-  },
-  notificationMessage: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  timestamp: {
-    fontSize: 12,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 16,
-    gap: 10,
-  },
-  button: {
-    minWidth: 104,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: Colors.overlay,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: Colors.card,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 24,
-    paddingTop: 28,
-    width: '85%',
-    maxWidth: 400,
-    position: 'relative',
-  },
-  modalTitle: {
-    textAlign: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 28,
-  },
-  modalCloseButton: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
-    padding: 4,
-    zIndex: 1,
-  },
-  relationshipButton: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 999,
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.cardRaised,
-    marginBottom: 10,
   },
-  relationshipButtonText: {
-    textAlign: 'center',
-    fontSize: 16,
+  texts: {
+    flex: 1,
+    minWidth: 0,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    marginBottom: 2,
+  },
+  title: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 21,
     fontWeight: '500',
+  },
+  titleRead: {
+    color: Colors.textSecondary,
+  },
+  time: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  body: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginLeft: 8,
+    marginTop: 7,
+  },
+  empty: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.card,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    marginBottom: 6,
+  },
+  emptyText: {
+    textAlign: 'center',
   },
 });

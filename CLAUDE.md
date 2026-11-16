@@ -30,20 +30,35 @@ Any new top-level route group has to be accounted for in `AuthGuard`, or users w
 
 **Supabase JS is v1 (`^1.35`), not v2.** Use the v1 API: `supabase.auth.session()`, `supabase.auth.signIn({ provider })`, and `onAuthStateChange` returning `{ data: subscription }`. Most v2 examples online won't work here.
 
-**Data access is split.** Quiz logic lives in `lib/supabase/quiz.ts`. Invites, notifications, profiles and compatibility are queried directly inside screens and components (`components/AccountModal.tsx`, `app/(tabs)/notifications.tsx`, `app/(tabs)/compatibility.tsx`, `context/NotificationsContext.tsx`). A "no rows" result from `.single()` shows up as error code `PGRST116` and is treated as "not found".
+**Data access is split.** Quiz logic lives in `lib/supabase/quiz.ts` and notifications in `lib/supabase/notifications.ts`. Invites, profiles and compatibility are queried directly inside screens and components (`components/InviteForm.tsx`, `app/(tabs)/invites.tsx`, `app/(tabs)/compatibility.tsx`). A "no rows" result from `.single()` shows up as error code `PGRST116` and is treated as "not found".
 
 **Quiz scoring** (`calculateQuizResult`): each answer is matched by `(question_id, option_key)` against `answer_animal_mapping` rows. Each matching row adds its `animal_weight` to that row's `animal_aura_id`, and the aura with the highest total wins. Results go into `user_quiz_results`; `answer_data` is stored as JSON. `QuizContext` (a `useReducer` store) drives the quiz flow and loads the user's latest result.
 
 **Invite → compatibility flow** (some of it lives in the database, not in this repo):
 1. `AccountModal` inserts a row into `invites` with `recipient_email`, plus `recipient_user_id` if a profile with that email already exists.
-2. The app never inserts `notifications` rows; something on the database side (presumably a trigger) creates them. Nothing sends an email to invitees who don't have an account.
-3. In `notifications.tsx`, accepting an invite sets its `status` and `relationship_type`, then calls the RPC `create_compatibility_results(invite_id)`.
+2. The app never inserts `notifications` rows; database triggers create them (see Notifications below). Nothing sends an email to invitees who don't have an account.
+3. In `app/(tabs)/invites.tsx` (the Invites tab), accepting an invite sets its `status` and `relationship_type`, then calls the RPC `create_compatibility_results(invite_id)`.
 4. After every quiz, `updateUserCompatibilityResults` runs the RPC `update_user_compatibility_results` if the user already has results, then calls `create_compatibility_results` for each accepted invite that has no `compatibility_results` row yet (matched by user pair in either order plus `relationship_type`). This also covers invites accepted before the other person took the quiz, since `create_compatibility_results` only inserts once both users have a result. Errors are logged, not thrown.
 5. `compatibility.tsx` reads `compatibility_results` and matches up text from `compatibility_insight_templates` by score and relationship type.
 
-The invite screens treat notifications for invites that are no longer `pending` as handled, and both the list and the unread badge hide them.
+The Invites tab only lists invite notifications (`invite_id` set) whose invite is still `pending`; its tab badge counts the same.
 
 **Imports:** `@/*` maps to the repo root (tsconfig paths plus babel `module-resolver`).
+
+## Notifications
+
+- **Table:** `public.notifications` (extended by `supabase/migrations/20261116120000_friend_notifications.sql`): `type`, `title`, `body`, `link`, `actor_id`, `data` (jsonb), `read_at`, `push_sent_at`, `email_sent_at`, plus the legacy `message`, `is_read` and `invite_id` that the Invites tab still uses. Migrations in `supabase/migrations` are run by hand in the Supabase SQL editor.
+- **Created only by `SECURITY DEFINER` trigger functions:**
+  - `invite_received` from `send_invite_notification()` (trigger `send_invite_notification_trigger` on `invites`). The same function still queues an `email_queue` row for invitees without an account; keep that branch when editing it.
+  - `invite_accepted` from `notify_invite_accepted()` (to the inviter, when `invites.status` becomes `accepted`).
+  - `match_ready` from `notify_match_ready()` (one row per user when a `compatibility_results` row is inserted; `update_user_compatibility_results` only updates rows, so retakes don't re-notify).
+  - Names fall back to "Someone"; a missing score shows as `??%`. Clients can only select their own rows and update `read_at` / `is_read`; there is no client insert. IDs (`notifications.id`, `invite_id`) are `bigint`, so numbers in the app.
+- **Texts** live in `constants/notificationCopy.ts`; the app renders from `type` + `data`. The triggers write the same texts into `title` / `body` as a fallback, so change both together.
+- **UI:** `components/NotificationBell.tsx` sits in every tab header (unread badge, hidden at 0) and opens the hidden tab route `app/(tabs)/notifications.tsx`. Tapping a row marks it read and opens its `link` (`/compatibility` or `/invites`; anything else is ignored). There's no realtime: the list refreshes on focus, on pull and when the app returns to the foreground; `NotificationsContext` refreshes both badge counts on tab changes and on foreground.
+
+**TODO (push and email):**
+- Push: store Expo push tokens per user (e.g. a `push_tokens` table), then have an Edge Function or cron send rows `where push_sent_at is null` through the Expo push API and set `push_sent_at`.
+- Email: same pattern with Resend for rows `where email_sent_at is null`, setting `email_sent_at`. Reuse `constants/notificationCopy.ts` for the texts.
 
 ## Roadmap docs
 
