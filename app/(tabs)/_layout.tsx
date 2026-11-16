@@ -4,7 +4,6 @@ import { Platform, View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { HapticTab } from '@/components/HapticTab';
-import { AuraTab } from '@/components/AuraTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
@@ -78,20 +77,18 @@ export default function TabLayout() {
         name="quiz"
         options={{
           title: 'Quiz',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="questionmark.circle.fill" color={isQuizComplete ? `${color}80` : color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="questionmark.circle.fill" color={color} />,
           tabBarButton: (props) => {
-            // Don't disable the tab if we're currently on it
-            // This handles the case when navigating from "Retake Quiz"
+            // With a result, the Quiz tab opens the "Retake" confirmation instead of
+            // the quiz. Not while already on the quiz (e.g. right after "Retake the quiz").
             const isCurrentlyOnQuizTab = pathname.includes('/quiz');
-            const shouldDisable = isQuizComplete && !isCurrentlyOnQuizTab && !directNavigateToQuiz;
-            
-            return shouldDisable ? (
-              // When quiz is complete, disable this tab by making it non-interactive
-              // but maintain proper layout and centering
+            const shouldConfirmRetake = isQuizComplete && !isCurrentlyOnQuizTab && !directNavigateToQuiz;
+
+            return shouldConfirmRetake ? (
               <HapticTab
                 {...props}
-                onPress={undefined}
-                accessibilityState={{ disabled: true }}
+                href="/retake"
+                onPress={() => router.navigate('/retake')}
               />
             ) : (
               <HapticTab {...props} />
@@ -104,7 +101,7 @@ export default function TabLayout() {
         options={{
           title: 'Animal aura',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
-          tabBarButton: AuraTab,
+          // Always opens: without a result, the screen shows the locked aura.
         }}
       />
       <Tabs.Screen
@@ -136,6 +133,14 @@ export default function TabLayout() {
         options={{
           href: null,
           title: 'Notifications',
+        }}
+      />
+      {/* Opened by the Quiz tab when the user already has a result; not shown in the tab bar. */}
+      <Tabs.Screen
+        name="retake"
+        options={{
+          href: null,
+          title: 'Retake the quiz',
         }}
       />
       {/* Opened from "See all" in Home's daily aura card; not shown in the tab bar. */}

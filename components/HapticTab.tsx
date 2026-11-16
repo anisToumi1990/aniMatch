@@ -1,6 +1,7 @@
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { withClientSideTabPress } from './tabBarPress';
 
 export function HapticTab(props: BottomTabBarButtonProps) {
   const { style, onPress, onPressIn, ref, ...rest } = props;
@@ -15,7 +16,8 @@ export function HapticTab(props: BottomTabBarButtonProps) {
         }
         onPressIn?.(ev);
       }}
-      onPress={onPress}
+      // Client-side navigation on web instead of following the tab's href (full reload).
+      onPress={withClientSideTabPress(onPress)}
     />
   );
 }

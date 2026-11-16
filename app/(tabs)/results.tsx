@@ -11,6 +11,7 @@ import { AuraButton } from '@/components/AuraButton';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { transparentHeaderOptions } from '@/constants/Theme';
 import { ScreenBackground } from '@/components/ScreenBackground';
+import { LockedAuraAvatar } from '@/components/LockedAuraAvatar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
 import { getFirstName } from '@/lib/names';
@@ -31,7 +32,7 @@ type ShareFeedback = 'downloaded' | 'error' | null;
 export default function ResultsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { animalAura: contextAura, resetQuiz, isPreviousResult } = useQuiz();
+  const { animalAura: contextAura, isPreviousResult } = useQuiz();
   const shareCardRef = useRef<View>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -123,19 +124,15 @@ export default function ResultsScreen() {
           <View style={styles.statusContainer}>
             {isEmpty ? (
               <>
-                <View style={styles.emptyRings}>
-                  <View style={styles.emptyRingOuter} />
-                  <View style={styles.emptyRingInner} />
-                  <View style={styles.emptyCore} />
-                </View>
+                <LockedAuraAvatar style={styles.lockedAvatar} />
                 <ThemedText type="subtitle" style={styles.statusTitle}>
-                  You haven&apos;t discovered your aura yet
+                  Your aura is locked 🔒
                 </ThemedText>
                 <ThemedText type="secondary" style={styles.statusText}>
-                  Take the 10-question quiz to find the animal that reflects your personality.
+                  Take the 10-question quiz to unlock the animal that reflects your personality.
                 </ThemedText>
                 <AuraButton
-                  label="Start the quiz"
+                  label="Take the quiz"
                   onPress={handleStartQuiz}
                   size="large"
                   icon="arrow-forward"
@@ -196,10 +193,9 @@ export default function ResultsScreen() {
     router.navigate(route);
   }
 
+  // Confirm first on the Retake screen: retaking changes the aura, daily message and match scores.
   const handleRetakeQuiz = () => {
-    // Just reset the quiz, which will trigger the directNavigateToQuiz flag
-    // The tab layout will handle the navigation to avoid the home tab flash
-    resetQuiz();
+    router.navigate('/retake');
   };
 
   // Accent color for this aura, used for the badge, section markers and traits
@@ -393,36 +389,8 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
   },
-  emptyRings: {
-    width: 120,
-    height: 120,
-    alignItems: 'center',
-    justifyContent: 'center',
+  lockedAvatar: {
     marginBottom: 28,
-  },
-  emptyRingOuter: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 1,
-    borderColor: withAlpha(Colors.textMuted, 0.25),
-  },
-  emptyRingInner: {
-    position: 'absolute',
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    borderWidth: 1,
-    borderColor: withAlpha(Colors.textMuted, 0.4),
-  },
-  emptyCore: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.card,
   },
   auraCard: {
     backgroundColor: Colors.card,
