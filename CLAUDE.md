@@ -43,6 +43,8 @@ Any new top-level route group has to be accounted for in `AuthGuard`, or users w
 
 The Invites tab only lists invite notifications (`invite_id` set) whose invite is still `pending`; its tab badge counts the same.
 
+**Names:** show people through `lib/names.ts` (`getDisplayName` / `getFirstName`): full name, else the part of the email before "@", else "Someone". Select `email` alongside `full_name` when loading profiles.
+
 **Imports:** `@/*` maps to the repo root (tsconfig paths plus babel `module-resolver`).
 
 ## Notifications
@@ -52,7 +54,7 @@ The Invites tab only lists invite notifications (`invite_id` set) whose invite i
   - `invite_received` from `send_invite_notification()` (trigger `send_invite_notification_trigger` on `invites`). The same function still queues an `email_queue` row for invitees without an account; keep that branch when editing it.
   - `invite_accepted` from `notify_invite_accepted()` (to the inviter, when `invites.status` becomes `accepted`).
   - `match_ready` from `notify_match_ready()` (one row per user when a `compatibility_results` row is inserted; `update_user_compatibility_results` only updates rows, so retakes don't re-notify).
-  - Names fall back to "Someone"; a missing score shows as `??%`. Clients can only select their own rows and update `read_at` / `is_read`; there is no client insert. IDs (`notifications.id`, `invite_id`) are `bigint`, so numbers in the app.
+  - Names: first name, else the email before "@", else "Someone" (`notification_first_name()`, same rule as `lib/names.ts`). A missing score shows as `??%`. Clients can only select their own rows and update `read_at` / `is_read`; there is no client insert. IDs (`notifications.id`, `invite_id`) are `bigint`, so numbers in the app.
 - **Texts** live in `constants/notificationCopy.ts`; the app renders from `type` + `data`. The triggers write the same texts into `title` / `body` as a fallback, so change both together.
 - **UI:** `components/NotificationBell.tsx` sits in every tab header (unread badge, hidden at 0) and opens the hidden tab route `app/(tabs)/notifications.tsx`. Tapping a row marks it read and opens its `link` (`/compatibility` or `/invites`; anything else is ignored). There's no realtime: the list refreshes on focus, on pull and when the app returns to the foreground; `NotificationsContext` refreshes both badge counts on tab changes and on foreground.
 

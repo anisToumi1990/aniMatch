@@ -9,6 +9,7 @@ import { ThemedText } from './ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Colors, withAlpha } from '@/constants/Colors';
 import { InviteForm, InviteLinkRoute } from './InviteForm';
+import { getDisplayName } from '@/lib/names';
 
 // The app is dark-only for now ("Aura glow"), so the light/dark toggle is hidden.
 // Flip this back on once light mode exists.
@@ -90,6 +91,8 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
     nameSuccessMessage: ''
   });
   const [isDarkMode, setIsDarkMode] = useState(false);
+  // Shown when not editing: the saved name, else the email name, else "Someone".
+  const displayName = getDisplayName(state.fullName, user?.email);
   // Bumped when the popup closes so the invite form remounts empty.
   const [inviteFormKey, setInviteFormKey] = useState(0);
   const textColor = useThemeColor({}, 'text');
@@ -219,7 +222,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
             <View style={styles.profileSection}>
               <View style={styles.avatarContainer}>
                 <ThemedText style={styles.avatarText}>
-                  {state.fullName.charAt(0).toUpperCase()}
+                  {displayName.charAt(0).toUpperCase()}
                 </ThemedText>
               </View>
               
@@ -247,7 +250,7 @@ export function AccountModal({ visible, onClose }: AccountModalProps) {
                   style={styles.nameContainer}
                   onPress={() => dispatch({ type: 'SET_EDITING_NAME', isEditing: true })}
                 >
-                  <ThemedText style={styles.nameText}>{state.fullName}</ThemedText>
+                  <ThemedText style={styles.nameText}>{displayName}</ThemedText>
                   <Ionicons name="pencil" size={16} color={textColor} style={styles.editIcon} />
                 </TouchableOpacity>
               )}

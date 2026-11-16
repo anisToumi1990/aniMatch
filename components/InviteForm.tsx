@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ThemedText } from './ThemedText';
 import { Colors } from '@/constants/Colors';
+import { getDisplayName } from '@/lib/names';
 
 /** Tabs the invite notices can link to. */
 export type InviteLinkRoute = '/(tabs)/compatibility' | '/(tabs)/invites';
@@ -171,7 +172,7 @@ export function InviteForm({ onLinkPress, autoFocus = false }: InviteFormProps) 
       if (bidirectionalInvites && bidirectionalInvites.length > 0) {
         const noticeKind = getInviteNoticeKind(bidirectionalInvites, user.id);
         if (noticeKind) {
-          const otherName = existingUser.full_name?.trim() || existingUser.email || email;
+          const otherName = getDisplayName(existingUser.full_name, existingUser.email || email);
           dispatch({ type: 'SUBMIT_NOTICE', notice: { kind: noticeKind, name: otherName } });
           setMessageTimeout();
           return;

@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { AccountModal } from '@/components/AccountModal';
 import { NotificationBell } from '@/components/NotificationBell';
+import { getDisplayName } from '@/lib/names';
 import { AuraDetailsModal } from '@/components/AuraDetailsModal';
 import { AuraAvatar } from '@/components/AuraAvatar';
 import { AuraButton } from '@/components/AuraButton';
@@ -22,7 +23,7 @@ export default function HomeScreen() {
   const { isQuizComplete } = useQuiz();
 
   // Get the user's full name from user metadata
-  const fullName = user?.user_metadata?.full_name || user?.email || 'User';
+  const fullName = getDisplayName(user?.user_metadata?.full_name, user?.email);
   const userInitial = fullName.charAt(0).toUpperCase();
 
   const [showAccountModal, setShowAccountModal] = useState(false);

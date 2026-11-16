@@ -13,7 +13,7 @@ import { transparentHeaderOptions } from '@/constants/Theme';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
-import { getFirstName } from '@/lib/compatibility';
+import { getFirstName } from '@/lib/names';
 import { splitTraits } from '@/lib/traits';
 import { InviteModal } from '@/components/InviteModal';
 import { InviteLinkRoute } from '@/components/InviteForm';
@@ -47,6 +47,7 @@ export default function ResultsScreen() {
   const [savedStatus, setSavedStatus] = useState<SavedResultStatus>('idle');
   const [reloadCount, setReloadCount] = useState(0);
   const userId = user?.id ?? null;
+  const userEmail = user?.email ?? null;
   const hasContextAura = contextAura !== null;
 
   useEffect(() => {
@@ -81,7 +82,7 @@ export default function ResultsScreen() {
     };
   }, [hasContextAura, userId, reloadCount]);
 
-  // First name for the share card, from profiles.full_name.
+  // First name for the share card: profiles.full_name, else the email name.
   useEffect(() => {
     if (!userId) {
       setFirstName(null);
@@ -90,18 +91,18 @@ export default function ResultsScreen() {
     let isCancelled = false;
     supabase
       .from('profiles')
-      .select('full_name')
+      .select('full_name, email')
       .eq('id', userId)
       .maybeSingle()
       .then(({ data, error }) => {
         if (isCancelled) return;
         if (error) console.error('Error loading profile name:', error);
-        setFirstName(getFirstName(data?.full_name));
+        setFirstName(getFirstName(data?.full_name, data?.email ?? userEmail));
       });
     return () => {
       isCancelled = true;
     };
-  }, [userId]);
+  }, [userId, userEmail]);
 
   const handleRetryLoad = useCallback(() => setReloadCount(count => count + 1), []);
   const handleStartQuiz = useCallback(() => router.push('/(tabs)/quiz'), [router]);

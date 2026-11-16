@@ -17,9 +17,3 @@ export function formatRelationshipType(relationshipType: string): string {
   const words = relationshipType.replace(/_/g, ' ');
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
-
-/** "Omar Trabelsi" -> "Omar". Null when there is no usable name. */
-export function getFirstName(fullName: string | null | undefined): string | null {
-  const firstName = fullName?.trim().split(/\s+/)[0];
-  return firstName ? firstName : null;
-}

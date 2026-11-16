@@ -11,7 +11,7 @@ export type NotificationType = 'invite_received' | 'invite_accepted' | 'match_re
 
 /** Values the triggers store in notifications.data. All optional. */
 export interface NotificationData {
-  /** First name of the other person ("Someone" when unknown). */
+  /** First name of the other person (email name, then "Someone", when there's no full name). */
   actor_name?: string | null;
   /** The other person's aura animal, e.g. "Fox", when known. */
   actor_animal?: string | null;
@@ -46,7 +46,7 @@ export const AURA_EMOJI: Record<string, string> = {
   wolf: '🐺',
 };
 
-export const FALLBACK_NAME = 'Someone';
+import { FALLBACK_NAME } from '@/lib/names';
 
 function getAuraEmoji(animal: string | null | undefined): string {
   if (!animal) return '✨';

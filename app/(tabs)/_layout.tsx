@@ -69,6 +69,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          // The Home screen sets its header title to "AniMatch", which would otherwise become the tab label.
+          tabBarLabel: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
