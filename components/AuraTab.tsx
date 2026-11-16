@@ -1,6 +1,7 @@
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { withClientSideTabPress } from './tabBarPress';
 import { useQuiz } from '@/context/QuizContext';
 import { Alert } from 'react-native';
 
@@ -9,11 +10,13 @@ export function AuraTab(props: BottomTabBarButtonProps) {
   const hasResult = isQuizComplete && animalAura;
 
   // Omit ref from props to avoid linter error
-  const { style, onPress, onPressIn, ref, ...rest } = props;
+  const { style, onPress, onPressIn, ref, href, ...rest } = props;
 
   return (
     <Pressable
       {...rest}
+      // Without a result the tab is disabled; drop its link (web only) so the browser can't follow it.
+      {...(hasResult && href ? { href } : {})}
       style={[style, { opacity: hasResult ? 1 : 0.5 }]}
       disabled={!hasResult}
       onPressIn={(ev) => {
@@ -33,7 +36,8 @@ export function AuraTab(props: BottomTabBarButtonProps) {
         }
         onPressIn?.(ev);
       }}
-      onPress={onPress}
+      // Client-side navigation on web instead of following the tab's href (full reload).
+      onPress={withClientSideTabPress(onPress)}
       accessibilityState={{ disabled: !hasResult }}
     />
   );
