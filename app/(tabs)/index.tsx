@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import React, { useRef, useState } from 'react';
-import { useQuiz } from '../../context/QuizContext';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ScreenBackground } from '@/components/ScreenBackground';
@@ -32,7 +31,6 @@ import { buildShareUrl } from '@/constants/AppLinks';
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const { resetQuiz } = useQuiz();
 
   // Get the user's full name from user metadata
   const fullName = getDisplayName(user?.user_metadata?.full_name, user?.email);
@@ -160,7 +158,8 @@ export default function HomeScreen() {
 
           {hasAura ? (
             <Pressable
-              onPress={resetQuiz}
+              // Confirm first: retaking changes the aura, daily message and match scores.
+              onPress={() => router.navigate('/retake')}
               accessibilityRole="button"
               style={({ pressed }) => [styles.retakeLink, pressed && { opacity: 0.7 }]}
             >

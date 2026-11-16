@@ -32,7 +32,7 @@ type ShareFeedback = 'downloaded' | 'error' | null;
 export default function ResultsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { animalAura: contextAura, resetQuiz, isPreviousResult } = useQuiz();
+  const { animalAura: contextAura, isPreviousResult } = useQuiz();
   const shareCardRef = useRef<View>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -193,10 +193,9 @@ export default function ResultsScreen() {
     router.navigate(route);
   }
 
+  // Confirm first on the Retake screen: retaking changes the aura, daily message and match scores.
   const handleRetakeQuiz = () => {
-    // Just reset the quiz, which will trigger the directNavigateToQuiz flag
-    // The tab layout will handle the navigation to avoid the home tab flash
-    resetQuiz();
+    router.navigate('/retake');
   };
 
   // Accent color for this aura, used for the badge, section markers and traits
