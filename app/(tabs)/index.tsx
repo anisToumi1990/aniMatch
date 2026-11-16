@@ -18,6 +18,10 @@ import { Colors } from '@/constants/Colors';
 import { transparentHeaderOptions } from '@/constants/Theme';
 import { DailyAuraCard } from '@/components/DailyAuraCard';
 import { AuraQuizHero } from '@/components/AuraQuizHero';
+import { DailyPairSection } from '@/components/DailyPairTips';
+import { InviteModal } from '@/components/InviteModal';
+import { InviteLinkRoute } from '@/components/InviteForm';
+import { PairTipItem, useDailyPairTips } from '@/hooks/useDailyPairTips';
 import { useDailyAura } from '@/hooks/useDailyAura';
 import { ShareCardHost } from '@/components/share/ShareCardHost';
 import { DailyAuraShareCard } from '@/components/share/DailyAuraShareCard';
@@ -63,11 +67,22 @@ export default function HomeScreen() {
     }
   }
 
-  // Retake link only when we know the user has an aura (not while loading or on an unknown error).
+  // Retake link and pair tips only when we know the user has an aura (not while loading or on an unknown error).
   const hasAura =
     dailyAura.status === 'ready' ||
     dailyAura.status === 'empty' ||
     (dailyAura.status === 'error' && dailyAura.aura !== null);
+
+  const { state: pairTips, retry: retryPairTips } = useDailyPairTips(hasAura);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+
+  function handleOpenMatch(item: PairTipItem) {
+    router.navigate({ pathname: '/compatibility', params: { resultId: String(item.resultId) } });
+  }
+
+  function handleInviteLink(route: InviteLinkRoute) {
+    router.navigate(route);
+  }
 
   return (
     <ScreenBackground>
@@ -97,14 +112,23 @@ export default function HomeScreen() {
             <AuraQuizHero onTakeQuiz={() => router.push('/(tabs)/quiz')} />
           ) : (
             <View style={styles.dailyAura}>
-              {/* A future "Today with {name}" pair tip goes inside as a child section. */}
               <DailyAuraCard
                 state={dailyAura}
                 onRetry={retryDailyAura}
                 onShare={handleShareDaily}
                 isSharing={isSharingDaily}
                 shareFeedback={dailyShareFeedback}
-              />
+              >
+                {hasAura ? (
+                  <DailyPairSection
+                    state={pairTips}
+                    onRetry={retryPairTips}
+                    onOpenMatch={handleOpenMatch}
+                    onSeeAll={() => router.navigate('/pair-tips')}
+                    onInvite={() => setIsInviteOpen(true)}
+                  />
+                ) : null}
+              </DailyAuraCard>
             </View>
           )}
 
@@ -155,6 +179,11 @@ export default function HomeScreen() {
             />
           </ShareCardHost>
         ) : null}
+        <InviteModal
+          visible={isInviteOpen}
+          onClose={() => setIsInviteOpen(false)}
+          onLinkPress={handleInviteLink}
+        />
         <AccountModal
           visible={showAccountModal}
           onClose={() => setShowAccountModal(false)}

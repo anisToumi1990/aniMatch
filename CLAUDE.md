@@ -66,6 +66,7 @@ The Invites tab only lists invite notifications (`invite_id` set) whose invite i
 
 - Home's card reads `daily_aura_messages` / `daily_aura_settings`; day N of the current season shows the Nth active row by `day_index` (`lib/dailyAuraSchedule.ts`, pure, local date, cached per day in `lib/supabase/dailyAura.ts`).
 - Content drop, no app release: add `supabase/content/daily-aura/season-<n>/*.json`, run `node scripts/build-daily-aura-seed.js <n> <migration-file>.sql`, run that SQL, then `update daily_aura_settings set current_season = <n>, season_start_date = '<launch date>'`.
+- Pair tips (`daily_pair_tips`, section 2 of the card, "See all" = `app/(tabs)/pair-tips.tsx`) use the same rule on the other person's animal and the same `daily_aura_settings` season, so a drop must include `supabase/content/daily-pair-tips/season-<n>/` too (`--kind=pair`).
 
 ## Roadmap docs
 
