@@ -1,4 +1,12 @@
-import { daysBetween, getDailyMessagePosition, msUntilNextLocalMidnight, toLocalDateString } from '../dailyAuraSchedule';
+import {
+  daysBetween,
+  getDailyMessagePosition,
+  getDailyPairTipPosition,
+  getPairTipOffsets,
+  msUntilNextLocalMidnight,
+  stableHash,
+  toLocalDateString,
+} from '../dailyAuraSchedule';
 
 describe('getDailyMessagePosition', () => {
   const base = { seasonStartDate: '2026-11-17', messageCount: 60 };
@@ -50,5 +58,40 @@ describe('local date helpers', () => {
 
   it('counts down to the next local midnight', () => {
     expect(msUntilNextLocalMidnight(new Date(2026, 0, 5, 23, 0, 0))).toBe(60 * 60 * 1000);
+  });
+});
+
+describe('pair tip offsets', () => {
+  const day = { seasonStartDate: '2026-11-17', localDate: '2026-11-20', messageCount: 30 };
+
+  it('gives two matches with the same animal different tips on the same day', () => {
+    const matches = [
+      { key: 'user-kax', group: 14 },
+      { key: 'user-bibo', group: 14 },
+      { key: 'user-zed', group: 14 },
+    ];
+    const offsets = getPairTipOffsets(matches, () => 30);
+    const positions = matches.map(match => getDailyPairTipPosition({ ...day, offset: offsets.get(match.key)! }));
+    expect(new Set(positions).size).toBe(3);
+  });
+
+  it('is deterministic and independent of the input order', () => {
+    const a = getPairTipOffsets([{ key: 'u1', group: 1 }, { key: 'u2', group: 1 }], () => 30);
+    const b = getPairTipOffsets([{ key: 'u2', group: 1 }, { key: 'u1', group: 1 }], () => 30);
+    expect([...a.entries()].sort()).toEqual([...b.entries()].sort());
+    expect(stableHash('user-kax')).toBe(stableHash('user-kax'));
+  });
+
+  it('resolves hash collisions within a group', () => {
+    // With 1 tip there is only one offset; with 2 tips two matches must differ.
+    const offsets = getPairTipOffsets([{ key: 'a', group: 1 }, { key: 'b', group: 1 }], () => 2);
+    expect(offsets.get('a')).not.toBe(offsets.get('b'));
+  });
+
+  it('keeps rotating one tip per day', () => {
+    const offset = 7;
+    expect(getDailyPairTipPosition({ ...day, offset })).toBe((3 + 7) % 30);
+    expect(getDailyPairTipPosition({ ...day, localDate: '2026-11-21', offset })).toBe((4 + 7) % 30);
+    expect(getDailyPairTipPosition({ ...day, messageCount: 0, offset })).toBeNull();
   });
 });

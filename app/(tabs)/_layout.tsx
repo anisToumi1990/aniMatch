@@ -138,6 +138,14 @@ export default function TabLayout() {
           title: 'Notifications',
         }}
       />
+      {/* Opened from "See all" in Home's daily aura card; not shown in the tab bar. */}
+      <Tabs.Screen
+        name="pair-tips"
+        options={{
+          href: null,
+          title: 'Today with your matches',
+        }}
+      />
     </Tabs>
   );
 }

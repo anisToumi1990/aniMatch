@@ -73,10 +73,36 @@ export async function fetchDailyAuraSettings(): Promise<DailyAuraSettings> {
   return { currentSeason: data.current_season, seasonStartDate: data.season_start_date };
 }
 
+async function countActiveMessages(auraId: number, season: number): Promise<number> {
+  const { count, error } = await supabase
+    .from('daily_aura_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('aura_id', auraId)
+    .eq('season', season)
+    .eq('is_active', true);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/** The highest season before `beforeSeason` with an active message for this aura, or null. */
+async function findLatestSeasonWithMessages(auraId: number, beforeSeason: number): Promise<number | null> {
+  const { data, error } = await supabase
+    .from('daily_aura_messages')
+    .select('season')
+    .eq('aura_id', auraId)
+    .lt('season', beforeSeason)
+    .eq('is_active', true)
+    .order('season', { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return data?.[0]?.season ?? null;
+}
+
 /**
  * Today's message for an aura (by animal_auras.id), using the user's local date.
  * Cached for the day (memory + AsyncStorage), so repeated calls don't refetch.
- * Resolves to null when the current season has no active message for this aura.
+ * Falls back to the latest earlier season when the current one has no message
+ * for this aura; resolves to null only when no season has any.
  */
 export async function fetchTodayAuraMessage(auraId: number, now: Date = new Date()): Promise<DailyAuraMessage | null> {
   const localDate = toLocalDateString(now);
@@ -85,18 +111,22 @@ export async function fetchTodayAuraMessage(auraId: number, now: Date = new Date
 
   const settings = await fetchDailyAuraSettings();
 
-  const { count, error: countError } = await supabase
-    .from('daily_aura_messages')
-    .select('id', { count: 'exact', head: true })
-    .eq('aura_id', auraId)
-    .eq('season', settings.currentSeason)
-    .eq('is_active', true);
-  if (countError) throw countError;
+  let season = settings.currentSeason;
+  let count = await countActiveMessages(auraId, season);
+  // No messages for this animal in the current season (e.g. a drop that skipped
+  // it): use the latest earlier season that has some.
+  if (count === 0) {
+    const fallbackSeason = await findLatestSeasonWithMessages(auraId, season);
+    if (fallbackSeason !== null) {
+      season = fallbackSeason;
+      count = await countActiveMessages(auraId, season);
+    }
+  }
 
   const position = getDailyMessagePosition({
     seasonStartDate: settings.seasonStartDate,
     localDate,
-    messageCount: count ?? 0,
+    messageCount: count,
   });
   if (position === null) {
     await writeCache({ auraId, localDate, message: null });
@@ -107,7 +137,7 @@ export async function fetchTodayAuraMessage(auraId: number, now: Date = new Date
     .from('daily_aura_messages')
     .select('id, aura_id, season, day_index, message, do_text, dont_text')
     .eq('aura_id', auraId)
-    .eq('season', settings.currentSeason)
+    .eq('season', season)
     .eq('is_active', true)
     .order('day_index', { ascending: true })
     .range(position, position);

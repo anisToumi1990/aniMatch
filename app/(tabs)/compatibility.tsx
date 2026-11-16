@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AuraAvatar } from '@/components/AuraAvatar';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
@@ -92,6 +92,8 @@ export default function CompatibilityScreen() {
   const shareCardRef = useRef<View>(null);
   const shareToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const router = useRouter();
+  // Set when another screen (e.g. Home's pair tips) opens a specific match.
+  const { resultId } = useLocalSearchParams<{ resultId?: string }>();
 
   useEffect(() => () => clearTimeout(shareToastTimeoutRef.current), []);
 
@@ -278,6 +280,16 @@ export default function CompatibilityScreen() {
     fetchInsight(item);
     fetchAuras(item);
   };
+
+  // Open the requested match once results are loaded, then clear the param.
+  useEffect(() => {
+    if (!resultId || isLoading) return;
+    const requested = compatibilityResults.find(result => String(result.id) === String(resultId));
+    if (requested) handleResultPress(requested);
+    router.setParams({ resultId: undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleResultPress is recreated every render.
+  }, [resultId, isLoading, compatibilityResults, router]);
+
 
   const renderCompatibilityItem = ({ item }: { item: CompatibilityResult }) => {
     const isCurrentUserA = user?.id === item.user_a_id;
