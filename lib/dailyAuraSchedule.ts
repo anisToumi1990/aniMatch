@@ -60,3 +60,58 @@ export function msUntilNextLocalMidnight(now: Date = new Date()): number {
   const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
   return Math.max(1000, next.getTime() - now.getTime());
 }
+
+/** Stable 32-bit FNV-1a hash of a string: the same on every device and server. */
+export function stableHash(key: string): number {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < key.length; index += 1) {
+    hash ^= key.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash >>> 0;
+}
+
+export interface PairTipMatch {
+  /** Stable per match, e.g. the other user's id. */
+  key: string;
+  /** Matches in the same group share a tip list, e.g. the other person's aura id. */
+  group: string | number;
+}
+
+/**
+ * Per-match offsets for pair tips. Each match starts at stableHash(key) % tipCount
+ * of its group; within a group (processed in key order) a taken offset moves to
+ * the next free one, so two matches with the same animal get different tips on
+ * the same day (as long as the group has enough tips). Deterministic for a given
+ * set of matches.
+ */
+export function getPairTipOffsets(matches: PairTipMatch[], tipCountForGroup: (group: string | number) => number): Map<string, number> {
+  const offsets = new Map<string, number>();
+  const used = new Map<string | number, Set<number>>();
+  [...matches]
+    .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+    .forEach(({ key, group }) => {
+      const count = tipCountForGroup(group);
+      if (count <= 0 || offsets.has(key)) return;
+      const taken = used.get(group) ?? new Set<number>();
+      let offset = stableHash(key) % count;
+      for (let tries = 0; taken.has(offset) && tries < count; tries += 1) {
+        offset = (offset + 1) % count;
+      }
+      taken.add(offset);
+      used.set(group, taken);
+      offsets.set(key, offset);
+    });
+  return offsets;
+}
+
+/**
+ * Pair tip rule: the daily rotation (getDailyMessagePosition) shifted by the
+ * match's offset. Same tip for that match all day; next tip tomorrow.
+ * Returns null when there are no tips.
+ */
+export function getDailyPairTipPosition(input: DailyMessageInput & { offset: number }): number | null {
+  const base = getDailyMessagePosition(input);
+  if (base === null) return null;
+  return (base + input.offset) % input.messageCount;
+}

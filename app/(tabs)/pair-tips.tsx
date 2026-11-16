@@ -9,7 +9,6 @@ import { InviteModal } from '@/components/InviteModal';
 import { InviteLinkRoute } from '@/components/InviteForm';
 import { NoMatchesInvite, PairTipRow } from '@/components/DailyPairTips';
 import { Colors } from '@/constants/Colors';
-import { transparentHeaderOptions } from '@/constants/Theme';
 import { PairTipItem, useDailyPairTips } from '@/hooks/useDailyPairTips';
 
 /** Case-insensitive match on the person's name or their animal. */
@@ -53,22 +52,23 @@ export default function PairTipsScreen() {
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.container}>
-        <Stack.Screen
-          options={{
-            ...transparentHeaderOptions,
-            title: 'Today with your matches',
-            headerLeft: () => (
-              <Pressable
-                onPress={handleBack}
-                accessibilityRole="button"
-                accessibilityLabel="Back"
-                style={({ pressed }) => [styles.headerButton, pressed && { opacity: 0.7 }]}
-              >
-                <Ionicons name="arrow-back" size={24} color={Colors.text} />
-              </Pressable>
-            ),
-          }}
-        />
+        {/* Own header (back + full title) instead of the tab header, which truncated
+            the title and had no back button on this hidden tab. */}
+        <Stack.Screen options={{ headerShown: false, title: 'Today with your matches' }} />
+        <View style={styles.header}>
+          <Pressable
+            onPress={handleBack}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.7 }]}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          </Pressable>
+          <ThemedText style={styles.headerTitle} accessibilityRole="header" numberOfLines={2}>
+            Today with your matches
+          </ThemedText>
+        </View>
         <View style={styles.content}>
           {hasMatches ? (
             <View style={styles.searchBox}>
@@ -140,7 +140,30 @@ export default function PairTipsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '500',
+    paddingRight: 12,
   },
   content: {
     flex: 1,
@@ -149,14 +172,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 20,
-  },
-  headerButton: {
-    marginLeft: 4,
-    padding: 10,
-    minWidth: 44,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   searchBox: {
     flexDirection: 'row',

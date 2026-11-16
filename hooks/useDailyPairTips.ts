@@ -67,10 +67,9 @@ export function useDailyPairTips(isEnabled: boolean = true) {
     setState(current => (current.status === 'ready' ? current : { status: 'loading' }));
     try {
       const matches = await fetchPairMatches(userId);
-      const auraIds = matches.map(match => match.auraId).filter((id): id is number => id !== null);
-      const tips = auraIds.length > 0 ? await fetchTodayPairTips(auraIds) : {};
+      const tips = await fetchTodayPairTips(matches);
       const items = matches.map(match => {
-        const template = match.auraId !== null ? tips[match.auraId] : null;
+        const template = tips.get(match.otherUserId) ?? null;
         return { ...match, tip: template ? fillTipName(template, match.firstName) : null };
       });
       lastLoaded = { userId, localDate, at: Date.now(), items };

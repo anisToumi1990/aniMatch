@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
-import { getDailyMessagePosition, toLocalDateString } from '@/lib/dailyAuraSchedule';
+import { getDailyPairTipPosition, getPairTipOffsets, toLocalDateString } from '@/lib/dailyAuraSchedule';
 import { fetchDailyAuraSettings } from '@/lib/supabase/dailyAura';
 import { getDisplayName, getFirstName } from '@/lib/names';
 
@@ -95,20 +95,21 @@ export async function fetchPairMatches(userId: string): Promise<PairMatch[]> {
   return matches;
 }
 
-interface TipsCache {
+interface TipListsCache {
   localDate: string;
-  /** aura id -> tip template ({name} not filled), null = no tip for that aura. */
-  tips: Record<string, string | null>;
+  seasonStartDate: string;
+  /** aura id -> that animal's active tip templates ({name} not filled), by day_index. */
+  lists: Record<string, string[]>;
 }
 
-const CACHE_KEY = 'animatch.dailyPairTips.v1';
-let memoryCache: TipsCache | null = null;
+const CACHE_KEY = 'animatch.dailyPairTips.v2';
+let memoryCache: TipListsCache | null = null;
 
-async function readCache(localDate: string): Promise<TipsCache> {
+async function readCache(localDate: string): Promise<TipListsCache | null> {
   if (memoryCache?.localDate === localDate) return memoryCache;
   try {
     const raw = await AsyncStorage.getItem(CACHE_KEY);
-    const stored = raw ? (JSON.parse(raw) as TipsCache) : null;
+    const stored = raw ? (JSON.parse(raw) as TipListsCache) : null;
     if (stored?.localDate === localDate) {
       memoryCache = stored;
       return stored;
@@ -116,11 +117,10 @@ async function readCache(localDate: string): Promise<TipsCache> {
   } catch {
     // Ignore a broken cache.
   }
-  memoryCache = { localDate, tips: {} };
-  return memoryCache;
+  return null;
 }
 
-async function writeCache(cache: TipsCache): Promise<void> {
+async function writeCache(cache: TipListsCache): Promise<void> {
   memoryCache = cache;
   try {
     await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(cache));
@@ -129,53 +129,114 @@ async function writeCache(cache: TipsCache): Promise<void> {
   }
 }
 
-/**
- * Today's tip template for each aura id (same day rule as the daily aura, on the
- * other person's animal). Cached for the day; only uncached auras are fetched,
- * in a single query.
- */
-export async function fetchTodayPairTips(auraIds: number[], now: Date = new Date()): Promise<Record<number, string | null>> {
-  const localDate = toLocalDateString(now);
-  const cache = await readCache(localDate);
-  const uniqueIds = Array.from(new Set(auraIds));
-  const missing = uniqueIds.filter(id => !(String(id) in cache.tips));
+interface TipRow {
+  aura_id: number;
+  season: number;
+  tip: string;
+}
 
-  if (missing.length > 0) {
+/** Groups rows by aura, keeping only each aura's highest season (rows are ordered by day_index). */
+function groupLatestSeason(rows: TipRow[]): Map<number, string[]> {
+  const latestSeason = new Map<number, number>();
+  rows.forEach(row => latestSeason.set(row.aura_id, Math.max(latestSeason.get(row.aura_id) ?? 0, row.season)));
+  const lists = new Map<number, string[]>();
+  rows.forEach(row => {
+    if (row.season !== latestSeason.get(row.aura_id)) return;
+    lists.set(row.aura_id, [...(lists.get(row.aura_id) ?? []), row.tip]);
+  });
+  return lists;
+}
+
+/**
+ * Today's tip lists for the given auras, cached for the day. Uses the current
+ * season (daily_aura_settings); an aura with no tips in it falls back to the
+ * latest earlier season that has tips, so the section never goes empty after a
+ * daily-aura-only content drop.
+ */
+export async function fetchPairTipLists(
+  auraIds: number[],
+  now: Date = new Date(),
+): Promise<{ seasonStartDate: string; localDate: string; lists: Record<number, string[]> }> {
+  const localDate = toLocalDateString(now);
+  const uniqueIds = Array.from(new Set(auraIds));
+  let cache = await readCache(localDate);
+  const missing = cache ? uniqueIds.filter(id => !(String(id) in cache!.lists)) : uniqueIds;
+
+  if (!cache || missing.length > 0) {
     const settings = await fetchDailyAuraSettings();
+    const lists: Record<string, string[]> = { ...(cache?.lists ?? {}) };
+
     const { data, error } = await supabase
       .from('daily_pair_tips')
-      .select('aura_id, day_index, tip')
+      .select('aura_id, season, tip')
       .in('aura_id', missing)
       .eq('season', settings.currentSeason)
       .eq('is_active', true)
       .order('aura_id', { ascending: true })
       .order('day_index', { ascending: true });
     if (error) throw error;
+    const current = groupLatestSeason((data ?? []) as TipRow[]);
 
-    const byAura = new Map<number, string[]>();
-    (data ?? []).forEach((row: { aura_id: number; tip: string }) => {
-      const list = byAura.get(row.aura_id) ?? [];
-      list.push(row.tip);
-      byAura.set(row.aura_id, list);
-    });
-    const tips = { ...cache.tips };
+    // Fallback: auras without tips this season use their latest earlier season.
+    const withoutTips = missing.filter(id => !current.has(id));
+    let fallback = new Map<number, string[]>();
+    if (withoutTips.length > 0) {
+      const { data: older, error: olderError } = await supabase
+        .from('daily_pair_tips')
+        .select('aura_id, season, tip')
+        .in('aura_id', withoutTips)
+        .lt('season', settings.currentSeason)
+        .eq('is_active', true)
+        .order('aura_id', { ascending: true })
+        .order('season', { ascending: false })
+        .order('day_index', { ascending: true });
+      if (olderError) throw olderError;
+      fallback = groupLatestSeason((older ?? []) as TipRow[]);
+    }
+
     missing.forEach(id => {
-      const list = byAura.get(id) ?? [];
-      const position = getDailyMessagePosition({
-        seasonStartDate: settings.seasonStartDate,
-        localDate,
-        messageCount: list.length,
-      });
-      tips[String(id)] = position === null ? null : list[position];
+      lists[String(id)] = current.get(id) ?? fallback.get(id) ?? [];
     });
-    await writeCache({ localDate, tips });
+    cache = { localDate, seasonStartDate: settings.seasonStartDate, lists };
+    await writeCache(cache);
   }
 
-  const result: Record<number, string | null> = {};
+  const result: Record<number, string[]> = {};
   uniqueIds.forEach(id => {
-    result[id] = memoryCache?.tips[String(id)] ?? null;
+    result[id] = cache!.lists[String(id)] ?? [];
   });
-  return result;
+  return { seasonStartDate: cache.seasonStartDate, localDate, lists: result };
+}
+
+/**
+ * Today's tip template per match (keyed by the other user's id), or null.
+ * Same day rotation as the daily aura, shifted per match (getPairTipOffsets) so
+ * two matches with the same animal don't get the same tip.
+ */
+export async function fetchTodayPairTips(
+  matches: Pick<PairMatch, 'otherUserId' | 'auraId'>[],
+  now: Date = new Date(),
+): Promise<Map<string, string | null>> {
+  const withAura = matches.filter((match): match is { otherUserId: string; auraId: number } => match.auraId !== null);
+  const tips = new Map<string, string | null>(matches.map(match => [match.otherUserId, null]));
+  if (withAura.length === 0) return tips;
+
+  const { seasonStartDate, localDate, lists } = await fetchPairTipLists(withAura.map(match => match.auraId), now);
+  const offsets = getPairTipOffsets(
+    withAura.map(match => ({ key: match.otherUserId, group: match.auraId })),
+    group => lists[Number(group)]?.length ?? 0,
+  );
+  withAura.forEach(match => {
+    const list = lists[match.auraId] ?? [];
+    const position = getDailyPairTipPosition({
+      seasonStartDate,
+      localDate,
+      messageCount: list.length,
+      offset: offsets.get(match.otherUserId) ?? 0,
+    });
+    tips.set(match.otherUserId, position === null ? null : list[position]);
+  });
+  return tips;
 }
 
 /** Replaces {name} in a tip with the person's first name. */
