@@ -12,6 +12,7 @@ import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { transparentHeaderOptions } from '@/constants/Theme';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { LockedAuraAvatar } from '@/components/LockedAuraAvatar';
+import { MeetTheAuras } from '@/components/MeetTheAuras';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
 import { getFirstName } from '@/lib/names';
@@ -121,6 +122,7 @@ export default function ResultsScreen() {
             ...transparentHeaderOptions,
             title: 'Animal aura',
           }} />
+          <ScrollView contentContainerStyle={styles.lockedScroll}>
           <View style={styles.statusContainer}>
             {isEmpty ? (
               <>
@@ -162,6 +164,8 @@ export default function ResultsScreen() {
               </>
             )}
           </View>
+          {isEmpty ? <MeetTheAuras style={styles.meetTheAurasLocked} /> : null}
+          </ScrollView>
         </SafeAreaView>
       </ScreenBackground>
     );
@@ -331,6 +335,8 @@ export default function ResultsScreen() {
               <Ionicons name="refresh-outline" size={16} color={Colors.textSecondary} />
               <ThemedText type="secondary" style={styles.retakeText}>Retake quiz</ThemedText>
             </Pressable>
+            {/* Moved here from Home. */}
+            <MeetTheAuras style={styles.meetTheAuras} />
           </View>
         </ScrollView>
         <ShareCardHost ref={shareCardRef}>
@@ -388,6 +394,19 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
+  },
+  lockedScroll: {
+    flexGrow: 1,
+    paddingBottom: 32,
+  },
+  meetTheAuras: {
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  meetTheAurasLocked: {
+    marginHorizontal: 20,
+    maxWidth: 640,
+    alignSelf: 'stretch',
   },
   lockedAvatar: {
     marginBottom: 28,

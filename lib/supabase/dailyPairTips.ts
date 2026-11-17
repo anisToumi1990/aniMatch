@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { getDailyPairTipPosition, getPairTipOffsets, toLocalDateString } from '@/lib/dailyAuraSchedule';
-import { fetchDailyAuraSettings } from '@/lib/supabase/dailyAura';
+import { getDailyAuraSettings } from '@/lib/supabase/dailyAura';
 import { getDisplayName, getFirstName } from '@/lib/names';
 
 /** One person the user has a compatibility result with (newest result per person). */
@@ -163,7 +163,7 @@ export async function fetchPairTipLists(
   const missing = cache ? uniqueIds.filter(id => !(String(id) in cache!.lists)) : uniqueIds;
 
   if (!cache || missing.length > 0) {
-    const settings = await fetchDailyAuraSettings();
+    const settings = await getDailyAuraSettings();
     const lists: Record<string, string[]> = { ...(cache?.lists ?? {}) };
 
     const { data, error } = await supabase

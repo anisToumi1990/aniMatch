@@ -1,78 +1,84 @@
-import { View, StyleSheet, TouchableOpacity, ScrollView, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../context/AuthContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, Stack } from 'expo-router';
 import React, { useRef, useState } from 'react';
-
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Stack, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/context/AuthContext';
 import { ThemedText } from '@/components/ThemedText';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { AccountModal } from '@/components/AccountModal';
 import { NotificationBell } from '@/components/NotificationBell';
-import { getDisplayName } from '@/lib/names';
-import { AuraDetailsModal } from '@/components/AuraDetailsModal';
-import { AuraAvatar } from '@/components/AuraAvatar';
-import { AURA_IMAGES, AuraImage } from '@/constants/AuraImages';
-import { Colors } from '@/constants/Colors';
-import { transparentHeaderOptions } from '@/constants/Theme';
-import { DailyAuraCard } from '@/components/DailyAuraCard';
 import { AuraQuizHero } from '@/components/AuraQuizHero';
-import { DailyPairSection } from '@/components/DailyPairTips';
 import { InviteModal } from '@/components/InviteModal';
 import { InviteLinkRoute } from '@/components/InviteForm';
-import { PairTipItem, useDailyPairTips } from '@/hooks/useDailyPairTips';
-import { useDailyAura } from '@/hooks/useDailyAura';
+import { PaywallModal } from '@/components/PaywallModal';
+import { AuraHero } from '@/components/home/AuraHero';
+import { WeekStrip } from '@/components/home/WeekStrip';
+import { DayMessage } from '@/components/home/DayMessage';
+import { MatchesRow } from '@/components/home/MatchesRow';
 import { ShareCardHost, ShareCardRef } from '@/components/share/ShareCardHost';
 import { DailyAuraShareCard } from '@/components/share/DailyAuraShareCard';
+import { Colors, getAuraColor } from '@/constants/Colors';
+import { transparentHeaderOptions } from '@/constants/Theme';
+import { buildShareUrl } from '@/constants/AppLinks';
+import { useDailyAura } from '@/hooks/useDailyAura';
+import { useAuraWeek } from '@/hooks/useAuraWeek';
+import { PairTipItem, useDailyPairTips } from '@/hooks/useDailyPairTips';
+import { getDisplayName } from '@/lib/names';
+import { weekdayName } from '@/lib/auraWeek';
 import { shareCardImage } from '@/lib/share/shareCardImage';
 import { waitForNextPaint } from '@/lib/share/shareCardTypes';
-import { buildShareUrl } from '@/constants/AppLinks';
+
+type ShareFeedback = { kind: 'info' | 'error'; text: string } | null;
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const userInitial = getDisplayName(user?.user_metadata?.full_name, user?.email).charAt(0).toUpperCase();
 
-  // Get the user's full name from user metadata
-  const fullName = getDisplayName(user?.user_metadata?.full_name, user?.email);
-  const userInitial = fullName.charAt(0).toUpperCase();
+  const { state: dailyAura, retry: retryDailyAura, localDate: today } = useDailyAura();
+  // The aura once known: ready, empty (no content) or a message error with a known aura.
+  const aura =
+    dailyAura.status === 'ready' || dailyAura.status === 'empty' || dailyAura.status === 'error'
+      ? dailyAura.aura
+      : null;
+  const week = useAuraWeek(aura?.id ?? null, today);
+  const { state: pairTips, retry: retryPairTips } = useDailyPairTips(aura !== null);
 
   const [showAccountModal, setShowAccountModal] = useState(false);
-  const [selectedAura, setSelectedAura] = useState<AuraImage | null>(null);
-  const { state: dailyAura, retry: retryDailyAura } = useDailyAura();
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [paywallDate, setPaywallDate] = useState<string | null>(null);
   const shareCardRef = useRef<ShareCardRef>(null);
-  const [isSharingDaily, setIsSharingDaily] = useState(false);
-  const [dailyShareFeedback, setDailyShareFeedback] = useState<{ kind: 'info' | 'error'; text: string } | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<ShareFeedback>(null);
 
-  async function handleShareDaily() {
-    if (dailyAura.status !== 'ready' || isSharingDaily) return;
-    setIsSharingDaily(true);
-    setDailyShareFeedback(null);
+  async function handleShare() {
+    if (!aura || week.state.status !== 'ready' || isSharing) return;
+    const { message } = week.state.message;
+    setIsSharing(true);
+    setShareFeedback(null);
     try {
       await waitForNextPaint();
       if (!shareCardRef.current) throw new Error('Share card is not ready.');
       const outcome = await shareCardImage(shareCardRef.current, {
-        fileName: 'animatch-today.png',
-        title: "Today's aura",
-        message: `Today's ${dailyAura.aura.name} aura: "${dailyAura.message.message}" What's yours?`,
+        fileName: 'animatch-aura.png',
+        title: 'My aura',
+        message: `My ${aura.name} aura${week.isToday ? ' today' : ''}: "${message}" What's yours?`,
         url: buildShareUrl('share-daily'),
       });
-      if (outcome === 'downloaded') setDailyShareFeedback({ kind: 'info', text: 'Saved as an image. Post it to your story!' });
+      if (outcome === 'downloaded') setShareFeedback({ kind: 'info', text: 'Saved as an image. Post it to your story!' });
     } catch (error) {
-      console.error('Error sharing daily aura:', error);
-      setDailyShareFeedback({ kind: 'error', text: "Couldn't create the image. Try again." });
+      console.error('Error sharing aura:', error);
+      setShareFeedback({ kind: 'error', text: "Couldn't create the image. Try again." });
     } finally {
-      setIsSharingDaily(false);
+      setIsSharing(false);
     }
   }
 
-  // Retake link and pair tips only when we know the user has an aura (not while loading or on an unknown error).
-  const hasAura =
-    dailyAura.status === 'ready' ||
-    dailyAura.status === 'empty' ||
-    (dailyAura.status === 'error' && dailyAura.aura !== null);
-
-  const { state: pairTips, retry: retryPairTips } = useDailyPairTips(hasAura);
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  function handleSelectDay(localDate: string) {
+    setShareFeedback(null);
+    week.selectDate(localDate);
+  }
 
   function handleOpenMatch(item: PairTipItem) {
     router.navigate({ pathname: '/compatibility', params: { resultId: String(item.resultId) } });
@@ -80,6 +86,58 @@ export default function HomeScreen() {
 
   function handleInviteLink(route: InviteLinkRoute) {
     router.navigate(route);
+  }
+
+  function renderBody() {
+    if (dailyAura.status === 'locked') {
+      return <AuraQuizHero onTakeQuiz={() => router.push('/(tabs)/quiz')} />;
+    }
+    if (dailyAura.status === 'loading') {
+      return (
+        <View style={styles.center} accessibilityLabel="Loading your aura">
+          <ActivityIndicator size="large" color={Colors.textSecondary} />
+        </View>
+      );
+    }
+    if (!aura) {
+      // Couldn't even load the user's aura.
+      return (
+        <View style={styles.center} accessibilityLiveRegion="polite">
+          <ThemedText style={styles.errorText}>Your aura got lost on the way. Check your connection.</ThemedText>
+          <Pressable onPress={retryDailyAura} accessibilityRole="button" style={({ pressed }) => [styles.retry, pressed && { opacity: 0.7 }]}>
+            <Ionicons name="refresh" size={14} color={Colors.text} />
+            <ThemedText style={styles.retryText}>Try again</ThemedText>
+          </Pressable>
+        </View>
+      );
+    }
+
+    return (
+      <>
+        <AuraHero animalName={aura.name} localDate={week.selectedDate} isToday={week.isToday} />
+        <WeekStrip
+          days={week.days}
+          selectedDate={week.selectedDate}
+          auraColor={getAuraColor(aura.name)}
+          onSelectDay={day => handleSelectDay(day.localDate)}
+          onLockedDay={day => setPaywallDate(day.localDate)}
+        />
+        <DayMessage
+          state={week.state}
+          onRetry={week.retry}
+          onShare={handleShare}
+          isSharing={isSharing}
+          shareFeedback={shareFeedback}
+        />
+        <MatchesRow
+          state={pairTips}
+          onRetry={retryPairTips}
+          onInvite={() => setIsInviteOpen(true)}
+          onSeeAll={() => router.navigate('/pair-tips')}
+          onOpenMatch={handleOpenMatch}
+        />
+      </>
+    );
   }
 
   return (
@@ -90,6 +148,7 @@ export default function HomeScreen() {
             ...transparentHeaderOptions,
             title: 'AniMatch',
             headerTitle: () => <ThemedText type="wordmark">ANIMATCH</ThemedText>,
+            headerTitleAlign: 'left',
             headerRight: () => (
               <View style={styles.headerActions}>
                 <NotificationBell />
@@ -105,145 +164,42 @@ export default function HomeScreen() {
             ),
           }}
         />
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {dailyAura.status === 'locked' ? (
-            <AuraQuizHero onTakeQuiz={() => router.push('/(tabs)/quiz')} />
-          ) : (
-            <View style={styles.dailyAura}>
-              <DailyAuraCard
-                state={dailyAura}
-                onRetry={retryDailyAura}
-                onShare={handleShareDaily}
-                isSharing={isSharingDaily}
-                shareFeedback={dailyShareFeedback}
-              >
-                {hasAura ? (
-                  <DailyPairSection
-                    state={pairTips}
-                    onRetry={retryPairTips}
-                    onOpenMatch={handleOpenMatch}
-                    onSeeAll={() => router.navigate('/pair-tips')}
-                    onInvite={() => setIsInviteOpen(true)}
-                  />
-                ) : null}
-              </DailyAuraCard>
-            </View>
-          )}
+        <ScrollView contentContainerStyle={styles.scrollContent}>{renderBody()}</ScrollView>
 
-          <View style={styles.carouselCard}>
-            <View style={styles.carouselHeader}>
-              <ThemedText type="subtitle" style={styles.carouselTitle}>Meet the auras</ThemedText>
-              <ThemedText type="muted">Tap one to explore its personality</ThemedText>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.carouselContent}
-            >
-              {AURA_IMAGES.map(aura => (
-                <TouchableOpacity
-                  key={aura.name}
-                  onPress={() => setSelectedAura(aura)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={`See the ${aura.name} aura's personality`}
-                  style={styles.carouselItem}
-                >
-                  <AuraAvatar animalName={aura.name} size="medium" />
-                  <ThemedText type="muted" style={styles.carouselName}>{aura.name}</ThemedText>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {hasAura ? (
-            <Pressable
-              // Confirm first: retaking changes the aura, daily message and match scores.
-              onPress={() => router.navigate('/retake')}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.retakeLink, pressed && { opacity: 0.7 }]}
-            >
-              <Ionicons name="refresh-outline" size={15} color={Colors.textMuted} />
-              <ThemedText type="muted" style={styles.retakeText}>Retake the quiz</ThemedText>
-            </Pressable>
-          ) : null}
-        </ScrollView>
-        {dailyAura.status === 'ready' ? (
+        {aura && week.state.status === 'ready' ? (
           <ShareCardHost ref={shareCardRef}>
             <DailyAuraShareCard
-              animalName={dailyAura.aura.name}
-              message={dailyAura.message.message}
-              doText={dailyAura.message.doText}
-              dontText={dailyAura.message.dontText}
+              animalName={aura.name}
+              dayLabel={week.isToday ? 'TODAY' : weekdayName(week.selectedDate).toUpperCase()}
+              message={week.state.message.message}
+              doText={week.state.message.doText}
+              dontText={week.state.message.dontText}
             />
           </ShareCardHost>
         ) : null}
-        <InviteModal
-          visible={isInviteOpen}
-          onClose={() => setIsInviteOpen(false)}
-          onLinkPress={handleInviteLink}
+        <PaywallModal
+          visible={paywallDate !== null}
+          lockedDate={paywallDate}
+          animalName={aura?.name ?? null}
+          source="week_strip"
+          onClose={() => setPaywallDate(null)}
         />
-        <AccountModal
-          visible={showAccountModal}
-          onClose={() => setShowAccountModal(false)}
-        />
-        <AuraDetailsModal
-          aura={selectedAura}
-          onClose={() => setSelectedAura(null)}
-        />
+        <InviteModal visible={isInviteOpen} onClose={() => setIsInviteOpen(false)} onLinkPress={handleInviteLink} />
+        <AccountModal visible={showAccountModal} onClose={() => setShowAccountModal(false)} />
       </SafeAreaView>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   container: {
     flex: 1,
     paddingTop: 60,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 32,
-    paddingBottom: 48,
-    width: '100%',
-    maxWidth: 640,
-    alignSelf: 'center',
-  },
-  dailyAura: {
-    marginBottom: 32,
-  },
-  carouselCard: {
-    backgroundColor: Colors.card,
-    borderColor: Colors.border,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingVertical: 24,
-    marginBottom: 40,
-  },
-  carouselHeader: {
-    paddingHorizontal: 24,
-    marginBottom: 16,
-    gap: 4,
-  },
-  carouselTitle: {
-    fontSize: 18,
-  },
-  carouselContent: {
-    paddingHorizontal: 16,
-  },
-  carouselItem: {
+  headerActions: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  carouselName: {
-    marginTop: 6,
-    fontSize: 13,
+    gap: 8,
   },
   accountButton: {
     width: 36,
@@ -261,16 +217,39 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '500',
   },
-  retakeLink: {
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 40,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
+  },
+  center: {
+    minHeight: 320,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  errorText: {
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: 'center',
+    color: Colors.danger,
+  },
+  retry: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'center',
     gap: 6,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  retakeText: {
+  retryText: {
     fontSize: 14,
-    textDecorationLine: 'underline',
+    fontWeight: '500',
   },
 });

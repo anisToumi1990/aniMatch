@@ -64,9 +64,13 @@ The Invites tab only lists invite notifications (`invite_id` set) whose invite i
 
 ## Daily aura
 
-- Home's card reads `daily_aura_messages` / `daily_aura_settings`; day N of the current season shows the Nth active row by `day_index` (`lib/dailyAuraSchedule.ts`, pure, local date, cached per day in `lib/supabase/dailyAura.ts`).
+- Home (`app/(tabs)/index.tsx`, blocks in `components/home/`) reads `daily_aura_messages` / `daily_aura_settings`; day N of the current season shows the Nth active row by `day_index` (`lib/dailyAuraSchedule.ts`, pure, local date). Messages are cached per date in `lib/supabase/dailyAura.ts`. The week strip (`lib/auraWeek.ts`, `hooks/useAuraWeek.ts`) shows 4 past days (greyed out before the season start), today and 2 locked days that open `components/PaywallModal.tsx`.
 - Content drop, no app release: add `supabase/content/daily-aura/season-<n>/*.json`, run `node scripts/build-daily-aura-seed.js <n> <migration-file>.sql`, run that SQL, then `update daily_aura_settings set current_season = <n>, season_start_date = '<launch date>'`.
-- Pair tips (`daily_pair_tips`, section 2 of the card, "See all" = `app/(tabs)/pair-tips.tsx`) use the same rule on the other person's animal, shifted per match (`getPairTipOffsets`, hash of their user id) so same-animal matches differ. Both features fall back to the latest earlier season with content when the current `daily_aura_settings` season has none for an animal.
+- Pair tips (`daily_pair_tips`, Home's matches row, "See all" = `app/(tabs)/pair-tips.tsx`) use the same rule on the other person's animal, shifted per match (`getPairTipOffsets`, hash of their user id) so same-animal matches differ. Both features fall back to the latest earlier season with content when the current `daily_aura_settings` season has none for an animal.
+
+## Premium (design only)
+
+No payments yet. The paywall's call to action inserts into `premium_interest` (insert-only RLS, so the insert uses `returning: 'minimal'`) via `lib/supabase/premium.ts` and shows a "coming soon" message. Prices are placeholders.
 
 ## Roadmap docs
 

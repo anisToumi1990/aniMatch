@@ -117,5 +117,6 @@ export function useDailyAura() {
 
   const retry = useCallback(() => setReloadCount(count => count + 1), []);
 
-  return { state, retry };
+  /** The user's local date ("YYYY-MM-DD"); changes at local midnight. */
+  return { state, retry, localDate };
 }
