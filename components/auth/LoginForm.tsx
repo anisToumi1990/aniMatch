@@ -193,7 +193,7 @@ export function LoginForm({ onRegisterPress }: LoginFormProps) {
                     <ActivityIndicator size="small" color={Colors.text} />
                   ) : (
                     <>
-                      <AntDesign name="apple1" size={18} color={Colors.text} />
+                      <AntDesign name="apple" size={18} color={Colors.text} />
                       <Text style={styles.socialButtonText}>Apple</Text>
                     </>
                   )}

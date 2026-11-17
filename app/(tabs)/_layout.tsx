@@ -10,6 +10,17 @@ import { Colors } from '@/constants/Colors';
 import { useQuiz } from '@/context/QuizContext';
 import { useNotifications } from '@/context/NotificationsContext';
 import { NotificationBell } from '@/components/NotificationBell';
+import { toIconColor } from '@/components/ui/iconColor';
+
+/**
+ * Screens reachable by navigation but without a tab-bar button. In SDK 58's
+ * JS tabs, `href: null` also makes the route unreachable (it falls back to /),
+ * so only the button is hidden.
+ */
+const hiddenTabOptions = {
+  tabBarButton: () => null,
+  tabBarItemStyle: { display: 'none' as const },
+};
 
 export default function TabLayout() {
   const { isQuizComplete, directNavigateToQuiz, setDirectNavigateToQuiz } = useQuiz();
@@ -117,7 +128,7 @@ export default function TabLayout() {
           title: 'Invites',
           tabBarIcon: ({ color }) => (
             <View>
-              <Ionicons name="person-add" size={26} color={color} />
+              <Ionicons name="person-add" size={26} color={toIconColor(color)} />
               {pendingInviteCount > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{pendingInviteCount}</Text>
@@ -131,7 +142,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="notifications"
         options={{
-          href: null,
+          ...hiddenTabOptions,
           title: 'Notifications',
         }}
       />
@@ -139,7 +150,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="retake"
         options={{
-          href: null,
+          ...hiddenTabOptions,
           title: 'Retake the quiz',
         }}
       />
@@ -147,7 +158,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="pair-tips"
         options={{
-          href: null,
+          ...hiddenTabOptions,
           title: 'Today with your matches',
         }}
       />

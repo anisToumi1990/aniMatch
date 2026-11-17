@@ -18,7 +18,7 @@ import { getFirstName } from '@/lib/names';
 import { splitTraits } from '@/lib/traits';
 import { InviteModal } from '@/components/InviteModal';
 import { InviteLinkRoute } from '@/components/InviteForm';
-import { ShareCardHost } from '@/components/share/ShareCardHost';
+import { ShareCardHost, ShareCardRef } from '@/components/share/ShareCardHost';
 import { AuraShareCard } from '@/components/share/AuraShareCard';
 import { shareCardImage } from '@/lib/share/shareCardImage';
 import { waitForNextPaint } from '@/lib/share/shareCardTypes';
@@ -33,7 +33,7 @@ export default function ResultsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { animalAura: contextAura, isPreviousResult } = useQuiz();
-  const shareCardRef = useRef<View>(null);
+  const shareCardRef = useRef<ShareCardRef>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<ShareFeedback>(null);

@@ -22,7 +22,7 @@ import { InviteModal } from '@/components/InviteModal';
 import { InviteLinkRoute } from '@/components/InviteForm';
 import { PairTipItem, useDailyPairTips } from '@/hooks/useDailyPairTips';
 import { useDailyAura } from '@/hooks/useDailyAura';
-import { ShareCardHost } from '@/components/share/ShareCardHost';
+import { ShareCardHost, ShareCardRef } from '@/components/share/ShareCardHost';
 import { DailyAuraShareCard } from '@/components/share/DailyAuraShareCard';
 import { shareCardImage } from '@/lib/share/shareCardImage';
 import { waitForNextPaint } from '@/lib/share/shareCardTypes';
@@ -39,7 +39,7 @@ export default function HomeScreen() {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [selectedAura, setSelectedAura] = useState<AuraImage | null>(null);
   const { state: dailyAura, retry: retryDailyAura } = useDailyAura();
-  const shareCardRef = useRef<View>(null);
+  const shareCardRef = useRef<ShareCardRef>(null);
   const [isSharingDaily, setIsSharingDaily] = useState(false);
   const [dailyShareFeedback, setDailyShareFeedback] = useState<{ kind: 'info' | 'error'; text: string } | null>(null);
 

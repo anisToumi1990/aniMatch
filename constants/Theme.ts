@@ -1,4 +1,4 @@
-import { DarkTheme, type Theme } from '@react-navigation/native';
+import { DarkTheme, type Theme } from 'expo-router/react-navigation';
 import { Colors } from './Colors';
 
 /** Header options shared by the tab screens: transparent, light text, medium-weight title. */

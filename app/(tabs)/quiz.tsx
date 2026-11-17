@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuiz } from '@/context/QuizContext';
 import { ThemedText } from '@/components/ThemedText';
@@ -10,7 +11,6 @@ import { NavigationControls } from '@/components/quiz/NavigationControls';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { Colors } from '@/constants/Colors';
 import { transparentHeaderOptions } from '@/constants/Theme';
-import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-context';
 
 export default function QuizScreen() {
   const router = useRouter();
@@ -61,7 +61,7 @@ export default function QuizScreen() {
   if (error) {
     return (
       <ScreenBackground>
-        <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
+        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
           <Stack.Screen
             options={{
               ...transparentHeaderOptions,
@@ -79,7 +79,7 @@ export default function QuizScreen() {
               Tap to retry
             </ThemedText>
           </ThemedView>
-        </SafeAreaViewContext>
+        </SafeAreaView>
       </ScreenBackground>
     );
   }
@@ -88,7 +88,7 @@ export default function QuizScreen() {
   if (isLoading && questions.length === 0) {
     return (
       <ScreenBackground>
-        <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
+        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
           <Stack.Screen
             options={{
               ...transparentHeaderOptions,
@@ -101,7 +101,7 @@ export default function QuizScreen() {
               Loading quiz...
             </ThemedText>
           </View>
-        </SafeAreaViewContext>
+        </SafeAreaView>
       </ScreenBackground>
     );
   }
@@ -109,7 +109,7 @@ export default function QuizScreen() {
   if (questions.length === 0) {
     return (
       <ScreenBackground>
-        <SafeAreaViewContext style={styles.container} edges={['bottom', 'left', 'right']}>
+        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
           <Stack.Screen
             options={{
               ...transparentHeaderOptions,
@@ -127,7 +127,7 @@ export default function QuizScreen() {
               Tap to retry
             </ThemedText>
           </ThemedView>
-        </SafeAreaViewContext>
+        </SafeAreaView>
       </ScreenBackground>
     );
   }
@@ -158,7 +158,7 @@ export default function QuizScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaViewContext style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
             ...transparentHeaderOptions,
@@ -194,7 +194,7 @@ export default function QuizScreen() {
             />
           </View>
         </ScrollView>
-      </SafeAreaViewContext>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
