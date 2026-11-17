@@ -1,7 +1,7 @@
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -88,7 +88,7 @@ export default function TabLayout() {
         name="quiz"
         options={{
           title: 'Quiz',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="questionmark.circle.fill" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="sparkles" size={25} color={toIconColor(color)} />,
           tabBarButton: (props) => {
             // With a result, the Quiz tab opens the "Retake" confirmation instead of
             // the quiz. Not while already on the quiz (e.g. right after "Retake the quiz").
@@ -111,7 +111,7 @@ export default function TabLayout() {
         name="results"
         options={{
           title: 'Animal aura',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="paw" size={25} color={toIconColor(color)} />,
           // Always opens: without a result, the screen shows the locked aura.
         }}
       />
@@ -119,7 +119,7 @@ export default function TabLayout() {
         name="compatibility"
         options={{
           title: 'Compatibility',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="heart.fill" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="circle-multiple-outline" size={27} color={toIconColor(color)} />,
         }}
       />
       <Tabs.Screen

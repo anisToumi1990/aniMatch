@@ -6,19 +6,21 @@ import { ShareCardFrame } from './ShareCardFrame';
 
 interface DailyAuraShareCardProps {
   animalName: string;
+  /** "TODAY" by default; a weekday (e.g. "SATURDAY") when sharing a past day. */
+  dayLabel?: string;
   message: string;
   doText: string;
   dontText: string;
 }
 
 /** "Today's aura" story card. Like the other share cards, no emojis. */
-export function DailyAuraShareCard({ animalName, message, doText, dontText }: DailyAuraShareCardProps) {
+export function DailyAuraShareCard({ animalName, dayLabel = 'TODAY', message, doText, dontText }: DailyAuraShareCardProps) {
   const auraColor = getAuraColor(animalName);
 
   return (
     <ShareCardFrame tintColor={auraColor} footerTitle="What's your aura?">
       <Text style={styles.eyebrow}>
-        TODAY <Text style={styles.dot}>·</Text> <Text style={{ color: auraColor }}>{animalName.toUpperCase()}</Text>
+        {dayLabel} <Text style={styles.dot}>·</Text> <Text style={{ color: auraColor }}>{animalName.toUpperCase()}</Text>
       </Text>
       <AuraAvatar animalName={animalName} size="large" style={styles.avatar} />
       <Text style={styles.message}>{message}</Text>
