@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { ThemedText } from '@/components/ThemedText';
@@ -31,10 +31,17 @@ import { waitForNextPaint } from '@/lib/share/shareCardTypes';
 
 type ShareFeedback = { kind: 'info' | 'error'; text: string } | null;
 
+/** Home's content column (scrollContent): max width and side padding. */
+const CONTENT_MAX_WIDTH = 640;
+const CONTENT_PADDING = 20;
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const userInitial = getDisplayName(user?.user_metadata?.full_name, user?.email).charAt(0).toUpperCase();
+  // On wide screens, line the header up with the centered content column instead of the window edges.
+  const { width: windowWidth } = useWindowDimensions();
+  const columnInset = Math.max(0, (windowWidth - CONTENT_MAX_WIDTH) / 2) + CONTENT_PADDING;
 
   const { state: dailyAura, retry: retryDailyAura, localDate: today } = useDailyAura();
   // The aura once known: ready, empty (no content) or a message error with a known aura.
@@ -143,12 +150,14 @@ export default function HomeScreen() {
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.container}>
-        <Stack.Screen
+        <Tabs.Screen
           options={{
             ...transparentHeaderOptions,
             title: 'AniMatch',
             headerTitle: () => <ThemedText type="wordmark">ANIMATCH</ThemedText>,
             headerTitleAlign: 'left',
+            headerTitleContainerStyle: { marginLeft: columnInset, marginRight: 0 },
+            headerRightContainerStyle: { paddingRight: columnInset },
             headerRight: () => (
               <View style={styles.headerActions}>
                 <NotificationBell />
@@ -210,7 +219,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
   },
   accountInitial: {
     fontSize: 15,
@@ -219,11 +227,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: CONTENT_PADDING,
     paddingTop: 8,
     paddingBottom: 40,
     width: '100%',
-    maxWidth: 640,
+    maxWidth: CONTENT_MAX_WIDTH,
     alignSelf: 'center',
   },
   center: {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator, Pressable, ScrollView, LayoutChangeEvent } from 'react-native';
 import { Stack } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -70,6 +70,51 @@ interface AnimalAura {
   id: number;
   name: string;
   icon_url: string;
+}
+
+interface LayoutPoint {
+  x: number;
+  y: number;
+}
+
+interface MatchCardProps {
+  onPress: () => void;
+  accessibilityLabel: string;
+  /** Secondary button (share). Rendered next to the card, not inside it. */
+  action: React.ReactNode;
+  /** Renders the card content; put `actionSlot` where the action should appear and pass `onHeaderLayout` to its row. */
+  children: (actionSlot: React.ReactNode, onHeaderLayout: (event: LayoutChangeEvent) => void) => React.ReactNode;
+}
+
+/**
+ * A pressable match card with a share button on top of it. On web a button
+ * can't contain another button, so the share button is a sibling of the card,
+ * positioned over an empty slot measured inside the card's header row.
+ */
+function MatchCard({ onPress, accessibilityLabel, action, children }: MatchCardProps) {
+  const [header, setHeader] = useState<LayoutPoint | null>(null);
+  const [slot, setSlot] = useState<LayoutPoint | null>(null);
+  const actionSlot = (
+    <View
+      style={styles.shareIconSlot}
+      onLayout={event => setSlot({ x: event.nativeEvent.layout.x, y: event.nativeEvent.layout.y })}
+    />
+  );
+  return (
+    <View style={styles.resultCardWrapper}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        style={({ pressed }) => [styles.resultCard, pressed && { opacity: 0.85 }]}
+      >
+        {children(actionSlot, event => setHeader({ x: event.nativeEvent.layout.x, y: event.nativeEvent.layout.y }))}
+      </Pressable>
+      {header && slot ? (
+        <View style={[styles.shareIconOverlay, { left: header.x + slot.x, top: header.y + slot.y }]}>{action}</View>
+      ) : null}
+    </View>
+  );
 }
 
 export default function CompatibilityScreen() {
@@ -301,13 +346,14 @@ export default function CompatibilityScreen() {
     const otherName = getOtherUserName(item);
 
     return (
-      <Pressable
+      <MatchCard
         onPress={() => handleResultPress(item)}
-        accessibilityRole="button"
         accessibilityLabel={`View details for match with ${otherName}`}
-        style={({ pressed }) => [styles.resultCard, pressed && { opacity: 0.85 }]}
+        action={renderShareButton(item)}
       >
-        <View style={styles.resultCardHeader}>
+        {(actionSlot, onHeaderLayout) => (
+        <>
+        <View style={styles.resultCardHeader} onLayout={onHeaderLayout}>
           <View style={styles.avatarPair}>
             <AuraAvatar animalName={myAuraName} size="small" />
             <AuraAvatar animalName={otherAuraName} size="small" style={styles.avatarOverlap} />
@@ -333,7 +379,7 @@ export default function CompatibilityScreen() {
               </View>
             </View>
           </View>
-          {renderShareButton(item)}
+          {actionSlot}
           <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
         </View>
         <View style={styles.scoreContainer}>
@@ -350,7 +396,9 @@ export default function CompatibilityScreen() {
             />
           </View>
         </View>
-      </Pressable>
+        </>
+        )}
+      </MatchCard>
     );
   };
 
@@ -573,10 +621,12 @@ const styles = StyleSheet.create({
     maxWidth: 640,
     alignSelf: 'center',
   },
+  resultCardWrapper: {
+    marginBottom: 14,
+  },
   resultCard: {
     padding: 20,
     borderRadius: 20,
-    marginBottom: 14,
     backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -680,6 +730,15 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     backgroundColor: Colors.cardRaised,
     marginRight: 8,
+  },
+  // Same footprint as shareIconButton (36 + 8 margin), so the header layout doesn't change.
+  shareIconSlot: {
+    width: 36,
+    height: 36,
+    marginRight: 8,
+  },
+  shareIconOverlay: {
+    position: 'absolute',
   },
   headerActions: {
     flexDirection: 'row',
