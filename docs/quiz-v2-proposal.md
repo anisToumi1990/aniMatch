@@ -211,9 +211,9 @@ Range **5.0%–9.4%**, inside the 3–12% goal. Seeds 7 and 2026 and a 100,000-u
 | Run | Range | Lowest | Highest | Users with a tie-breaker |
 |---|---|---|---|---|
 | 10,000 users, seed 42 | 4.0%–9.1% | Parrot 4.0% | Wolf 9.1% | 22.0% |
-| 20,000 users, seed 7 | 4.0%–9.4% | Parrot 4.0% | Wolf 9.3% | 21.6% |
+| 20,000 users, seed 7 | 4.0%–9.4% | Parrot 4.0% | Lion 9.4% | 21.6% |
 
-Still inside the 3–12% goal. Parrot is the rarest animal in both modes: watch it first when re-tuning with real data. TODO (phase 2): add this weighted mode to `scripts/quiz-v2-simulation.js` as an option (e.g. `--realistic`).
+Still inside the 3–12% goal. Parrot is the rarest animal in both modes: watch it first when re-tuning with real data. Run it with `node scripts/quiz-v2-simulation.js 10000 42 --realistic`.
 
 **Caveat:** real people don't answer at random. Some answers will be more popular (e.g. "half for you, half for me"), which will skew the split. Once v2 is live, we should log the trait scores and re-tune the profiles from real data, re-running this script with the real answer frequencies.
 
