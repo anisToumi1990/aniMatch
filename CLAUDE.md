@@ -19,6 +19,13 @@ AniMatch ("animatchaura") is an Expo SDK 53 / React Native 0.79 app using expo-r
 - `.env` needs `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`. `lib/supabase/index.ts` throws at import time if either one is missing.
 - **Never commit `.env`.** Don't stage it, even if `git add -A` or `git status` shows it.
 
+## Security (Supabase project settings)
+
+- `supabase/migrations/20261121090000_security_hardening.sql` pins `search_path = public` on `handle_new_user()`, `mark_notification_read()`, `create_compatibility_results(integer)` and `update_user_compatibility_results(uuid, integer)`, and revokes execute from `public` / `anon` / `authenticated` on the trigger functions (`handle_new_user`, `send_invite_notification`, `notify_invite_accepted`, `notify_match_ready`). Set `search_path` on any new function the same way.
+- Email OTP expiry is set to 1 hour.
+- Leaked password protection is off: it needs the Pro plan.
+- Postgres upgrade is still pending.
+
 ## Architecture
 
 **Routing and auth gate.** `app/_layout.tsx` nests the providers in this order: `SafeAreaProvider` → `AuthProvider` → `QuizProvider` → `NotificationsProvider`. Inside them, `AuthGuard` redirects based on `useSegments()`:
