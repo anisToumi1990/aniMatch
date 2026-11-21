@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-AniMatch ("animatchaura") is an Expo SDK 58 / React Native 0.88 (React 19.3) app using expo-router and TypeScript (strict), with Supabase as the backend. Users take a 15-question trait quiz (quiz v2) that matches them to one of 15 "Animal Auras", invite other users, and see how compatible their auras are for a chosen relationship type (Lover / Business Partner / Family).
+AniMatch ("animatchaura") is an Expo SDK 58 / React Native 0.88 (React 19.3) app using expo-router and TypeScript (strict), with Supabase as the backend. Users take a 15-question trait quiz (quiz v2) that matches them to one of 15 "Animal Auras", invite other users, and see how compatible they are for a chosen relationship type (Lover / Business Partner / Family), scored from both people's traits (compatibility v2).
 
 ## Commands
 
@@ -43,7 +43,7 @@ Any new top-level route group has to be accounted for in `AuthGuard`, or users w
 - 5 traits: `social`, `curiosity`, `organization`, `kindness`, `chill` (easygoing 100 vs intense 0). 15 main questions (3 per trait) + 5 tie-breakers (1 per trait) in `quiz_v2_questions`; 4 answers each in `quiz_v2_options` worth `points` 0-3 on the question's trait. Each aura's ideal 0-100 profile is in `animal_trait_profiles`.
 - Scoring is pure, in `lib/quizV2Scoring.ts` (`evaluateQuizV2`): trait score = points / (answers × 3) × 100, aura = closest profile by Euclidean distance. If 2nd − 1st distance < 2, ask a tie-breaker on the trait where the two closest auras (after the main questions) differ most, then the next, max 3; the closest wins after that.
 - `lib/quizV2Session.ts` is the session reducer used by `QuizContext` (`useReducer`): main questions and their answers are shuffled on load (A-D labels follow display order), tie-breakers are appended only when needed, and changing an earlier answer drops the tie-breakers that depended on it. Data access: `lib/supabase/quizV2.ts`.
-- Results go into `user_quiz_results` with `quiz_version = 2`, `trait_scores` (jsonb, 1 decimal) and `answer_data` = `[{ question_id, option_id }]`. Then the usual `updateUserCompatibilityResults` runs (compatibility is still animal-based).
+- Results go into `user_quiz_results` with `quiz_version = 2`, `trait_scores` (jsonb, 1 decimal) and `answer_data` = `[{ question_id, option_id }]`. Then the usual `updateUserCompatibilityResults` runs.
 - **v1:** older rows have `quiz_version = 1` (the default) and keep their animal. The v1 tables (`quiz_questions`, `quiz_answer_options`, `answer_animal_mapping`) are still in the database but no longer used by the app. Users whose latest result is v1 see Home's "New, more accurate quiz" banner (`components/home/QuizV2Banner.tsx`), which opens `/retake`; it's hidden after a v2 result or once dismissed (AsyncStorage, per user and device: `lib/quizV2Banner.ts`).
 - Changing questions or profiles: edit the doc, re-run the simulation, regenerate/update the seed in `supabase/migrations/20261121100100_quiz_v2_seed.sql` (upserts by id) and keep `scripts/quiz-v2-simulation.js` in sync.
 
@@ -52,7 +52,15 @@ Any new top-level route group has to be accounted for in `AuthGuard`, or users w
 2. The app never inserts `notifications` rows; database triggers create them (see Notifications below). Nothing sends an email to invitees who don't have an account.
 3. In `app/(tabs)/invites.tsx` (the Invites tab), accepting an invite sets its `status` and `relationship_type`, then calls the RPC `create_compatibility_results(invite_id)`.
 4. After every quiz, `updateUserCompatibilityResults` runs the RPC `update_user_compatibility_results` if the user already has results, then calls `create_compatibility_results` for each accepted invite that has no `compatibility_results` row yet (matched by user pair in either order plus `relationship_type`). This also covers invites accepted before the other person took the quiz, since `create_compatibility_results` only inserts once both users have a result. Errors are logged, not thrown.
-5. `compatibility.tsx` reads `compatibility_results` and matches up text from `compatibility_insight_templates` by score and relationship type.
+5. `compatibility.tsx` reads `compatibility_results` and matches up text from `compatibility_insight_templates` by overall score and relationship type. v2 rows also show the 4 area bars and "Where you click" / "Where you clash" (`components/compatibility/AreaBreakdown.tsx`, texts in `constants/compatibilityCopy.ts`).
+
+**Compatibility v2** (design: `docs/compatibility-v2-proposal.md`; migrations `20261122100000_compatibility_v2.sql` → `…100100_compatibility_v2_check.sql` → `…100200_compatibility_v2_rollout.sql`):
+- Computed only in the database, because it needs both people's traits. `compatibility_v2_traits(user)` returns the latest v2 `trait_scores`, else the animal's `animal_trait_profiles` row as-is. `compatibility_v2_scores(a, b, type)` returns 4 areas (communication, energy, conflict, values) and the overall score. Weights and calibration are in `compatibility_v2_settings` (one row per relationship type).
+- These internal functions and `compatibility_v2_refresh_pair()` have no client execute. Only the two RPCs call them; both are SECURITY DEFINER, check the caller (part of the invite / is `user_id`) and keep their old signatures. `create_compatibility_results` ignores invites that aren't `accepted`.
+- `compatibility_results` stores the overall in `compatibility_score` (whole number), plus `communication_score`, `energy_score`, `conflict_score`, `values_score` and `compatibility_version` (2; v1 rows have null areas). "Conflict" is shown as "Handling conflict": high is always good.
+- `lib/compatibilityV2.ts` is the pure reference implementation with the same default settings. It's also used for the UI's levels and click/clash.
+- **Changing a formula or setting:** update `scripts/compatibility-v2-simulation.js`, `lib/compatibilityV2.ts` and the SQL function / settings together. Then run `node scripts/compatibility-v2-simulation.js --fixture`, which regenerates `lib/__tests__/fixtures/compatibilityV2-fixture.json` and the SQL check file, and run both checks.
+- **RLS:** clients can only `select` their own `compatibility_results` rows and their own `user_quiz_results` rows. Never add a policy, view or RPC that exposes another user's `trait_scores`.
 
 The Invites tab only lists invite notifications (`invite_id` set) whose invite is still `pending`; its tab badge counts the same.
 

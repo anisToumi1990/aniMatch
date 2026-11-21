@@ -1,0 +1,47 @@
+[
+  {
+    "kind": "function",
+    "name": "create_compatibility_results",
+    "detail": "CREATE OR REPLACE FUNCTION public.create_compatibility_results(invite_id integer)\n RETURNS void\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\nDECLARE\r\n    invite_row RECORD;\r\n    inviter_aura_id INT;\r\n    recipient_aura_id INT;\r\n    comp_score FLOAT;\r\nBEGIN\r\n    -- Fetch the invite row\r\n    SELECT *\r\n    INTO invite_row\r\n    FROM invites\r\n    WHERE id = invite_id;\r\n\r\n    IF NOT FOUND THEN\r\n        RAISE LOG 'No invite found with id = %', invite_id;\r\n        RETURN;\r\n    END IF;\r\n\r\n    RAISE LOG 'invite_id: %', invite_id;\r\n    RAISE LOG 'inviter_user_id: %, recipient_user_id: %', invite_row.inviter_user_id, invite_row.recipient_user_id;\r\n\r\n    IF invite_row.inviter_user_id IS NOT NULL AND invite_row.recipient_user_id IS NOT NULL AND invite_row.relationship_type IS NOT NULL THEN\r\n\r\n        -- Get latest aura_id for inviter\r\n        SELECT aura_id INTO inviter_aura_id\r\n        FROM user_quiz_results\r\n        WHERE user_id = invite_row.inviter_user_id AND aura_id IS NOT NULL\r\n        ORDER BY quiz_date DESC\r\n        LIMIT 1;\r\n\r\n        RAISE LOG 'inviter_aura_id: %', inviter_aura_id;\r\n\r\n        -- Get latest aura_id for recipient\r\n        SELECT aura_id INTO recipient_aura_id\r\n        FROM user_quiz_results\r\n        WHERE user_id = invite_row.recipient_user_id AND aura_id IS NOT NULL\r\n        ORDER BY quiz_date DESC\r\n        LIMIT 1;\r\n\r\n        RAISE LOG 'recipient_aura_id: %', recipient_aura_id;\r\n\r\n        -- Proceed only if both aura_ids are available\r\n        IF inviter_aura_id IS NOT NULL AND recipient_aura_id IS NOT NULL THEN\r\n            -- Calculate compatibility score\r\n            SELECT compatibility_score INTO comp_score\r\n            FROM animal_compatibility\r\n            WHERE animal_a_id = inviter_aura_id AND animal_b_id = recipient_aura_id;\r\n\r\n            RAISE LOG 'compatibility_score: %', comp_score;\r\n\r\n            -- Insert the compatibility results\r\n            INSERT INTO compatibility_results (\r\n                invite_id,\r\n                user_a_id,\r\n                user_b_id,\r\n                user_a_aura_id,\r\n                user_b_aura_id,\r\n                compatibility_score,\r\n                relationship_type\r\n            )\r\n            VALUES (\r\n                invite_row.id,\r\n                invite_row.inviter_user_id,\r\n                invite_row.recipient_user_id,\r\n                inviter_aura_id,\r\n                recipient_aura_id,\r\n                comp_score,\r\n                invite_row.relationship_type\r\n            );\r\n\r\n            RAISE LOG 'Inserted compatibility result for invite_id: %', invite_row.id;\r\n        ELSE\r\n            RAISE LOG 'Missing aura_id: inviter_aura_id = %, recipient_aura_id = %', inviter_aura_id, recipient_aura_id;\r\n        END IF;\r\n    ELSE\r\n        RAISE LOG 'Required invite fields are missing (inviter_user_id, recipient_user_id, relationship_type)';\r\n    END IF;\r\nEND;\r\n$function$\n"
+  },
+  {
+    "kind": "function",
+    "name": "update_user_compatibility_results",
+    "detail": "CREATE OR REPLACE FUNCTION public.update_user_compatibility_results(user_id uuid, new_aura_id integer)\n RETURNS void\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  other_aura_id int;\r\n  new_score numeric;\r\nbegin\r\n  -- Update where user is user_a\r\n  for other_aura_id in\r\n    select user_b_aura_id from compatibility_results where user_a_id = user_id\r\n  loop\r\n    -- Try (new_aura_id, other_aura_id)\r\n    select compatibility_score into new_score\r\n    from animal_compatibility\r\n    where animal_a_id = new_aura_id and animal_b_id = other_aura_id\r\n    limit 1;\r\n\r\n    -- If not found, try (other_aura_id, new_aura_id)\r\n    if new_score is null then\r\n      select compatibility_score into new_score\r\n      from animal_compatibility\r\n      where animal_a_id = other_aura_id and animal_b_id = new_aura_id\r\n      limit 1;\r\n    end if;\r\n\r\n    update compatibility_results\r\n    set user_a_aura_id = new_aura_id,\r\n        compatibility_score = coalesce(new_score, 0)\r\n    where user_a_id = user_id and user_b_aura_id = other_aura_id;\r\n  end loop;\r\n\r\n  -- Update where user is user_b\r\n  for other_aura_id in\r\n    select user_a_aura_id from compatibility_results where user_b_id = user_id\r\n  loop\r\n    -- Try (other_aura_id, new_aura_id)\r\n    select compatibility_score into new_score\r\n    from animal_compatibility\r\n    where animal_a_id = other_aura_id and animal_b_id = new_aura_id\r\n    limit 1;\r\n\r\n    -- If not found, try (new_aura_id, other_aura_id)\r\n    if new_score is null then\r\n      select compatibility_score into new_score\r\n      from animal_compatibility\r\n      where animal_a_id = new_aura_id and animal_b_id = other_aura_id\r\n      limit 1;\r\n    end if;\r\n\r\n    update compatibility_results\r\n    set user_b_aura_id = new_aura_id,\r\n        compatibility_score = coalesce(new_score, 0)\r\n    where user_b_id = user_id and user_a_aura_id = other_aura_id;\r\n  end loop;\r\nend;\r\n$function$\n"
+  },
+  {
+    "kind": "policy",
+    "name": "compatibility_results.Enable delete access for user_a or user_b",
+    "detail": "DELETE to public using ((auth.uid() = user_a_id) OR (auth.uid() = user_b_id)) check -"
+  },
+  {
+    "kind": "policy",
+    "name": "compatibility_results.Enable insert access for user_a or user_b",
+    "detail": "INSERT to public using - check ((auth.uid() = user_a_id) OR (auth.uid() = user_b_id))"
+  },
+  {
+    "kind": "policy",
+    "name": "compatibility_results.Enable update access for user_a or user_b",
+    "detail": "UPDATE to public using ((auth.uid() = user_a_id) OR (auth.uid() = user_b_id)) check -"
+  },
+  {
+    "kind": "policy",
+    "name": "compatibility_results.Users can read their own compatibility re",
+    "detail": "SELECT to public using ((auth.uid() = user_a_id) OR (auth.uid() = user_b_id)) check -"
+  },
+  {
+    "kind": "policy",
+    "name": "user_quiz_results.Users can insert their own results",
+    "detail": "INSERT to authenticated using - check (auth.uid() = user_id)"
+  },
+  {
+    "kind": "policy",
+    "name": "user_quiz_results.Users can read their own results and the resu",
+    "detail": "SELECT to public using ((auth.uid() = user_id) OR (EXISTS ( SELECT 1\n   FROM invites\n  WHERE ((invites.inviter_user_id = user_quiz_results.user_id) AND (invites.recipient_user_id = auth.uid()) AND (invites.status = 'accepted'::text))))) check -"
+  },
+  {
+    "kind": "policy",
+    "name": "user_quiz_results.Users can update their own results",
+    "detail": "UPDATE to public using (user_id = auth.uid()) check (auth.uid() = user_id)"
+  }
+]
