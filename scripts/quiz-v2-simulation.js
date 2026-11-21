@@ -14,12 +14,14 @@
  * Usage:
  *   node scripts/quiz-v2-simulation.js              # 10,000 users, seed 42
  *   node scripts/quiz-v2-simulation.js 50000 7      # users, seed
+ *   node scripts/quiz-v2-simulation.js --realistic  # weighted answers (see ANSWER_WEIGHTS)
  *
- * Simulated users pick every answer uniformly at random. Exits 1 if any animal
- * falls outside MIN_SHARE..MAX_SHARE.
+ * By default simulated users pick every answer uniformly at random. With --realistic
+ * they favor the middle answers (15/35/35/15% for 3/2/1/0 points). Exits 1 if any
+ * animal falls outside MIN_SHARE..MAX_SHARE.
  */
 
-const TRAITS = ['social', 'curiosity', 'organization', 'kindness', 'calm'];
+const TRAITS = ['social', 'curiosity', 'organization', 'kindness', 'chill'];
 
 // Trait of each main question, in order (Q1..Q15). Answers A..D are worth 3, 2, 1, 0 points.
 const QUESTION_TRAITS = [
@@ -27,9 +29,14 @@ const QUESTION_TRAITS = [
   'curiosity', 'curiosity', 'curiosity',
   'organization', 'organization', 'organization',
   'kindness', 'kindness', 'kindness',
-  'calm', 'calm', 'calm',
+  'chill', 'chill', 'chill',
 ];
 const ANSWER_POINTS = [3, 2, 1, 0];
+// Probability of picking each answer in ANSWER_POINTS, per mode.
+const ANSWER_WEIGHTS = {
+  uniform: [0.25, 0.25, 0.25, 0.25],
+  realistic: [0.15, 0.35, 0.35, 0.15],
+};
 const MAX_POINTS = 3;
 
 // One tie-breaker question per trait (TB-S, TB-C, TB-O, TB-K, TB-Ca), same 3/2/1/0 scale.
@@ -39,7 +46,7 @@ const TIE_GAP = 2; // distance units (trait points)
 const MIN_SHARE = 3;
 const MAX_SHARE = 12;
 
-// Final tuned profiles: [social, curiosity, organization, kindness, calm].
+// Final tuned profiles: [social, curiosity, organization, kindness, chill].
 const PROFILES = {
   Dolphin:  [78, 58, 42, 72, 48],
   Peacock:  [74, 50, 60, 30, 34],
@@ -69,8 +76,13 @@ function mulberry32(seed) {
   };
 }
 
-function randomAnswerPoints(random) {
-  return ANSWER_POINTS[Math.floor(random() * ANSWER_POINTS.length)];
+function randomAnswerPoints(random, weights) {
+  let roll = random();
+  for (let i = 0; i < ANSWER_POINTS.length; i += 1) {
+    roll -= weights[i];
+    if (roll < 0) return ANSWER_POINTS[i];
+  }
+  return ANSWER_POINTS[ANSWER_POINTS.length - 1];
 }
 
 /** points[trait] and counts[trait] -> 0-100 scores. */
@@ -98,11 +110,11 @@ function tieBreakerOrder(first, second) {
   return TRAITS.map((_, i) => i).sort((i, j) => Math.abs(a[j] - b[j]) - Math.abs(a[i] - b[i]));
 }
 
-function simulateUser(random) {
+function simulateUser(random, weights) {
   const points = Object.fromEntries(TRAITS.map(t => [t, 0]));
   const counts = Object.fromEntries(TRAITS.map(t => [t, 0]));
   for (const trait of QUESTION_TRAITS) {
-    points[trait] += randomAnswerPoints(random);
+    points[trait] += randomAnswerPoints(random, weights);
     counts[trait] += 1;
   }
 
@@ -116,7 +128,7 @@ function simulateUser(random) {
   let asked = 0;
   while (asked < MAX_TIE_BREAKERS && ranking[1].distance - ranking[0].distance < TIE_GAP) {
     const trait = TRAITS[order[asked]];
-    points[trait] += randomAnswerPoints(random);
+    points[trait] += randomAnswerPoints(random, weights);
     counts[trait] += 1;
     asked += 1;
     ranking = rankAnimals(toScores(points, counts));
@@ -126,8 +138,12 @@ function simulateUser(random) {
 }
 
 function main() {
-  const users = Number(process.argv[2]) || 10000;
-  const seed = Number(process.argv[3]) || 42;
+  const args = process.argv.slice(2);
+  const mode = args.includes('--realistic') ? 'realistic' : 'uniform';
+  const positional = args.filter(arg => !arg.startsWith('--'));
+  const users = Number(positional[0]) || 10000;
+  const seed = Number(positional[1]) || 42;
+  const weights = ANSWER_WEIGHTS[mode];
   const random = mulberry32(seed);
 
   const finalCounts = Object.fromEntries(Object.keys(PROFILES).map(n => [n, 0]));
@@ -138,7 +154,7 @@ function main() {
   const askedHistogram = [0, 0, 0, 0];
 
   for (let i = 0; i < users; i += 1) {
-    const result = simulateUser(random);
+    const result = simulateUser(random, weights);
     finalCounts[result.animal] += 1;
     initialCounts[result.initialAnimal] += 1;
     if (result.isTie) {
@@ -150,7 +166,7 @@ function main() {
   }
 
   const pct = n => (n / users) * 100;
-  console.log(`Users: ${users}, seed: ${seed}, tie gap: ${TIE_GAP}\n`);
+  console.log(`Users: ${users}, seed: ${seed}, answers: ${mode}, tie gap: ${TIE_GAP}\n`);
   console.log('| Animal | Before tie-breakers | Final |');
   console.log('|---|---|---|');
   const rows = Object.keys(PROFILES).sort((a, b) => finalCounts[b] - finalCounts[a]);
