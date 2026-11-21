@@ -1,0 +1,668 @@
+{
+  "generatedBy": "node scripts/compatibility-v2-simulation.js --fixture",
+  "cases": [
+    {
+      "name": "Dolphin + Otter (profiles)",
+      "a": {
+        "social": 78,
+        "curiosity": 58,
+        "organization": 42,
+        "kindness": 72,
+        "chill": 48
+      },
+      "b": {
+        "social": 66,
+        "curiosity": 58,
+        "organization": 30,
+        "kindness": 58,
+        "chill": 72
+      },
+      "areas": {
+        "communication": 90.95200000000001,
+        "energy": 82.886,
+        "conflict": 85.14,
+        "values": 73.12799999999999
+      },
+      "areasRounded": {
+        "communication": 91,
+        "energy": 83,
+        "conflict": 85,
+        "values": 73
+      },
+      "overall": {
+        "lover": 90.68346860330729,
+        "business_partner": 88.34199050603026,
+        "family": 88.97308282566294
+      },
+      "overallRounded": {
+        "lover": 91,
+        "business_partner": 88,
+        "family": 89
+      }
+    },
+    {
+      "name": "Parrot + Bear (profiles)",
+      "a": {
+        "social": 76,
+        "curiosity": 66,
+        "organization": 30,
+        "kindness": 54,
+        "chill": 32
+      },
+      "b": {
+        "social": 26,
+        "curiosity": 32,
+        "organization": 68,
+        "kindness": 56,
+        "chill": 70
+      },
+      "areas": {
+        "communication": 44.70399999999999,
+        "energy": 26.599999999999987,
+        "conflict": 56.123999999999995,
+        "values": 54.35600000000001
+      },
+      "areasRounded": {
+        "communication": 45,
+        "energy": 27,
+        "conflict": 56,
+        "values": 54
+      },
+      "overall": {
+        "lover": 33.98023094144086,
+        "business_partner": 43.291065089969116,
+        "family": 47.61563199429825
+      },
+      "overallRounded": {
+        "lover": 34,
+        "business_partner": 43,
+        "family": 48
+      }
+    },
+    {
+      "name": "Cat + Peacock (profiles)",
+      "a": {
+        "social": 26,
+        "curiosity": 70,
+        "organization": 34,
+        "kindness": 38,
+        "chill": 46
+      },
+      "b": {
+        "social": 74,
+        "curiosity": 50,
+        "organization": 60,
+        "kindness": 30,
+        "chill": 34
+      },
+      "areas": {
+        "communication": 35.68,
+        "energy": 46.07,
+        "conflict": 42.239999999999995,
+        "values": 64.86
+      },
+      "areasRounded": {
+        "communication": 36,
+        "energy": 46,
+        "conflict": 42,
+        "values": 65
+      },
+      "overall": {
+        "lover": 36.00814801895257,
+        "business_partner": 46.25222957764661,
+        "family": 40.74956358091563
+      },
+      "overallRounded": {
+        "lover": 36,
+        "business_partner": 46,
+        "family": 41
+      }
+    },
+    {
+      "name": "Elephant + Wolf (profiles)",
+      "a": {
+        "social": 50,
+        "curiosity": 40,
+        "organization": 62,
+        "kindness": 76,
+        "chill": 70
+      },
+      "b": {
+        "social": 54,
+        "curiosity": 30,
+        "organization": 62,
+        "kindness": 70,
+        "chill": 34
+      },
+      "areas": {
+        "communication": 99.03599999999997,
+        "energy": 78.815,
+        "conflict": 89.50799999999998,
+        "values": 97.36
+      },
+      "areasRounded": {
+        "communication": 99,
+        "energy": 79,
+        "conflict": 90,
+        "values": 97
+      },
+      "overall": {
+        "lover": 93.71796003712312,
+        "business_partner": 95.27018484845796,
+        "family": 94.5009499840727
+      },
+      "overallRounded": {
+        "lover": 94,
+        "business_partner": 95,
+        "family": 95
+      }
+    },
+    {
+      "name": "Owl + Snake (profiles)",
+      "a": {
+        "social": 28,
+        "curiosity": 66,
+        "organization": 64,
+        "kindness": 50,
+        "chill": 68
+      },
+      "b": {
+        "social": 28,
+        "curiosity": 62,
+        "organization": 54,
+        "kindness": 30,
+        "chill": 64
+      },
+      "areas": {
+        "communication": 77.03999999999999,
+        "energy": 97.04599999999999,
+        "conflict": 76.04,
+        "values": 86.49200000000002
+      },
+      "areasRounded": {
+        "communication": 77,
+        "energy": 97,
+        "conflict": 76,
+        "values": 86
+      },
+      "overall": {
+        "lover": 90.56355615428981,
+        "business_partner": 89.85160110620012,
+        "family": 87.37599451727058
+      },
+      "overallRounded": {
+        "lover": 91,
+        "business_partner": 90,
+        "family": 87
+      }
+    },
+    {
+      "name": "all 100 + all 100",
+      "a": {
+        "social": 100,
+        "curiosity": 100,
+        "organization": 100,
+        "kindness": 100,
+        "chill": 100
+      },
+      "b": {
+        "social": 100,
+        "curiosity": 100,
+        "organization": 100,
+        "kindness": 100,
+        "chill": 100
+      },
+      "areas": {
+        "communication": 100,
+        "energy": 100,
+        "conflict": 100,
+        "values": 100
+      },
+      "areasRounded": {
+        "communication": 100,
+        "energy": 100,
+        "conflict": 100,
+        "values": 100
+      },
+      "overall": {
+        "lover": 96.76539143820101,
+        "business_partner": 96.81694771525213,
+        "family": 96.5255833266077
+      },
+      "overallRounded": {
+        "lover": 97,
+        "business_partner": 97,
+        "family": 97
+      }
+    },
+    {
+      "name": "all 0 + all 100",
+      "a": {
+        "social": 0,
+        "curiosity": 0,
+        "organization": 0,
+        "kindness": 0,
+        "chill": 0
+      },
+      "b": {
+        "social": 100,
+        "curiosity": 100,
+        "organization": 100,
+        "kindness": 100,
+        "chill": 100
+      },
+      "areas": {
+        "communication": 0,
+        "energy": 0,
+        "conflict": 0,
+        "values": 0
+      },
+      "areasRounded": {
+        "communication": 0,
+        "energy": 0,
+        "conflict": 0,
+        "values": 0
+      },
+      "overall": {
+        "lover": 2.1846657476554405,
+        "business_partner": 2.0133751096573085,
+        "family": 2.2409223506079474
+      },
+      "overallRounded": {
+        "lover": 2,
+        "business_partner": 2,
+        "family": 2
+      }
+    },
+    {
+      "name": "all 0 + all 0",
+      "a": {
+        "social": 0,
+        "curiosity": 0,
+        "organization": 0,
+        "kindness": 0,
+        "chill": 0
+      },
+      "b": {
+        "social": 0,
+        "curiosity": 0,
+        "organization": 0,
+        "kindness": 0,
+        "chill": 0
+      },
+      "areas": {
+        "communication": 52.6,
+        "energy": 100,
+        "conflict": 1.6799999999999997,
+        "values": 59.92
+      },
+      "areasRounded": {
+        "communication": 53,
+        "energy": 100,
+        "conflict": 2,
+        "values": 60
+      },
+      "overall": {
+        "lover": 54.28738261605725,
+        "business_partner": 44.962931730828835,
+        "family": 20.68979023468154
+      },
+      "overallRounded": {
+        "lover": 54,
+        "business_partner": 45,
+        "family": 21
+      }
+    },
+    {
+      "name": "quiz-like steps",
+      "a": {
+        "social": 33.3,
+        "curiosity": 66.7,
+        "organization": 100,
+        "kindness": 22.2,
+        "chill": 77.8
+      },
+      "b": {
+        "social": 44.4,
+        "curiosity": 55.6,
+        "organization": 11.1,
+        "kindness": 88.9,
+        "chill": 0
+      },
+      "areas": {
+        "communication": 69.3132,
+        "energy": 57.681200000000004,
+        "conflict": 0,
+        "values": 13.678999999999995
+      },
+      "areasRounded": {
+        "communication": 69,
+        "energy": 58,
+        "conflict": 0,
+        "values": 14
+      },
+      "overall": {
+        "lover": 28.68348766289036,
+        "business_partner": 14.809453985699706,
+        "family": 9.151794053349095
+      },
+      "overallRounded": {
+        "lover": 29,
+        "business_partner": 15,
+        "family": 9
+      }
+    },
+    {
+      "name": "random pair 1",
+      "a": {
+        "social": 48.5,
+        "curiosity": 39.6,
+        "organization": 58.5,
+        "kindness": 64.2,
+        "chill": 37.2
+      },
+      "b": {
+        "social": 59,
+        "curiosity": 36.3,
+        "organization": 72.8,
+        "kindness": 91.5,
+        "chill": 68.7
+      },
+      "areas": {
+        "communication": 97.55079999999998,
+        "energy": 79.38139999999999,
+        "conflict": 83.45259999999999,
+        "values": 86.089
+      },
+      "areasRounded": {
+        "communication": 98,
+        "energy": 79,
+        "conflict": 83,
+        "values": 86
+      },
+      "overall": {
+        "lover": 92.07094094026513,
+        "business_partner": 92.56146792463319,
+        "family": 91.61701602040479
+      },
+      "overallRounded": {
+        "lover": 92,
+        "business_partner": 93,
+        "family": 92
+      }
+    },
+    {
+      "name": "random pair 2",
+      "a": {
+        "social": 53.8,
+        "curiosity": 66.4,
+        "organization": 25.8,
+        "kindness": 32.9,
+        "chill": 38.7
+      },
+      "b": {
+        "social": 32.8,
+        "curiosity": 45.6,
+        "organization": 24.4,
+        "kindness": 64,
+        "chill": 26.8
+      },
+      "areas": {
+        "communication": 59.593599999999995,
+        "energy": 67.1153,
+        "conflict": 55.3362,
+        "values": 53.602
+      },
+      "areasRounded": {
+        "communication": 60,
+        "energy": 67,
+        "conflict": 55,
+        "values": 54
+      },
+      "overall": {
+        "lover": 62.48643574921505,
+        "business_partner": 56.494123285645756,
+        "family": 55.44294841052298
+      },
+      "overallRounded": {
+        "lover": 62,
+        "business_partner": 56,
+        "family": 55
+      }
+    },
+    {
+      "name": "random pair 3",
+      "a": {
+        "social": 93.6,
+        "curiosity": 73.2,
+        "organization": 32.4,
+        "kindness": 79.4,
+        "chill": 59.1
+      },
+      "b": {
+        "social": 10.2,
+        "curiosity": 73.5,
+        "organization": 15.8,
+        "kindness": 55.6,
+        "chill": 57.6
+      },
+      "areas": {
+        "communication": 43.8674,
+        "energy": 33.79505,
+        "conflict": 86.09160000000003,
+        "values": 57.4812
+      },
+      "areasRounded": {
+        "communication": 44,
+        "energy": 34,
+        "conflict": 86,
+        "values": 57
+      },
+      "overall": {
+        "lover": 51.15819688900837,
+        "business_partner": 57.626519894736774,
+        "family": 71.95533520683134
+      },
+      "overallRounded": {
+        "lover": 51,
+        "business_partner": 58,
+        "family": 72
+      }
+    },
+    {
+      "name": "random pair 4",
+      "a": {
+        "social": 74.7,
+        "curiosity": 48.7,
+        "organization": 60.7,
+        "kindness": 40.2,
+        "chill": 81.5
+      },
+      "b": {
+        "social": 54.9,
+        "curiosity": 60.5,
+        "organization": 26.6,
+        "kindness": 74,
+        "chill": 71.4
+      },
+      "areas": {
+        "communication": 70.6104,
+        "energy": 74.2838,
+        "conflict": 80.87080000000003,
+        "values": 51.10860000000002
+      },
+      "areasRounded": {
+        "communication": 71,
+        "energy": 74,
+        "conflict": 81,
+        "values": 51
+      },
+      "overall": {
+        "lover": 79.17890874854903,
+        "business_partner": 69.11549222934215,
+        "family": 76.19122147845671
+      },
+      "overallRounded": {
+        "lover": 79,
+        "business_partner": 69,
+        "family": 76
+      }
+    },
+    {
+      "name": "random pair 5",
+      "a": {
+        "social": 28.6,
+        "curiosity": 42.2,
+        "organization": 47.3,
+        "kindness": 42.2,
+        "chill": 21
+      },
+      "b": {
+        "social": 64.6,
+        "curiosity": 56.7,
+        "organization": 64.3,
+        "kindness": 55.7,
+        "chill": 51.7
+      },
+      "areas": {
+        "communication": 56.36939999999999,
+        "energy": 52.41544999999999,
+        "conflict": 49.8762,
+        "values": 77.22039999999998
+      },
+      "areasRounded": {
+        "communication": 56,
+        "energy": 52,
+        "conflict": 50,
+        "values": 77
+      },
+      "overall": {
+        "lover": 56.951831536702706,
+        "business_partner": 68.8097194212417,
+        "family": 61.04587411436485
+      },
+      "overallRounded": {
+        "lover": 57,
+        "business_partner": 69,
+        "family": 61
+      }
+    },
+    {
+      "name": "random pair 6",
+      "a": {
+        "social": 62.4,
+        "curiosity": 53.6,
+        "organization": 34.7,
+        "kindness": 54.3,
+        "chill": 77.8
+      },
+      "b": {
+        "social": 24.6,
+        "curiosity": 75.8,
+        "organization": 49.4,
+        "kindness": 36.9,
+        "chill": 59
+      },
+      "areas": {
+        "communication": 48.3136,
+        "energy": 50.42420000000001,
+        "conflict": 77.06440000000002,
+        "values": 62.95940000000002
+      },
+      "areasRounded": {
+        "communication": 48,
+        "energy": 50,
+        "conflict": 77,
+        "values": 63
+      },
+      "overall": {
+        "lover": 59.82644116166238,
+        "business_partner": 63.60262008824012,
+        "family": 70.94436038909834
+      },
+      "overallRounded": {
+        "lover": 60,
+        "business_partner": 64,
+        "family": 71
+      }
+    },
+    {
+      "name": "random pair 7",
+      "a": {
+        "social": 63.2,
+        "curiosity": 93.5,
+        "organization": 57.9,
+        "kindness": 36.9,
+        "chill": 49
+      },
+      "b": {
+        "social": 27,
+        "curiosity": 41.1,
+        "organization": 55.8,
+        "kindness": 66.6,
+        "chill": 30.2
+      },
+      "areas": {
+        "communication": 37.48479999999999,
+        "energy": 32.98970000000001,
+        "conflict": 61.89340000000001,
+        "values": 60.447799999999994
+      },
+      "areasRounded": {
+        "communication": 37,
+        "energy": 33,
+        "conflict": 62,
+        "values": 60
+      },
+      "overall": {
+        "lover": 37.46189247402405,
+        "business_partner": 48.23218129345158,
+        "family": 53.464722157584895
+      },
+      "overallRounded": {
+        "lover": 37,
+        "business_partner": 48,
+        "family": 53
+      }
+    },
+    {
+      "name": "random pair 8",
+      "a": {
+        "social": 16.2,
+        "curiosity": 43.7,
+        "organization": 36.7,
+        "kindness": 66.8,
+        "chill": 41
+      },
+      "b": {
+        "social": 23.7,
+        "curiosity": 72.3,
+        "organization": 63.3,
+        "kindness": 43.6,
+        "chill": 76.1
+      },
+      "areas": {
+        "communication": 71.37180000000002,
+        "energy": 64.82315000000003,
+        "conflict": 65.224,
+        "values": 55.89
+      },
+      "areasRounded": {
+        "communication": 71,
+        "energy": 65,
+        "conflict": 65,
+        "values": 56
+      },
+      "overall": {
+        "lover": 71.46010531193573,
+        "business_partner": 66.35116153076991,
+        "family": 67.7508873017405
+      },
+      "overallRounded": {
+        "lover": 71,
+        "business_partner": 66,
+        "family": 68
+      }
+    }
+  ]
+}

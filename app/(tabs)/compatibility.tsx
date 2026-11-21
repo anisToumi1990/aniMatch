@@ -12,6 +12,8 @@ import { AuraAvatar } from '@/components/AuraAvatar';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { formatRelationshipType, getMatchLevel } from '@/lib/compatibility';
+import { getStoredAreaScores } from '@/lib/compatibilityV2';
+import { AreaBreakdown } from '@/components/compatibility/AreaBreakdown';
 import { getDisplayName, getFirstName } from '@/lib/names';
 import { ShareCardHost, ShareCardRef } from '@/components/share/ShareCardHost';
 import { MatchShareCard } from '@/components/share/MatchShareCard';
@@ -46,6 +48,12 @@ interface CompatibilityResult {
   compatibility_score: number;
   relationship_type: 'lover' | 'business_partner' | 'family';
   created_at: string;
+  /** Compatibility v2 (null / missing on v1 rows). */
+  compatibility_version?: number | null;
+  communication_score?: number | null;
+  energy_score?: number | null;
+  conflict_score?: number | null;
+  values_score?: number | null;
   user_a: {
     full_name: string | null;
     email: string | null;
@@ -344,6 +352,7 @@ export default function CompatibilityScreen() {
     const score = Math.round(item.compatibility_score);
     const level = getMatchLevel(score);
     const otherName = getOtherUserName(item);
+    const areaScores = getStoredAreaScores(item);
 
     return (
       <MatchCard
@@ -395,6 +404,7 @@ export default function CompatibilityScreen() {
               ]}
             />
           </View>
+          {areaScores ? <AreaBreakdown areas={areaScores} /> : null}
         </View>
         </>
         )}

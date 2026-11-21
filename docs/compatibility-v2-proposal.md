@@ -1,6 +1,6 @@
 # Compatibility v2 proposal: trait-based matching
 
-Status: **proposal only (phase 1)**. Nothing in the app or the database changes yet.
+Status: **built (phase 2)**. Decision: users without a v2 result use their animal's profile as-is (no expected-score table). Implementation notes are at the end.
 Simulation: `scripts/compatibility-v2-simulation.js`. Builds on quiz v2 (`docs/quiz-v2-proposal.md`).
 
 ## 1. Inputs
@@ -63,14 +63,16 @@ Level per area: **high ≥ 70** (where you click), **medium 45–69**, **low < 4
 
 The result screen shows the top area as **Where you click** and the lowest area as **Where you clash**. If no area is low, it shows the lowest medium area there instead.
 
-| Area | High: where you click | Medium | Low: where you clash |
-|---|---|---|---|
-| Communication | You finish each other's sentences, and mostly finish them nicely. | You get each other most of the time. The rest of the time, ask one more question. | Same language, different dictionaries. Say it twice, kindly. |
-| Energy | Same pace, same plans. Your calendars basically sync themselves. | One of you wants to go out, the other wants to stay in. Take turns and you both win. | One of you is a festival, the other is a reading nook. Book some of each. |
-| Conflict | Arguments are rare and short. You both cool down faster than a microwave meal. | You clash now and then, and you get over it. Just don't keep score. | Small sparks catch fast here. Agree on a time-out word before you need one. |
-| Values | You want the same things, and you'd even plan them the same way. | Same destination, different routes. Agree on the map before you start. | Your priorities don't line up yet. Talk about what matters before it matters. |
+Rewritten in phase 2 by the rule **clear first, witty second**: no idioms, nothing that needs a second read. The bar labels say what a high score means, so "Conflict" is shown as "Handling conflict" and "Values" as "Shared values".
 
-These texts don't use names or pronouns, so they work for any pair and any relationship type. They'd live in `constants/compatibilityCopy.ts`, like the notification texts.
+| Area (label) | High: where you click | Medium | Low: where you clash |
+|---|---|---|---|
+| Communication | You understand each other easily, even on hard topics. Rare, and very handy. | You mostly understand each other. When something sounds off, ask before assuming. | The same words often mean different things to you two. Check what the other meant. |
+| Energy | You like the same pace and the same plans. Picking a weekend takes seconds. | One of you often wants more action than the other. Take turns choosing. | One of you wants to go out, the other wants to stay in. Plan some of each. |
+| Handling conflict | You rarely fight, and when you do, you both calm down fast. | You argue sometimes and get past it. Try not to bring up old fights. | Small disagreements turn into fights quickly. Agree now on how to take a break. |
+| Shared values | You want the same things from life, and you would plan them the same way. | You want similar things but go about them differently. Agree on the plan first. | What matters most to each of you is different. Talk about priorities early. |
+
+These texts don't use names or pronouns, so they work for any pair and any relationship type. They live in `constants/compatibilityCopy.ts`. If every area is high, there's no "Where you clash".
 
 ## 5. Simulation
 
@@ -184,3 +186,16 @@ No new flow is needed:
 - Re-fit the calibration (`--calibrate`) and possibly the area formulas with real `trait_scores` once enough v2 users exist. The current calibration assumes noise sd 12 around each animal.
 - Decide on the v1 fallback: bare profile (as specified) or expected animal-pair score (recommended, section 5).
 - Fill in the comparison with the current `animal_compatibility` (section 5).
+
+## Phase 2: as built
+
+- **SQL, in order** (run by hand in the SQL editor):
+  1. `20261122100000_compatibility_v2.sql`: area columns, `compatibility_version`, `compatibility_v2_settings`, `compatibility_v2_traits()`, `compatibility_v2_scores()`. Additions only.
+  2. `20261122100100_compatibility_v2_check.sql`: generated, read-only. Fails if the SQL scores differ from the shared fixture.
+  3. `20261122100200_compatibility_v2_rollout.sql`: the internal helper `compatibility_v2_refresh_pair()`, the two RPCs, the RLS lock-down and the backfill, in one transaction.
+- **The 3 implementations agree through one fixture:** the script (`--fixture`), `lib/compatibilityV2.ts` (Jest) and `compatibility_v2_scores()` (the check file).
+  - Before: the RPCs were SECURITY INVOKER. They relied on client insert/update policies on `compatibility_results` and on the "accepted invite" read policy on `user_quiz_results` (`docs/compatibility-v2-db-snapshot.json`).
+  - Now: both are SECURITY DEFINER and check the caller. Those client policies are gone.
+- `create_compatibility_results` now does nothing for invites that aren't `accepted`. The app calls it after a rejection too.
+- It also recomputes instead of inserting a second row when the pair already has one.
+- **UI:** each Compatibility card shows the 4 bars plus "Where you click" / "Where you clash" (`components/compatibility/AreaBreakdown.tsx`) for v2 rows. v1 rows look as before.
