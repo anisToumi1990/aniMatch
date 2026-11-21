@@ -1,12 +1,12 @@
 # Quiz v2 proposal: trait-based matching
 
-Status: **proposal only (phase 1)**. Nothing in the app or the database changes yet.
+Status: **proposal only (phase 1), reviewed**. Review changes: trait "Calm" renamed to "Chill", Q14 answer fixed, realistic simulation added. Nothing in the app or the database changes yet.
 Simulation: `scripts/quiz-v2-simulation.js`.
 
 ## How it works
 
 - The quiz measures 5 traits, each scored 0–100:
-  **Social energy (S)**, **Curiosity (C)**, **Organization (O)**, **Kindness (K)**, **Calm (Ca)**.
+  **Social energy (S)**, **Curiosity (C)**, **Organization (O)**, **Kindness (K)**, **Chill (Ch)**: easygoing (100) vs intense and driven (0).
 - 15 scenario questions, 3 per trait. Each answer is worth 3, 2, 1 or 0 points on that question's trait.
 - Trait score = points earned / points possible × 100. With 3 questions that's 0, 11, 22, … 100.
 - Each of the 15 animals has an ideal profile on the same 5 traits.
@@ -126,12 +126,12 @@ Low-kindness answers are framed as directness, fairness or honesty, not as being
 | Rock-paper-scissors for it. | 1 |
 | Sorry, I've been thinking about this slice all day. | 0 |
 
-### Calm (Ca)
+### Chill (Ch)
 
-Low-calm answers are framed as drive and reacting fast, not as panic.
+This trait is **easygoing vs intense**, not "calm vs anxious". Low-chill answers are framed as drive, intensity and reacting fast, which are positive ways to be, not panic. (Renamed from "Calm" after review: the questions measure how easygoing vs fiery someone is.)
 
 **Q13. Your flight is delayed 4 hours.**
-| Answer | Ca |
+| Answer | Ch |
 |---|---|
 | A quiet corner and some bonus free time. Nice. | 3 |
 | One sigh, then snacks and a movie. | 2 |
@@ -139,15 +139,15 @@ Low-calm answers are framed as drive and reacting fast, not as panic.
 | Already at the desk, making things happen. | 0 |
 
 **Q14. Ten minutes before a big presentation:**
-| Answer | Ca |
+| Answer | Ch |
 |---|---|
 | Relaxed. It'll go how it goes. | 3 |
 | A few deep breaths and I'm ready. | 2 |
-| One more run-through of the slides. | 1 |
+| My heart's racing a bit, but I'll use it. | 1 |
 | Buzzing with nerves, which is exactly my fuel. | 0 |
 
 **Q15. Someone cuts in front of you in a long queue.**
-| Answer | Ca |
+| Answer | Ch |
 |---|---|
 | Not worth my energy. I let it go. | 3 |
 | A light joke about it, then I move on. | 2 |
@@ -158,7 +158,7 @@ Low-calm answers are framed as drive and reacting fast, not as panic.
 
 Based on `animal_auras.description` / `traits` in Supabase. These are the **final, tuned** values (section 3).
 
-| Animal | S | C | O | K | Ca | Why |
+| Animal | S | C | O | K | Ch | Why |
 |---|---|---|---|---|---|---|
 | Dolphin | 78 | 58 | 42 | 72 | 48 | Playful, friendly social butterfly with high emotional intelligence; a little sensitive. |
 | Peacock | 74 | 50 | 60 | 30 | 34 | Charismatic, stylish self-expression; puts effort into presentation, seeks attention. |
@@ -176,7 +176,7 @@ Based on `animal_auras.description` / `traits` in Supabase. These are the **fina
 | Deer | 28 | 44 | 40 | 78 | 38 | Gentle, empathetic, nurturing; sensitive and startled by conflict. |
 | Otter | 66 | 58 | 30 | 58 | 72 | Playful, lighthearted, spontaneous; finds joy in simple things, not a worrier. |
 
-Each animal also has one standout trait the others don't share in the same combination, e.g. Eagle is the most organized but low on kindness, Elephant is kind *and* calm, Deer is kind but not calm.
+Each animal also has one standout trait the others don't share in the same combination, e.g. Eagle is the most organized but low on kindness, Elephant is kind *and* chill, Deer is kind but not chill.
 
 ## 3. Simulation
 
@@ -205,6 +205,15 @@ Each animal also has one standout trait the others don't share in the same combi
 | Parrot | 5.0% | 5.0% |
 
 Range **5.0%–9.4%**, inside the 3–12% goal. Seeds 7 and 2026 and a 100,000-user run land between 4.8% and 8.8%.
+
+**Realistic check (added after review).** Real people pick the "middle" answers more often. Re-run with answers weighted 15% / 35% / 35% / 15% (3 / 2 / 1 / 0 points):
+
+| Run | Range | Lowest | Highest | Users with a tie-breaker |
+|---|---|---|---|---|
+| 10,000 users, seed 42 | 4.0%–9.1% | Parrot 4.0% | Wolf 9.1% | 22.0% |
+| 20,000 users, seed 7 | 4.0%–9.4% | Parrot 4.0% | Wolf 9.3% | 21.6% |
+
+Still inside the 3–12% goal. Parrot is the rarest animal in both modes: watch it first when re-tuning with real data. TODO (phase 2): add this weighted mode to `scripts/quiz-v2-simulation.js` as an option (e.g. `--realistic`).
 
 **Caveat:** real people don't answer at random. Some answers will be more popular (e.g. "half for you, half for me"), which will skew the split. Once v2 is live, we should log the trait scores and re-tune the profiles from real data, re-running this script with the real answer frequencies.
 
@@ -252,8 +261,8 @@ Simulated (10,000 users): 15.4% need 1 tie-breaker, 3.1% need 2, 1.5% need 3. 0.
 | "Sure, but next time you pick the place and pay." | 1 |
 | I tell them honestly that it bugs me. | 0 |
 
-**TB-Ca. The wifi dies in the middle of your show.**
-| Answer | Ca |
+**TB-Ch. The wifi dies in the middle of your show.**
+| Answer | Ch |
 |---|---|
 | Perfect excuse for a nap. | 3 |
 | I'll read until it's back. | 2 |
