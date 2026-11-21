@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
+import { useQuiz } from '@/context/QuizContext';
 import { ThemedText } from '@/components/ThemedText';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { AccountModal } from '@/components/AccountModal';
@@ -16,6 +17,7 @@ import { AuraHero } from '@/components/home/AuraHero';
 import { WeekStrip } from '@/components/home/WeekStrip';
 import { DayMessage } from '@/components/home/DayMessage';
 import { MatchesRow } from '@/components/home/MatchesRow';
+import { QuizV2Banner } from '@/components/home/QuizV2Banner';
 import { ShareCardHost, ShareCardRef } from '@/components/share/ShareCardHost';
 import { DailyAuraShareCard } from '@/components/share/DailyAuraShareCard';
 import { Colors, getAuraColor } from '@/constants/Colors';
@@ -26,6 +28,7 @@ import { useAuraWeek } from '@/hooks/useAuraWeek';
 import { PairTipItem, useDailyPairTips } from '@/hooks/useDailyPairTips';
 import { getDisplayName } from '@/lib/names';
 import { weekdayName } from '@/lib/auraWeek';
+import { dismissQuizV2Banner, isQuizV2BannerDismissed, shouldShowQuizV2Banner } from '@/lib/quizV2Banner';
 import { shareCardImage } from '@/lib/share/shareCardImage';
 import { waitForNextPaint } from '@/lib/share/shareCardTypes';
 
@@ -58,6 +61,27 @@ export default function HomeScreen() {
   const shareCardRef = useRef<ShareCardRef>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<ShareFeedback>(null);
+
+  // "New, more accurate quiz" banner for users whose latest result is from the old quiz.
+  const { latestQuizVersion } = useQuiz();
+  const userId = user?.id ?? null;
+  const [isBannerDismissed, setIsBannerDismissed] = useState(true);
+  useEffect(() => {
+    if (!userId) return;
+    let isCancelled = false;
+    isQuizV2BannerDismissed(userId).then(isDismissed => {
+      if (!isCancelled) setIsBannerDismissed(isDismissed);
+    });
+    return () => {
+      isCancelled = true;
+    };
+  }, [userId]);
+  const showQuizV2Banner = shouldShowQuizV2Banner(latestQuizVersion, isBannerDismissed);
+
+  function handleDismissBanner() {
+    setIsBannerDismissed(true);
+    if (userId) dismissQuizV2Banner(userId);
+  }
 
   async function handleShare() {
     if (!aura || week.state.status !== 'ready' || isSharing) return;
@@ -121,6 +145,13 @@ export default function HomeScreen() {
 
     return (
       <>
+        {showQuizV2Banner ? (
+          <QuizV2Banner
+            auraColor={getAuraColor(aura.name)}
+            onOpen={() => router.navigate('/retake')}
+            onDismiss={handleDismissBanner}
+          />
+        ) : null}
         <AuraHero animalName={aura.name} localDate={week.selectedDate} isToday={week.isToday} />
         <WeekStrip
           days={week.days}

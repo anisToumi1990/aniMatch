@@ -16,66 +16,57 @@ export default function QuizScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const isRetaking = params.source === 'retake';
-  
+
   const {
-    questions,
-    currentQuestionIndex,
-    currentAnswerOptions,
+    currentStep,
+    currentIndex,
+    stepCount,
+    mainQuestionCount,
+    tieBreakerNumber,
+    selectedOptionId,
+    isLastStep,
+    allAnswered,
     isLoading,
     error,
-    userAnswers,
-    progress,
     loadQuiz,
     goToNextQuestion,
     goToPreviousQuestion,
-    selectAnswer,
-    submitQuiz,
+    selectOption,
+    finishQuiz,
     isQuizComplete,
     animalAura,
   } = useQuiz();
-  
-  useEffect(() => {
-    // For debugging
-    console.log('Quiz screen params:', params);
-    console.log('isRetaking:', isRetaking);
-    console.log('isQuizComplete:', isQuizComplete);
-  }, [params, isRetaking, isQuizComplete]);
 
-  // If quiz is already complete and not retaking, redirect to results
+  // If the quiz is already complete and not retaking, show the result instead.
   useEffect(() => {
     if (isQuizComplete && animalAura && !isRetaking) {
-      console.log('Quiz is complete, redirecting to results');
-      // The QuizContext's submitQuiz will now handle navigation to results
-      // This redirect is only for cases where someone navigates back to the quiz
-      router.replace("/(tabs)/results");
+      router.replace('/(tabs)/results');
     }
   }, [isQuizComplete, animalAura, router, isRetaking]);
 
-  // Load the quiz when the component mounts or is accessed through Retake Quiz
+  // Load (and shuffle) a fresh quiz when the screen mounts.
   useEffect(() => {
-    // Always load the quiz when the component mounts
     loadQuiz();
-  }, []);
+  }, [loadQuiz]);
 
-  // Handle error state
-  if (error) {
+  const header = (
+    <Stack.Screen
+      options={{
+        ...transparentHeaderOptions,
+        title: 'Quiz',
+      }}
+    />
+  );
+
+  // Loading failed: nothing to show but a retry.
+  if (error && !currentStep) {
     return (
       <ScreenBackground>
         <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-          <Stack.Screen
-            options={{
-              ...transparentHeaderOptions,
-              title: 'Quiz',
-            }}
-          />
+          {header}
           <ThemedView style={styles.errorContainer}>
-            <ThemedText style={styles.errorText}>
-              {error}
-            </ThemedText>
-            <ThemedText
-              style={styles.retryText}
-              onPress={loadQuiz}
-            >
+            <ThemedText style={styles.errorText}>{error}</ThemedText>
+            <ThemedText style={styles.retryText} onPress={loadQuiz} accessibilityRole="button">
               Tap to retry
             </ThemedText>
           </ThemedView>
@@ -84,17 +75,11 @@ export default function QuizScreen() {
     );
   }
 
-  // Handle loading state
-  if (isLoading && questions.length === 0) {
+  if (isLoading && !currentStep) {
     return (
       <ScreenBackground>
         <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-          <Stack.Screen
-            options={{
-              ...transparentHeaderOptions,
-              title: 'Quiz',
-            }}
-          />
+          {header}
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors.textSecondary} />
             <ThemedText type="secondary" style={styles.loadingText}>
@@ -106,24 +91,14 @@ export default function QuizScreen() {
     );
   }
 
-  if (questions.length === 0) {
+  if (!currentStep) {
     return (
       <ScreenBackground>
         <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-          <Stack.Screen
-            options={{
-              ...transparentHeaderOptions,
-              title: 'Quiz',
-            }}
-          />
+          {header}
           <ThemedView style={styles.errorContainer}>
-            <ThemedText style={styles.errorText}>
-              No questions available. Please try again later.
-            </ThemedText>
-            <ThemedText
-              style={styles.retryText}
-              onPress={loadQuiz}
-            >
+            <ThemedText style={styles.errorText}>No questions available. Please try again later.</ThemedText>
+            <ThemedText style={styles.retryText} onPress={loadQuiz} accessibilityRole="button">
               Tap to retry
             </ThemedText>
           </ThemedView>
@@ -132,65 +107,61 @@ export default function QuizScreen() {
     );
   }
 
-  const currentQuestion = questions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === questions.length - 1;
-  
-  // Function to handle completing the quiz
-  const handleNext = () => {
-    if (isLastQuestion) {
-      // Check if all questions are answered
-      if (userAnswers.length === questions.length) {
-        console.log('Submitting quiz with', userAnswers.length, 'answers');
-        // Submit directly without showing the popup
-        submitQuiz();
-        console.log('Quiz submitted, isQuizComplete:', isQuizComplete);
-      } else {
-        Alert.alert(
-          'Incomplete Quiz',
-          'Please answer all questions before submitting.',
-          [{ text: 'OK' }]
-        );
-      }
-    } else {
+  const isTieBreaker = tieBreakerNumber !== null;
+  // Tie-breakers keep the bar full: the 15 questions are done.
+  const progress = isTieBreaker ? 1 : (currentIndex + 1) / Math.max(1, mainQuestionCount);
+  const progressLabel = isTieBreaker ? `Bonus question ${tieBreakerNumber} · You're between two auras` : undefined;
+
+  function handleNext() {
+    if (!isLastStep) {
       goToNextQuestion();
+      return;
     }
-  };
+    if (!allAnswered) {
+      Alert.alert('Incomplete Quiz', 'Please answer all questions before submitting.', [{ text: 'OK' }]);
+      return;
+    }
+    // Adds a tie-breaker if the two closest auras are too close, otherwise saves the result.
+    finishQuiz();
+  }
 
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.container}>
-        <Stack.Screen
-          options={{
-            ...transparentHeaderOptions,
-            title: 'Quiz',
-          }}
-        />
-        
+        {header}
+
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <ProgressIndicator
-              currentQuestion={currentQuestionIndex + 1}
-              totalQuestions={questions.length}
-              progress={(currentQuestionIndex + 1) / questions.length}
+              currentQuestion={currentIndex + 1}
+              totalQuestions={mainQuestionCount}
+              progress={progress}
+              label={progressLabel}
             />
-            
-            <QuestionCard 
-              question={currentQuestion}
-              answerOptions={currentAnswerOptions}
-              userAnswers={userAnswers}
-              onSelectAnswer={selectAnswer}
+
+            <QuestionCard
+              key={currentStep.questionId}
+              step={currentStep}
+              selectedOptionId={selectedOptionId}
+              onSelectOption={selectOption}
               goToNextQuestion={goToNextQuestion}
-              isLastQuestion={isLastQuestion}
+              isLastQuestion={isLastStep}
             />
-            
+
+            {error ? (
+              <ThemedText style={styles.inlineError} accessibilityLiveRegion="polite">
+                {error}
+              </ThemedText>
+            ) : null}
+
             <NavigationControls
               onPrevious={goToPreviousQuestion}
               onNext={handleNext}
-              canGoBack={currentQuestionIndex > 0}
-              canGoForward={currentQuestionIndex < questions.length}
-              isLastQuestion={isLastQuestion}
+              canGoBack={currentIndex > 0}
+              canGoForward={selectedOptionId !== null && currentIndex < stepCount}
+              isLastQuestion={isLastStep}
               isLoading={isLoading}
-              allQuestionsAnswered={userAnswers.length === questions.length}
+              allQuestionsAnswered={allAnswered}
             />
           </View>
         </ScrollView>
@@ -242,6 +213,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 16,
+  },
+  inlineError: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    color: Colors.danger,
   },
   retryText: {
     fontSize: 16,

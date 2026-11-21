@@ -6,21 +6,28 @@ interface ProgressIndicatorProps {
   currentQuestion: number;
   totalQuestions: number;
   progress: number;
+  /** Replaces "Question X of Y", e.g. for tie-breakers. */
+  label?: string;
 }
 
 export function ProgressIndicator({ 
   currentQuestion, 
   totalQuestions, 
-  progress 
+  progress,
+  label,
 }: ProgressIndicatorProps) {
   return (
     <View style={styles.container}>
       <ThemedText type="muted" style={styles.questionCounter}>
-        Question {currentQuestion} of {totalQuestions}
+        {label ?? `Question ${currentQuestion} of ${totalQuestions}`}
       </ThemedText>
       
-      <View style={styles.progressBarContainer}>
-        <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+      <View
+        style={styles.progressBarContainer}
+        accessibilityRole="progressbar"
+        accessibilityValue={{ min: 0, max: 100, now: Math.round(progress * 100) }}
+      >
+        <View style={[styles.progressBar, { width: `${Math.min(1, progress) * 100}%` }]} />
       </View>
     </View>
   );
