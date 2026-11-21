@@ -1,59 +1,51 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { QuizQuestion, QuizAnswerOption, UserAnswer } from '@/lib/supabase/quiz';
 import { ThemedText } from '@/components/ThemedText';
 import { AnswerOption } from './AnswerOption';
 import { Colors } from '@/constants/Colors';
+import type { QuizV2Step } from '@/lib/quizV2Session';
 
 interface QuestionCardProps {
-  question: QuizQuestion;
-  answerOptions: QuizAnswerOption[];
-  userAnswers: UserAnswer[];
-  onSelectAnswer: (questionId: number, optionKey: string) => void;
+  step: QuizV2Step;
+  selectedOptionId: number | null;
+  onSelectOption: (questionId: number, optionId: number) => void;
+  /** Called shortly after a pick, except on the last step (the user taps Finish there). */
   goToNextQuestion: () => void;
   isLastQuestion: boolean;
 }
 
-export function QuestionCard({ 
-  question, 
-  answerOptions, 
-  userAnswers, 
-  onSelectAnswer,
-  goToNextQuestion,
-  isLastQuestion
-}: QuestionCardProps) {
-  const selectedAnswer = userAnswers.find(
-    (answer) => answer.question_id === question.id
-  );
+/** Delay before auto-advancing, so the selection is visible. */
+const AUTO_ADVANCE_MS = 300;
 
-  const handleOptionSelect = (questionId: number, optionKey: string) => {
-    onSelectAnswer(questionId, optionKey);
-    
-    // Auto-advance to next question if this isn't the last question
-    if (!isLastQuestion) {
-      // Use a short timeout to give visual feedback of selection before advancing
-      setTimeout(() => {
-        goToNextQuestion();
-      }, 300);
-    }
-  };
+export function QuestionCard({ step, selectedOptionId, onSelectOption, goToNextQuestion, isLastQuestion }: QuestionCardProps) {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Don't advance from a question the user has already left.
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [step.questionId]);
+
+  function handleSelect(optionId: number) {
+    onSelectOption(step.questionId, optionId);
+    if (isLastQuestion) return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(goToNextQuestion, AUTO_ADVANCE_MS);
+  }
 
   return (
-    <View style={[
-      styles.container
-    ]}>
-      <ThemedText style={styles.questionText}>
-        {question.question_text}
-      </ThemedText>
-      
+    <View style={styles.container}>
+      <ThemedText style={styles.questionText}>{step.text}</ThemedText>
+
       <View style={styles.optionsContainer}>
-        {answerOptions.map((option) => (
+        {step.options.map(option => (
           <AnswerOption
             key={option.id}
-            optionKey={option.option_key}
-            optionText={option.option_text}
-            isSelected={selectedAnswer?.selected_option === option.option_key}
-            onSelect={() => handleOptionSelect(question.id, option.option_key)}
+            optionKey={option.key}
+            optionText={option.text}
+            isSelected={selectedOptionId === option.id}
+            onSelect={() => handleSelect(option.id)}
           />
         ))}
       </View>
@@ -80,4 +72,4 @@ const styles = StyleSheet.create({
   optionsContainer: {
     marginTop: 8,
   },
-}); 
+});

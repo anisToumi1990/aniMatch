@@ -19,14 +19,14 @@ function articleFor(animal: string): string {
 }
 
 /**
- * Opened by the Quiz tab when the user already has a result: confirm before
- * retaking, since the aura, daily message and match scores will change.
+ * Opened by the Quiz tab (and Home's new-quiz banner) when the user already has a
+ * result: confirm before retaking, since the aura, daily message and match scores will change.
  */
 export default function RetakeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const userId = user?.id ?? null;
-  const { animalAura: contextAura, resetQuiz } = useQuiz();
+  const { animalAura: contextAura, resetQuiz, latestQuizVersion } = useQuiz();
   const [savedAuraName, setSavedAuraName] = useState<string | null>(null);
   const [isLoadingSaved, setIsLoadingSaved] = useState(false);
 
@@ -85,7 +85,9 @@ export default function RetakeScreen() {
               <ThemedText style={styles.title}>Ready for a fresh start?</ThemedText>
             )}
             <ThemedText type="secondary" style={styles.text}>
-              Want to retake the quiz? Your aura, daily message and match scores will update.
+              {latestQuizVersion === 1
+                ? 'The new quiz reads you more accurately. Your aura, daily message and match scores may change.'
+                : 'Want to retake the quiz? Your aura, daily message and match scores will update.'}
             </ThemedText>
             <View style={styles.buttons}>
               <AuraButton label="Retake the quiz" icon="refresh" onPress={resetQuiz} style={styles.button} />

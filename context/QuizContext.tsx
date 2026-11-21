@@ -1,45 +1,55 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useReducer, useState, ReactNode } from 'react';
 import { useRouter } from 'expo-router';
 import {
-  fetchQuizQuestions,
-  fetchAnswerOptions,
-  calculateQuizResult,
-  submitQuizResult,
   fetchAnimalAura,
   fetchLatestQuizResult,
   updateUserCompatibilityResults,
-  QuizQuestion,
-  QuizAnswerOption,
-  UserAnswer,
   AnimalAura,
 } from '../lib/supabase/quiz';
+import { fetchAnimalTraitProfiles, fetchQuizV2Questions, submitQuizV2Result, QUIZ_V2_VERSION } from '../lib/supabase/quizV2';
+import { evaluateQuizV2, roundTraitScores } from '../lib/quizV2Scoring';
+import {
+  EMPTY_QUIZ_V2_SESSION,
+  QuizV2Step,
+  areAllStepsAnswered,
+  getAnswerRecords,
+  getMainQuestionCount,
+  getScoredAnswers,
+  quizV2SessionReducer,
+} from '../lib/quizV2Session';
 import { useAuth } from './AuthContext';
 
 interface QuizContextType {
-  // Quiz data
-  questions: QuizQuestion[];
-  currentQuestionIndex: number;
-  currentAnswerOptions: QuizAnswerOption[];
+  // Quiz v2 session
+  currentStep: QuizV2Step | null;
+  currentIndex: number;
+  stepCount: number;
+  mainQuestionCount: number;
+  tieBreakerNumber: number | null;
+  selectedOptionId: number | null;
+  isLastStep: boolean;
+  allAnswered: boolean;
   isLoading: boolean;
   error: string | null;
-  
-  // Quiz state
-  userAnswers: UserAnswer[];
+
+  // Result
   isQuizComplete: boolean;
-  progress: number;
   animalAura: AnimalAura | null;
   isPreviousResult: boolean;
-  
+  /** Version of the latest saved result: 1 (old quiz), 2, or null (none / not loaded). */
+  latestQuizVersion: number | null;
+
   // Navigation helper
   directNavigateToQuiz: boolean;
   setDirectNavigateToQuiz: (value: boolean) => void;
-  
+
   // Actions
   loadQuiz: () => Promise<void>;
   goToNextQuestion: () => void;
   goToPreviousQuestion: () => void;
-  selectAnswer: (questionId: number, optionKey: string) => void;
-  submitQuiz: () => Promise<void>;
+  selectOption: (questionId: number, optionId: number) => void;
+  /** On the last step: asks a tie-breaker if needed, otherwise saves the result. */
+  finishQuiz: () => Promise<void>;
   resetQuiz: () => void;
 }
 
@@ -50,195 +60,125 @@ export function QuizProvider({ children }: { children: ReactNode }) {
   const userId = session?.user?.id;
   const router = useRouter();
 
-  // Quiz data state
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [currentAnswerOptions, setCurrentAnswerOptions] = useState<QuizAnswerOption[]>([]);
+  const [quiz, dispatch] = useReducer(quizV2SessionReducer, EMPTY_QUIZ_V2_SESSION);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Quiz progress state
-  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
+
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [animalAura, setAnimalAura] = useState<AnimalAura | null>(null);
   const [isPreviousResult, setIsPreviousResult] = useState(false);
+  const [latestQuizVersion, setLatestQuizVersion] = useState<number | null>(null);
 
   // Navigation helper to enable direct navigation to quiz tab
   const [directNavigateToQuiz, setDirectNavigateToQuiz] = useState(false);
 
   // Reset quiz state when user changes
   useEffect(() => {
-    console.log('User ID changed, resetting quiz state');
-    setQuestions([]);
-    setCurrentQuestionIndex(0);
-    setUserAnswers([]);
+    dispatch({ type: 'reset' });
     setIsQuizComplete(false);
     setAnimalAura(null);
     setIsPreviousResult(false);
+    setLatestQuizVersion(null);
     setDirectNavigateToQuiz(false);
   }, [userId]);
 
-  // Calculate progress (0 to 1)
-  const progress = questions.length ? userAnswers.length / questions.length : 0;
-
-  // Load quiz questions and answer options
-  const loadQuiz = async () => {
+  const loadQuiz = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    dispatch({ type: 'reset' });
     try {
-      // Reset state
-      setQuestions([]);
-      setCurrentQuestionIndex(0);
-      setUserAnswers([]);
-      setIsQuizComplete(false);
-      setAnimalAura(null);
-      
-      // Fetch all questions
-      const quizQuestions = await fetchQuizQuestions();
-      setQuestions(quizQuestions);
-      
-      // If questions exist, load the first one's answer options
-      if (quizQuestions.length > 0) {
-        const firstQuestion = quizQuestions[0];
-        const options = await fetchAnswerOptions(firstQuestion.id);
-        setCurrentAnswerOptions(options);
-      }
+      const [questions, profiles] = await Promise.all([fetchQuizV2Questions(), fetchAnimalTraitProfiles()]);
+      if (profiles.length === 0) throw new Error('The quiz is not available right now. Please try again later.');
+      dispatch({ type: 'loaded', questions, profiles });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred loading the quiz');
       console.error('Error loading quiz:', err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  // Load answer options for the current question
-  const loadCurrentQuestionOptions = async () => {
-    if (questions.length === 0 || currentQuestionIndex >= questions.length) {
-      return;
-    }
-    
-    try {
-      const options = await fetchAnswerOptions(questions[currentQuestionIndex].id);
-      setCurrentAnswerOptions(options);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load answer options');
-      console.error('Error loading answer options:', err);
-    }
-  };
-
-  // Navigate to the next question
-  const goToNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    }
-  };
-
-  // Navigate to the previous question
-  const goToPreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-    }
-  };
-
-  // Select an answer for the current question
-  const selectAnswer = (questionId: number, optionKey: string) => {
-    setUserAnswers((prev) => {
-      // Check if this question is already answered
-      const existingAnswerIndex = prev.findIndex((a) => a.question_id === questionId);
-      
-      if (existingAnswerIndex >= 0) {
-        // Update existing answer
-        const updated = [...prev];
-        updated[existingAnswerIndex] = { question_id: questionId, selected_option: optionKey };
-        return updated;
-      } else {
-        // Add new answer
-        return [...prev, { question_id: questionId, selected_option: optionKey }];
-      }
-    });
-  };
+  const goToNextQuestion = useCallback(() => dispatch({ type: 'next' }), []);
+  const goToPreviousQuestion = useCallback(() => dispatch({ type: 'back' }), []);
+  const selectOption = useCallback((questionId: number, optionId: number) => {
+    dispatch({ type: 'select', questionId, optionId });
+  }, []);
 
   // Load the user's latest quiz result when they sign in
   useEffect(() => {
-    const loadLatestResult = async () => {
-      // Only attempt to load if user is authenticated and we don't already have a result
-      if (userId && !isQuizComplete && !animalAura) {
-        setIsLoading(true);
-        try {
-          console.log('Loading latest result for user:', userId);
-          const latestResult = await fetchLatestQuizResult(userId);
-          
-          if (latestResult && latestResult.animal_aura) {
-            // Set the animal aura from the latest result
-            setAnimalAura(latestResult.animal_aura);
-            setIsQuizComplete(true);
-            setIsPreviousResult(true); // Mark this as a restored previous result
-            console.log('Loaded previous quiz result:', latestResult.animal_aura.name);
-          } else {
-            // Explicitly set animalAura to null for users with no results
-            console.log('No quiz result found for user:', userId);
-            setAnimalAura(null);
-            setIsQuizComplete(false);
-            setIsPreviousResult(false);
-          }
-        } catch (err) {
-          console.error('Error loading latest quiz result:', err);
-          // Don't set error state here to avoid showing error to user on login
-          // But do reset the quiz state
+    if (!userId) return;
+    let isCancelled = false;
+    setIsLoading(true);
+    fetchLatestQuizResult(userId)
+      .then(latestResult => {
+        if (isCancelled) return;
+        if (latestResult?.animal_aura) {
+          setAnimalAura(latestResult.animal_aura);
+          setIsQuizComplete(true);
+          setIsPreviousResult(true);
+          // Rows saved before the v2 migration have no quiz_version: they're v1.
+          setLatestQuizVersion(latestResult.quiz_version ?? 1);
+        } else {
           setAnimalAura(null);
           setIsQuizComplete(false);
           setIsPreviousResult(false);
-        } finally {
-          setIsLoading(false);
+          setLatestQuizVersion(null);
         }
-      }
+      })
+      .catch(err => {
+        // Don't show an error on login, just start without a result.
+        console.error('Error loading latest quiz result:', err);
+        if (isCancelled) return;
+        setAnimalAura(null);
+        setIsQuizComplete(false);
+        setIsPreviousResult(false);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsLoading(false);
+      });
+    return () => {
+      isCancelled = true;
     };
-
-    loadLatestResult();
   }, [userId]);
 
-  // Submit the quiz and calculate results
-  const submitQuiz = async () => {
+  const finishQuiz = async () => {
+    setError(null);
     if (!userId) {
       setError('You must be logged in to submit the quiz');
       return;
     }
-
-    if (userAnswers.length !== questions.length) {
+    if (!areAllStepsAnswered(quiz)) {
       setError('Please answer all questions before submitting');
       return;
     }
 
+    let evaluation;
+    try {
+      evaluation = evaluateQuizV2(getScoredAnswers(quiz), quiz.profiles);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not calculate your aura');
+      return;
+    }
+
+    // Too close to call: one more question, if we have one for that trait.
+    if (evaluation.status === 'needsTieBreaker' && quiz.tieBreakers[evaluation.trait]) {
+      dispatch({ type: 'addTieBreaker', trait: evaluation.trait });
+      return;
+    }
+
+    const auraId = evaluation.ranking[0].auraId;
     setIsLoading(true);
     try {
-      console.log('Starting quiz submission process');
-      
-      // Calculate the matching animal aura
-      const auraId = await calculateQuizResult(userAnswers);
-      console.log('Calculated aura ID:', auraId);
-      
-      // Save the user's result
-      await submitQuizResult(userId, auraId, userAnswers);
-      console.log('Saved quiz result to database');
-      
-      // Fetch the detailed aura information
+      await submitQuizV2Result(userId, auraId, getAnswerRecords(quiz), roundTraitScores(evaluation.traitScores));
       const aura = await fetchAnimalAura(auraId);
-      // Update all compatibility results for this user
+      // Same flow as before: refresh match scores (match_ready notifications come from the database).
       await updateUserCompatibilityResults(userId, auraId);
-      console.log('Updated compatibility results for user:', userId);
-      // Update state
       setAnimalAura(aura);
       setIsQuizComplete(true);
-      setIsPreviousResult(false); // This is a fresh result, not a previous one
-      
-      console.log('States updated, navigating to results screen');
-      
-      // Ensure the state updates are processed before navigation
-      setTimeout(() => {
-        router.replace("/(tabs)/results");
-        console.log('Navigation to results complete');
-      }, 100);
-      
+      setIsPreviousResult(false);
+      setLatestQuizVersion(QUIZ_V2_VERSION);
+      // Let the state updates land before navigating.
+      setTimeout(() => router.replace('/(tabs)/results'), 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred submitting your answers');
       console.error('Error submitting quiz:', err);
@@ -247,49 +187,41 @@ export function QuizProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Reset the quiz to start over
+  // Reset the quiz to start over (Retake screen)
   const resetQuiz = () => {
-    setIsLoading(true);
-    setCurrentQuestionIndex(0);
-    setUserAnswers([]);
     setIsQuizComplete(false);
     setAnimalAura(null);
     setIsPreviousResult(false);
-    
-    // Set flag to directly navigate to quiz tab
     setDirectNavigateToQuiz(true);
-    
-    // Immediately fetch fresh quiz data
-    loadQuiz().then(() => {
-      console.log('Quiz reset and reloaded successfully');
-    }).catch(err => {
-      console.error('Error reloading quiz after reset:', err);
-    });
+    loadQuiz();
   };
 
-  // Load answer options when the current question changes
-  useEffect(() => {
-    loadCurrentQuestionOptions();
-  }, [currentQuestionIndex, questions]);
+  const currentStep = quiz.steps[quiz.index] ?? null;
+  const mainQuestionCount = getMainQuestionCount(quiz);
+  const selectedOptionId = currentStep ? quiz.answers[currentStep.questionId] ?? null : null;
 
-  const value = {
-    questions,
-    currentQuestionIndex,
-    currentAnswerOptions,
+  const value: QuizContextType = {
+    currentStep,
+    currentIndex: quiz.index,
+    stepCount: quiz.steps.length,
+    mainQuestionCount,
+    tieBreakerNumber: currentStep?.isTiebreaker ? quiz.index - mainQuestionCount + 1 : null,
+    selectedOptionId,
+    isLastStep: quiz.steps.length > 0 && quiz.index === quiz.steps.length - 1,
+    allAnswered: areAllStepsAnswered(quiz),
     isLoading,
     error,
-    userAnswers,
     isQuizComplete,
-    progress,
     animalAura,
     isPreviousResult,
+    latestQuizVersion,
     directNavigateToQuiz,
     setDirectNavigateToQuiz,
     loadQuiz,
     goToNextQuestion,
     goToPreviousQuestion,
-    selectAnswer,
-    submitQuiz,
+    selectOption,
+    finishQuiz,
     resetQuiz,
   };
 
@@ -302,4 +234,4 @@ export function useQuiz() {
     throw new Error('useQuiz must be used within a QuizProvider');
   }
   return context;
-} 
+}

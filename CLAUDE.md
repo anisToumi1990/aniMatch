@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-AniMatch ("animatchaura") is an Expo SDK 53 / React Native 0.79 app using expo-router and TypeScript (strict), with Supabase as the backend. Users take a 10-question personality quiz that matches them to one of 15 "Animal Auras", invite other users, and see how compatible their auras are for a chosen relationship type (Lover / Business Partner / Family).
+AniMatch ("animatchaura") is an Expo SDK 58 / React Native 0.88 (React 19.3) app using expo-router and TypeScript (strict), with Supabase as the backend. Users take a 15-question trait quiz (quiz v2) that matches them to one of 15 "Animal Auras", invite other users, and see how compatible their auras are for a chosen relationship type (Lover / Business Partner / Family).
 
 ## Commands
 
 - **Run the app:** `npx expo start --offline`
-- **iOS simulator:** Device Hub (Xcode 27), with Expo Go for SDK 53 installed manually on it. Don't expect `expo start --ios` to install or upgrade Expo Go for you.
-- **Lint:** `npm run lint` (`expo lint`)
-- **Tests:** `npm test` (jest-expo, runs in `--watchAll` mode). Run one test file without watching: `npx jest components/__tests__/ThemedText-test.tsx`. The only test right now is the template snapshot test.
-- **Type-check:** `npx tsc --noEmit`
+- **iOS simulator:** Device Hub (Xcode 27), with Expo Go for SDK 58 installed manually on it. Don't expect `expo start --ios` to install or upgrade Expo Go for you.
+- **Tests:** `npm test` (jest-expo, runs in `--watchAll` mode). Run once without watching: `npx jest --watchAll=false`, or one file: `npx jest lib/__tests__/quizV2Scoring-test.ts`. Unit tests live in `lib/__tests__/`. The template `ThemedText` snapshot test already fails on `develop` (the renderer returns `null`), and Jest 30 rewrites the `.snap` header when it runs; don't commit that file by accident.
+- **Lint:** `npm run lint` (`expo lint`). The repo has no ESLint config, so the first run creates `eslint.config.js`; don't commit it unless that's the task.
+- **Type-check:** `npx tsc --noEmit`. Two errors already exist on `develop` (`components/ExternalLink.tsx` href type, `lib/supabase/index.ts` client options); anything else is new.
 
 ## Environment
 
@@ -37,9 +37,15 @@ Any new top-level route group has to be accounted for in `AuthGuard`, or users w
 
 **Supabase JS is v1 (`^1.35`), not v2.** Use the v1 API: `supabase.auth.session()`, `supabase.auth.signIn({ provider })`, and `onAuthStateChange` returning `{ data: subscription }`. Most v2 examples online won't work here.
 
-**Data access is split.** Quiz logic lives in `lib/supabase/quiz.ts` and notifications in `lib/supabase/notifications.ts`. Invites, profiles and compatibility are queried directly inside screens and components (`components/InviteForm.tsx`, `app/(tabs)/invites.tsx`, `app/(tabs)/compatibility.tsx`). A "no rows" result from `.single()` shows up as error code `PGRST116` and is treated as "not found".
+**Data access is split.** Quiz data lives in `lib/supabase/quiz.ts` (results, auras, compatibility sync) and `lib/supabase/quizV2.ts` (v2 questions, profiles, saving), notifications in `lib/supabase/notifications.ts`. Invites, profiles and compatibility are queried directly inside screens and components (`components/InviteForm.tsx`, `app/(tabs)/invites.tsx`, `app/(tabs)/compatibility.tsx`). A "no rows" result from `.single()` shows up as error code `PGRST116` and is treated as "not found".
 
-**Quiz scoring** (`calculateQuizResult`): each answer is matched by `(question_id, option_key)` against `answer_animal_mapping` rows. Each matching row adds its `animal_weight` to that row's `animal_aura_id`, and the aura with the highest total wins. Results go into `user_quiz_results`; `answer_data` is stored as JSON. `QuizContext` (a `useReducer` store) drives the quiz flow and loads the user's latest result.
+**Quiz (v2, trait-based).** Full design and tuning: `docs/quiz-v2-proposal.md`; profile simulation: `node scripts/quiz-v2-simulation.js [users] [seed] [--realistic]`.
+- 5 traits: `social`, `curiosity`, `organization`, `kindness`, `chill` (easygoing 100 vs intense 0). 15 main questions (3 per trait) + 5 tie-breakers (1 per trait) in `quiz_v2_questions`; 4 answers each in `quiz_v2_options` worth `points` 0-3 on the question's trait. Each aura's ideal 0-100 profile is in `animal_trait_profiles`.
+- Scoring is pure, in `lib/quizV2Scoring.ts` (`evaluateQuizV2`): trait score = points / (answers × 3) × 100, aura = closest profile by Euclidean distance. If 2nd − 1st distance < 2, ask a tie-breaker on the trait where the two closest auras (after the main questions) differ most, then the next, max 3; the closest wins after that.
+- `lib/quizV2Session.ts` is the session reducer used by `QuizContext` (`useReducer`): main questions and their answers are shuffled on load (A-D labels follow display order), tie-breakers are appended only when needed, and changing an earlier answer drops the tie-breakers that depended on it. Data access: `lib/supabase/quizV2.ts`.
+- Results go into `user_quiz_results` with `quiz_version = 2`, `trait_scores` (jsonb, 1 decimal) and `answer_data` = `[{ question_id, option_id }]`. Then the usual `updateUserCompatibilityResults` runs (compatibility is still animal-based).
+- **v1:** older rows have `quiz_version = 1` (the default) and keep their animal. The v1 tables (`quiz_questions`, `quiz_answer_options`, `answer_animal_mapping`) are still in the database but no longer used by the app. Users whose latest result is v1 see Home's "New, more accurate quiz" banner (`components/home/QuizV2Banner.tsx`), which opens `/retake`; it's hidden after a v2 result or once dismissed (AsyncStorage, per user and device: `lib/quizV2Banner.ts`).
+- Changing questions or profiles: edit the doc, re-run the simulation, regenerate/update the seed in `supabase/migrations/20261121100100_quiz_v2_seed.sql` (upserts by id) and keep `scripts/quiz-v2-simulation.js` in sync.
 
 **Invite → compatibility flow** (some of it lives in the database, not in this repo):
 1. `AccountModal` inserts a row into `invites` with `recipient_email`, plus `recipient_user_id` if a profile with that email already exists.
@@ -81,7 +87,7 @@ No payments yet. The paywall's call to action inserts into `premium_interest` (i
 
 ## Roadmap docs
 
-`plan.md` covers auth, `plan2.md` the quiz, and `plan3.md` invites and compatibility. `plan3.md` describes invite emails and an invitee onboarding flow (sign up → pick relationship type → quiz) that isn't fully built yet.
+`plan.md` covers auth, `plan2.md` the original (v1) quiz, `docs/quiz-v2-proposal.md` the current quiz, and `plan3.md` invites and compatibility. `plan3.md` describes invite emails and an invitee onboarding flow (sign up → pick relationship type → quiz) that isn't fully built yet.
 
 ## Conventions (from `.cursorrules`)
 
