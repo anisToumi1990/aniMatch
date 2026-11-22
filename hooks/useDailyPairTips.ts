@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { PairMatch, fetchPairMatches, fetchTodayPairTips, fillTipName } from '@/lib/supabase/dailyPairTips';
+import { onHiddenMatchesChange } from '@/lib/supabase/hiddenMatches';
 import { msUntilNextLocalMidnight, toLocalDateString } from '@/lib/dailyAuraSchedule';
 
 /** A match with today's tip, {name} already filled in (null when there's no tip). */
@@ -107,6 +108,16 @@ export function useDailyPairTips(isEnabled: boolean = true) {
     schedule();
     return () => clearTimeout(timeout);
   }, [isEnabled, load]);
+
+  // Hiding or showing a match changes the list right away.
+  useEffect(
+    () =>
+      onHiddenMatchesChange(() => {
+        lastLoaded = null;
+        load(true);
+      }),
+    [load],
+  );
 
   const retry = useCallback(() => load(true), [load]);
 

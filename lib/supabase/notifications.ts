@@ -28,25 +28,8 @@ export interface AppNotification {
 
 const NOTIFICATION_COLUMNS = 'id, user_id, type, title, body, message, link, actor_id, data, invite_id, read_at, created_at';
 
-/** In-app routes a notification may open. Anything else is ignored. */
-export const NOTIFICATION_ROUTES = {
-  compatibility: '/compatibility',
-  invites: '/invites',
-} as const;
-
-export type NotificationRoute = (typeof NOTIFICATION_ROUTES)[keyof typeof NOTIFICATION_ROUTES];
-
-const KNOWN_ROUTES: string[] = Object.values(NOTIFICATION_ROUTES);
-
-/** The route to open for a notification, or null if it has none we know. */
-export function getNotificationRoute(notification: AppNotification): NotificationRoute | null {
-  if (notification.link && KNOWN_ROUTES.includes(notification.link)) {
-    return notification.link as NotificationRoute;
-  }
-  // Older invite rows have no link.
-  if (notification.invite_id) return NOTIFICATION_ROUTES.invites;
-  return null;
-}
+export { NOTIFICATION_ROUTES, getNotificationTarget } from '@/lib/notificationRoutes';
+export type { NotificationRoute, NotificationTarget } from '@/lib/notificationRoutes';
 
 /** Text to show, from constants/notificationCopy.ts when the type is known. */
 export function getDisplayText(notification: AppNotification): NotificationText {

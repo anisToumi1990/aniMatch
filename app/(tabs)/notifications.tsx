@@ -15,7 +15,7 @@ import {
   AppNotification,
   fetchNotifications,
   getDisplayText,
-  getNotificationRoute,
+  getNotificationTarget,
   markAllNotificationsRead,
   markNotificationRead,
 } from '@/lib/supabase/notifications';
@@ -95,7 +95,7 @@ export default function NotificationsScreen() {
   }
 
   async function handlePress(notification: AppNotification) {
-    const route = getNotificationRoute(notification);
+    const target = getNotificationTarget(notification);
     if (!notification.read_at) {
       // Optimistic: show it as read right away.
       const readAt = new Date().toISOString();
@@ -114,7 +114,7 @@ export default function NotificationsScreen() {
       }
       refreshCount();
     }
-    if (route) router.navigate(route);
+    if (target) router.navigate(target);
   }
 
   async function handleMarkAllRead() {
