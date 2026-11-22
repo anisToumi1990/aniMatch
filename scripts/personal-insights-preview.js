@@ -30,7 +30,8 @@ const TRAIT_LABELS = { social: 'Social', curiosity: 'Curiosity', organization: '
 const LEVELS = ['high', 'medium', 'low'];
 const TYPES = ['lover', 'business_partner', 'family'];
 const TYPE_LABELS = { lover: 'Lover', business_partner: 'Business partner', family: 'Family' };
-const SECTIONS = ['who', 'strength', 'challenge', 'tip'];
+// who = sentence 1 after {Label} (singular verb); who_they = sentence 2, starts with "They" (no repeated name).
+const SECTIONS = ['who', 'who_they', 'strength', 'challenge', 'tip'];
 const AREAS = ['communication', 'energy', 'conflict', 'values'];
 
 /** Selection thresholds (see the doc, section 3). */
@@ -43,7 +44,7 @@ const RULES = {
 };
 
 /** Max length per text, measured with a long first name in place of {name}. */
-const MAX = { who: 95, strength: 135, challenge: 150, tip: 180, difference: 130, similar: 110, area: 115, balanced: 95 };
+const MAX = { who: 95, who_they: 100, strength: 135, challenge: 150, tip: 180, difference: 130, similar: 110, area: 115, balanced: 95 };
 const SAMPLE_NAME = 'Alexandra';
 
 const GENDERED = /\b(he|she|him|her|his|hers|himself|herself|he's|she's|boyfriend|girlfriend|husband|wife)\b/i;
@@ -71,8 +72,10 @@ function validate(lib) {
     if (EMOJI.test(text)) errors.push(`${where}: contains an emoji`);
     const unknown = (text.match(/\{[^}]*\}/g) ?? []).filter(token => !placeholders.includes(token));
     if (unknown.length) errors.push(`${where}: unknown placeholder ${unknown.join(', ')}`);
-    if (kind !== 'who' && kind !== 'balanced' && !/[.!?]["”]?$/.test(text)) errors.push(`${where}: should end with a full stop`);
-    if ((kind === 'who' || kind === 'balanced') && /[.!?]$/.test(text)) errors.push(`${where}: "who" texts are fragments, no final full stop`);
+    const isFragment = kind === 'who' || kind === 'who_they' || kind === 'balanced';
+    if (!isFragment && !/[.!?]["”]?$/.test(text)) errors.push(`${where}: should end with a full stop`);
+    if (isFragment && /[.!?]$/.test(text)) errors.push(`${where}: "who" texts are fragments, no final full stop`);
+    if (kind === 'who_they' && !/^They\b/.test(text)) errors.push(`${where}: must start with "They": ${text}`);
     const key = text.toLowerCase();
     if (seen.has(key)) errors.push(`${where}: same text as ${seen.get(key)}`);
     else seen.set(key, where);
@@ -84,8 +87,9 @@ function validate(lib) {
         for (const section of SECTIONS) {
           const where = `traits.${trait}.${level}.${type}.${section}`;
           const text = lib.traits?.[trait]?.[level]?.[type]?.[section];
-          check(where, text, section, { placeholders: section === 'who' ? [] : ['{name}'] });
-          if (section !== 'who' && typeof text === 'string' && !text.includes('{name}')) {
+          const isWho = section === 'who' || section === 'who_they';
+          check(where, text, section, { placeholders: isWho ? [] : ['{name}'] });
+          if (!isWho && typeof text === 'string' && !text.includes('{name}')) {
             errors.push(`${where}: should mention {name}`);
           }
         }
@@ -162,7 +166,8 @@ function buildInsights(lib, { name, type, me, them, areas }) {
     who = `${label} ${entry(ordered[0].key).who}.`;
     picks.who = [`${ordered[0].key} ${level(ordered[0].key)}`];
     if (standsOut(ordered[1])) {
-      who += ` ${capitalize(`${name} ${entry(ordered[1].key).who}`)}.`;
+      // Sentence 2 starts with "They" (plural form), so the name isn't repeated.
+      who += ` ${entry(ordered[1].key).who_they}.`;
       picks.who.push(`${ordered[1].key} ${level(ordered[1].key)}`);
     }
   }
@@ -323,7 +328,7 @@ function renderLibrary(lib) {
     out += `\n#### ${TRAIT_LABELS[trait]}\n`;
     for (const level of LEVELS) {
       out += `\n**${TRAIT_LABELS[trait]}: ${level}** (${level === 'high' ? `≥ ${lib.levels.high}` : level === 'low' ? `< ${lib.levels.low}` : `${lib.levels.low}-${lib.levels.high - 1}`})\n\n`;
-      out += `| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |\n|---|---|---|---|---|\n`;
+      out += `| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |\n|---|---|---|---|---|---|\n`;
       for (const type of TYPES) {
         const entry = lib.traits[trait][level][type];
         out += `| ${TYPE_LABELS[type]} | ${SECTIONS.map(section => cell(entry[section])).join(' | ')} |\n`;
@@ -415,8 +420,8 @@ function replaceGenerated(doc, part, content) {
 // ---------------------------------------------------------------------------
 
 const FIXTURE_OUT = path.join(ROOT, 'lib', '__tests__', 'fixtures', 'personalInsights-fixture.json');
-const SEED_MIGRATION = path.join(ROOT, 'supabase', 'migrations', '20261122120100_personal_insights_seed.sql');
-const CHECK_MIGRATION = path.join(ROOT, 'supabase', 'migrations', '20261122120200_personal_insights_check.sql');
+const SEED_MIGRATION = path.join(ROOT, 'supabase', 'migrations', '20261122130100_personal_insights_seed.sql');
+const CHECK_MIGRATION = path.join(ROOT, 'supabase', 'migrations', '20261122130200_personal_insights_check.sql');
 
 function traits(social, curiosity, organization, kindness, chill) {
   return { social, curiosity, organization, kindness, chill };
@@ -536,7 +541,8 @@ function writeSeed(lib) {
 -- Edit the JSON and re-run the script; don't edit this file by hand.
 --
 -- Replaces the whole library in one transaction (only personal_insights_build() reads it).
--- Run in the Supabase SQL editor after 20261122120000_personal_insights.sql.
+-- Run in the Supabase SQL editor after 20261122120000_personal_insights.sql and
+-- 20261122130000_personal_insights_who_they.sql.
 
 begin;
 
@@ -572,7 +578,7 @@ function writeCheck(cases) {
 -- lib/personalInsights.ts). Don't edit by hand.
 --
 -- Read-only: raises an exception (and changes nothing) if any case returns different texts.
--- Run in the Supabase SQL editor after 20261122120100_personal_insights_seed.sql.
+-- Run in the Supabase SQL editor after 20261122130100_personal_insights_seed.sql.
 
 do $$
 declare

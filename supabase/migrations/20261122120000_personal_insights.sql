@@ -7,8 +7,10 @@
 --
 -- Run in the Supabase SQL editor, in this order:
 --   1. this file (tables + functions)
---   2. 20261122120100_personal_insights_seed.sql  (generated: the content library)
---   3. 20261122120200_personal_insights_check.sql (generated: read-only fixture check)
+--   2. 20261122130000_personal_insights_who_they.sql (adds the "They" sentence-2 texts,
+--      replaces personal_insights_build())
+--   3. 20261122130100_personal_insights_seed.sql  (generated: the content library)
+--   4. 20261122130200_personal_insights_check.sql (generated: read-only fixture check)
 --
 -- Security:
 --   - Content tables: RLS on, no policies, no grants: clients can't read them.
@@ -117,7 +119,7 @@ $$;
 -- 3. personal_insights_build(): the selection rules (doc section 3)
 --
 -- Same rules as buildPersonalInsights() in lib/personalInsights.ts and buildInsights()
--- in scripts/personal-insights-preview.js; 20261122120200_personal_insights_check.sql
+-- in scripts/personal-insights-preview.js; 20261122130200_personal_insights_check.sql
 -- compares this function with the shared fixture.
 --
 -- All scores are compared in tenths of a point (integers). Ties: trait order

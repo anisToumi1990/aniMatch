@@ -57,6 +57,10 @@ describe('screen rules', () => {
       expect(text).not.toMatch(/\b(he|she|him|her|his|hers)\b/i);
       expect(text.charAt(0)).toBe(text.charAt(0).toUpperCase());
     });
+    // "Who they are" names them once; a 2nd sentence starts with "They".
+    expect(who.toLowerCase().split(c.person.toLowerCase()).length - 1).toBe(1);
+    const second = who.split('. ')[1];
+    if (second) expect(second).toMatch(/^They\b/);
   });
 
   it('uses the relationship label only to open "Who they are"', () => {

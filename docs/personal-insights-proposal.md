@@ -42,7 +42,7 @@ The match detail keeps the score, the avatars and the 4 area bars (`AreaBreakdow
 | Business partner | "Your business partner {name}" | {name} / they |
 | Family | "{name}" | {name} / they |
 
-`{Label}` only opens "Who they are". Every other text uses `{name}`, and "they / their / them" with plural verbs. No he/she, no gendered words (boyfriend, wife…): the script rejects them.
+`{Label}` only opens "Who they are"; its 2nd sentence starts with "They". Every other text uses `{name}`, and "they / their / them" with plural verbs. No he/she, no gendered words (boyfriend, wife…): the script rejects them.
 
 **Tone rules** (checked by the script where possible):
 
@@ -57,142 +57,142 @@ The match detail keeps the score, the avatars and the 4 area bars (`AreaBreakdow
 
 ## 2. Content library
 
-Dimensions: **trait (5) × level (3) × relationship type (3) × section (4)** = 180 texts, plus 30 difference texts, 5 "similar" texts, 24 area texts and 3 "balanced" fallbacks: **242 texts**.
+Dimensions: **trait (5) × level (3) × relationship type (3) × section (5: who, who-they, strength, challenge, tip)** = 225 texts, plus 30 difference texts, 5 "similar" texts, 24 area texts and 3 "balanced" fallbacks: **287 texts**.
 
 Levels use the trait score (0-100): **high ≥ 60, medium 40-59, low < 40**. These match how the animal profiles are spread (most profile values are ≤ 40 or ≥ 60, so each animal gets clear highs and lows).
 
-"Who they are" entries are fragments that follow `{Label}` or `{name}`, with a singular verb ("Your partner Sam *recharges* around people…").
+"Who they are" entries are fragments: sentence 1 follows `{Label}` with a singular verb ("Your partner Sam *recharges* around people…"); sentence 2 is a separate "They …" form with a plural verb ("They *also recharge*…").
 
 <!-- generated:library -->
 #### Social
 
 **Social: high** (≥ 60)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | recharges around people and makes friends in minutes | {name} brings energy into your life together: new people, new plans, a full weekend if you want one. | A quiet evening at home can feel like a lost evening to {name}, and they may say yes to plans before checking with you. | Give {name} a social outlet without you having to be there every time. Encourage their nights out and they come home happier and more present. |
-| Business partner | is at their best in front of people: clients, events, pitches | {name} opens doors. They network easily and can turn a cold contact into a warm one in a single conversation. | {name} can over-promise in the moment when a client is excited, and the follow-up work then lands on someone else. | Put {name} on the calls and meetings where people decide. Agree beforehand on what they can promise, so their energy closes deals you can deliver. |
-| Family | is the one who brings everyone together | {name} keeps the family connected: they remember the gatherings, start the group chats and make sure nobody drifts away. | {name} may take it personally when you skip a family event or need some time alone. | When you can't come, tell {name} early and suggest another time to see each other. They care more about the connection than the specific event. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | recharges around people and makes friends in minutes | They also recharge around people and make friends in minutes | {name} brings energy into your life together: new people, new plans, a full weekend if you want one. | A quiet evening at home can feel like a lost evening to {name}, and they may say yes to plans before checking with you. | Give {name} a social outlet without you having to be there every time. Encourage their nights out and they come home happier and more present. |
+| Business partner | is at their best in front of people: clients, events, pitches | They're also at their best in front of people: clients, events, pitches | {name} opens doors. They network easily and can turn a cold contact into a warm one in a single conversation. | {name} can over-promise in the moment when a client is excited, and the follow-up work then lands on someone else. | Put {name} on the calls and meetings where people decide. Agree beforehand on what they can promise, so their energy closes deals you can deliver. |
+| Family | is the one who brings everyone together | They're also the one who brings everyone together | {name} keeps the family connected: they remember the gatherings, start the group chats and make sure nobody drifts away. | {name} may take it personally when you skip a family event or need some time alone. | When you can't come, tell {name} early and suggest another time to see each other. They care more about the connection than the specific event. |
 
 **Social: medium** (40-59)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | is as happy at a party as on a quiet night in | {name} adapts easily to your social rhythm, whether you want a crowd or just the two of you. | Because {name} is fine either way, they may not say when they actually need people, or need a break from them. | Ask {name} directly: "Out or in tonight?" They often don't push for it, but they usually have a preference. |
-| Business partner | can work a room or work alone, depending on what the job needs | {name} is comfortable with clients and just as comfortable with a quiet day of focused work. | {name} may not volunteer for the visible roles, even when they'd do them well. | Ask {name} to take one client-facing task this month. They're good at it, but they rarely ask for the spotlight. |
-| Family | enjoys family time but also likes their own space | {name} shows up for the important moments without needing to be at every single one. | {name} may go quiet for a while without meaning anything by it, which can look like distance. | A short, regular check-in works well with {name}. Something like a weekly call keeps you close without feeling like an obligation. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | is as happy at a party as on a quiet night in | They're as happy at a party as on a quiet night in | {name} adapts easily to your social rhythm, whether you want a crowd or just the two of you. | Because {name} is fine either way, they may not say when they actually need people, or need a break from them. | Ask {name} directly: "Out or in tonight?" They often don't push for it, but they usually have a preference. |
+| Business partner | can work a room or work alone, depending on what the job needs | They can work a room or work alone, depending on what the job needs | {name} is comfortable with clients and just as comfortable with a quiet day of focused work. | {name} may not volunteer for the visible roles, even when they'd do them well. | Ask {name} to take one client-facing task this month. They're good at it, but they rarely ask for the spotlight. |
+| Family | enjoys family time but also likes their own space | They enjoy family time but also like their own space | {name} shows up for the important moments without needing to be at every single one. | {name} may go quiet for a while without meaning anything by it, which can look like distance. | A short, regular check-in works well with {name}. Something like a weekly call keeps you close without feeling like an obligation. |
 
 **Social: low** (< 40)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | recharges in quiet and prefers a few deep conversations to a crowd | {name} gives you their full attention. When you talk, they really listen, and they remember what you said. | Big groups and long parties drain {name}, even when they enjoy them, and they may need a quiet day after. | Plan time alone together, not just events. If you go to a party, agree on a time to leave so {name} can relax and enjoy it. |
-| Business partner | does their best work with focus and few interruptions | {name} thinks before speaking. When they share an opinion in a meeting, it's usually well thought out. | {name} may not speak up in big meetings, so their best ideas can stay unsaid. | Ask {name} for their view one-on-one or in writing before a big meeting. You'll get their real thinking, not just a nod. |
-| Family | shows love quietly rather than loudly | {name} is the calm, steady presence at family gatherings, the one who notices who's left out. | Long family days can tire {name} out, and they may leave early or go quiet. | Don't read {name}'s quietness as a lack of interest. A one-on-one coffee will mean more to them than a big family dinner. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | recharges in quiet and prefers a few deep conversations to a crowd | They recharge in quiet and prefer a few deep conversations to a crowd | {name} gives you their full attention. When you talk, they really listen, and they remember what you said. | Big groups and long parties drain {name}, even when they enjoy them, and they may need a quiet day after. | Plan time alone together, not just events. If you go to a party, agree on a time to leave so {name} can relax and enjoy it. |
+| Business partner | does their best work with focus and few interruptions | They do their best work with focus and few interruptions | {name} thinks before speaking. When they share an opinion in a meeting, it's usually well thought out. | {name} may not speak up in big meetings, so their best ideas can stay unsaid. | Ask {name} for their view one-on-one or in writing before a big meeting. You'll get their real thinking, not just a nod. |
+| Family | shows love quietly rather than loudly | They show love quietly rather than loudly | {name} is the calm, steady presence at family gatherings, the one who notices who's left out. | Long family days can tire {name} out, and they may leave early or go quiet. | Don't read {name}'s quietness as a lack of interest. A one-on-one coffee will mean more to them than a big family dinner. |
 
 #### Curiosity
 
 **Curiosity: high** (≥ 60)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | always wants to learn, try and explore something new | {name} keeps your relationship fresh: new places, new ideas, new things to talk about over dinner. | {name} gets bored with routine quickly and may push for change when you'd rather keep things as they are. | Plan one new experience together each month: a place, a class, a recipe. It feeds {name}'s curiosity and gives you shared stories. |
-| Business partner | is full of ideas and always looking for a better way | {name} spots opportunities others miss and isn't afraid to question how things have always been done. | {name} may start new ideas before the current ones are finished. | Keep a shared "later" list for {name}'s new ideas. They feel heard, and the current project stays on track. |
-| Family | loves new ideas, places and conversations | {name} is the one who suggests the trip, the new restaurant or the topic that gets the whole table talking. | {name} may find family traditions a bit repetitive and want to change them. | Let {name} plan part of the next family get-together. They'll bring something new, and they'll feel their ideas count. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | always wants to learn, try and explore something new | They also always want to learn, try and explore something new | {name} keeps your relationship fresh: new places, new ideas, new things to talk about over dinner. | {name} gets bored with routine quickly and may push for change when you'd rather keep things as they are. | Plan one new experience together each month: a place, a class, a recipe. It feeds {name}'s curiosity and gives you shared stories. |
+| Business partner | is full of ideas and always looking for a better way | They're also full of ideas and always looking for a better way | {name} spots opportunities others miss and isn't afraid to question how things have always been done. | {name} may start new ideas before the current ones are finished. | Keep a shared "later" list for {name}'s new ideas. They feel heard, and the current project stays on track. |
+| Family | loves new ideas, places and conversations | They also love new ideas, places and conversations | {name} is the one who suggests the trip, the new restaurant or the topic that gets the whole table talking. | {name} may find family traditions a bit repetitive and want to change them. | Let {name} plan part of the next family get-together. They'll bring something new, and they'll feel their ideas count. |
 
 **Curiosity: medium** (40-59)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | enjoys new things but also values what already works | {name} is open to trying something new with you without needing constant change. | {name} may go along with your plans without saying what they'd really like to try. | Ask {name} to pick the next date idea. They have preferences, they just don't always push them. |
-| Business partner | is open to new ideas when there's a good reason | {name} balances fresh ideas with common sense. They'll try something new, but they'll ask why first. | {name} may need a clear reason before joining a new idea, which can feel slow when you're excited. | When you pitch a new idea to {name}, lead with the problem it solves. They join fast once the reason is clear. |
-| Family | likes some change, but not too much at once | {name} helps the family try new things without losing what makes it feel like home. | {name} can feel caught between the people who want change and those who want things as they are. | Ask {name} for their opinion when the family disagrees about plans. They often find the middle ground. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | enjoys new things but also values what already works | They enjoy new things but also value what already works | {name} is open to trying something new with you without needing constant change. | {name} may go along with your plans without saying what they'd really like to try. | Ask {name} to pick the next date idea. They have preferences, they just don't always push them. |
+| Business partner | is open to new ideas when there's a good reason | They're open to new ideas when there's a good reason | {name} balances fresh ideas with common sense. They'll try something new, but they'll ask why first. | {name} may need a clear reason before joining a new idea, which can feel slow when you're excited. | When you pitch a new idea to {name}, lead with the problem it solves. They join fast once the reason is clear. |
+| Family | likes some change, but not too much at once | They like some change, but not too much at once | {name} helps the family try new things without losing what makes it feel like home. | {name} can feel caught between the people who want change and those who want things as they are. | Ask {name} for their opinion when the family disagrees about plans. They often find the middle ground. |
 
 **Curiosity: low** (< 40)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | is grounded, practical and happy with the simple things | {name} is steady and easy to be with. They don't need constant novelty to be happy with you. | {name} may resist new plans or changes, especially if they come with little warning. | Give {name} time to warm up to new ideas. Mention a plan a few days ahead instead of springing it on them. |
-| Business partner | is practical and focused on what works today | {name} keeps the business grounded. They focus on what works and finish what they start. | {name} may push back on new ideas that haven't been tested yet. | Show {name} a concrete example or a small test before a big change. Proof convinces them more than vision. |
-| Family | values traditions and things that have stood the test of time | {name} keeps family traditions alive, the recipes, the rituals, the yearly plans everyone counts on. | {name} may feel unsettled when the family changes plans or habits. | When something changes, explain to {name} what stays the same. Keeping one familiar thing makes change easier for them. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | is grounded, practical and happy with the simple things | They're also grounded, practical and happy with the simple things | {name} is steady and easy to be with. They don't need constant novelty to be happy with you. | {name} may resist new plans or changes, especially if they come with little warning. | Give {name} time to warm up to new ideas. Mention a plan a few days ahead instead of springing it on them. |
+| Business partner | is practical and focused on what works today | They're also practical and focused on what works today | {name} keeps the business grounded. They focus on what works and finish what they start. | {name} may push back on new ideas that haven't been tested yet. | Show {name} a concrete example or a small test before a big change. Proof convinces them more than vision. |
+| Family | values traditions and things that have stood the test of time | They also value traditions and things that have stood the test of time | {name} keeps family traditions alive, the recipes, the rituals, the yearly plans everyone counts on. | {name} may feel unsettled when the family changes plans or habits. | When something changes, explain to {name} what stays the same. Keeping one familiar thing makes change easier for them. |
 
 #### Organization
 
 **Organization: high** (≥ 60)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | likes plans, clear agreements and a tidy home | {name} makes life together run smoothly: bills paid, trips booked, plans that actually happen. | Last-minute changes and loose plans stress {name} more than they show. | If plans change, tell {name} as early as you can and suggest a new plan, not just a cancellation. They relax once there's a plan B. |
-| Business partner | runs on lists, deadlines and clear processes | {name} is reliable. When they say it will be done by Friday, it's done by Friday. | {name} can get frustrated with partners who work in a looser way, and may end up redoing things themselves. | {name} gives their best with clear roles and deadlines. Agree in writing who does what, and stick to it. |
-| Family | is the family's organizer, the one with the calendar | {name} remembers birthdays, plans the holidays and makes sure everyone knows where to be. | {name} may feel they're the only one keeping things together, and get tired of it. | Take one organizing task off {name}'s plate, and say thank you for the rest. Being noticed matters to them. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | likes plans, clear agreements and a tidy home | They also like plans, clear agreements and a tidy home | {name} makes life together run smoothly: bills paid, trips booked, plans that actually happen. | Last-minute changes and loose plans stress {name} more than they show. | If plans change, tell {name} as early as you can and suggest a new plan, not just a cancellation. They relax once there's a plan B. |
+| Business partner | runs on lists, deadlines and clear processes | They also run on lists, deadlines and clear processes | {name} is reliable. When they say it will be done by Friday, it's done by Friday. | {name} can get frustrated with partners who work in a looser way, and may end up redoing things themselves. | {name} gives their best with clear roles and deadlines. Agree in writing who does what, and stick to it. |
+| Family | is the family's organizer, the one with the calendar | They're also the family's organizer, the one with the calendar | {name} remembers birthdays, plans the holidays and makes sure everyone knows where to be. | {name} may feel they're the only one keeping things together, and get tired of it. | Take one organizing task off {name}'s plate, and say thank you for the rest. Being noticed matters to them. |
 
 **Organization: medium** (40-59)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | likes some structure but can go with the flow | {name} plans enough to keep things on track but can still say yes to a spontaneous evening. | {name} may expect you to share the planning without saying so out loud. | Split the planning clearly with {name}: one of you does trips, the other does weekends. It avoids quiet frustration. |
-| Business partner | is organized when it counts and flexible when it doesn't | {name} adapts well: they can follow a process or improvise when a deal needs it. | {name} may not insist on structure until things start to slip. | Set a short weekly check-in with {name} to review priorities. It keeps you both on track before things slip. |
-| Family | helps with plans without needing to control them | {name} is easy to plan with: they help when asked and don't fuss about the details. | {name} may leave the planning to others and then not love the result. | Ask {name} for one concrete thing when planning a family event. They're happy to help, they just wait to be asked. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | likes some structure but can go with the flow | They like some structure but can go with the flow | {name} plans enough to keep things on track but can still say yes to a spontaneous evening. | {name} may expect you to share the planning without saying so out loud. | Split the planning clearly with {name}: one of you does trips, the other does weekends. It avoids quiet frustration. |
+| Business partner | is organized when it counts and flexible when it doesn't | They're organized when it counts and flexible when it doesn't | {name} adapts well: they can follow a process or improvise when a deal needs it. | {name} may not insist on structure until things start to slip. | Set a short weekly check-in with {name} to review priorities. It keeps you both on track before things slip. |
+| Family | helps with plans without needing to control them | They help with plans without needing to control them | {name} is easy to plan with: they help when asked and don't fuss about the details. | {name} may leave the planning to others and then not love the result. | Ask {name} for one concrete thing when planning a family event. They're happy to help, they just wait to be asked. |
 
 **Organization: low** (< 40)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | is spontaneous and happy to see where the day goes | {name} keeps life fun and flexible. A rainy Sunday can turn into an adventure with them. | {name} may forget dates, run late or leave plans to the last minute. | Put important dates in a shared calendar with reminders. It's not about trust: it frees {name} to be spontaneous without missing what matters. |
-| Business partner | is flexible, quick and good at improvising | {name} handles surprises well. When a plan breaks, they find another way, fast. | Deadlines and paperwork are not {name}'s favorite, and they can slip when no one checks in. | Give {name} short deadlines and quick check-ins instead of one big due date. They do great work in sprints. |
-| Family | is relaxed about plans and happy to improvise | {name} stays calm when family plans fall apart. They're the one who says "we'll figure it out." | {name} may confirm late, forget a date or change plans last minute. | Send {name} a short reminder the day before family plans. It helps them show up, and it avoids a last-minute scramble. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | is spontaneous and happy to see where the day goes | They're also spontaneous and happy to see where the day goes | {name} keeps life fun and flexible. A rainy Sunday can turn into an adventure with them. | {name} may forget dates, run late or leave plans to the last minute. | Put important dates in a shared calendar with reminders. It's not about trust: it frees {name} to be spontaneous without missing what matters. |
+| Business partner | is flexible, quick and good at improvising | They're also flexible, quick and good at improvising | {name} handles surprises well. When a plan breaks, they find another way, fast. | Deadlines and paperwork are not {name}'s favorite, and they can slip when no one checks in. | Give {name} short deadlines and quick check-ins instead of one big due date. They do great work in sprints. |
+| Family | is relaxed about plans and happy to improvise | They're also relaxed about plans and happy to improvise | {name} stays calm when family plans fall apart. They're the one who says "we'll figure it out." | {name} may confirm late, forget a date or change plans last minute. | Send {name} a short reminder the day before family plans. It helps them show up, and it avoids a last-minute scramble. |
 
 #### Kindness
 
 **Kindness: high** (≥ 60)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | is warm, caring and quick to notice how you feel | {name} notices when something is off with you, often before you say a word. | {name} may put your needs before their own and not say when they're hurt or tired. | Ask {name} what they need, and mean it. They're so used to caring for others that a simple "How are you, really?" goes a long way. |
-| Business partner | is supportive and puts people first | {name} builds trust with clients and colleagues. People like working with them and come back. | {name} may avoid hard conversations, like asking for money or saying no to a client. | {name} gives their best when their effort is recognized. Thank them for a specific detail, not just "good job". |
-| Family | is the caring heart of the family | {name} is the person everyone calls when something goes wrong. They always make time. | {name} may take on everyone's problems and end up exhausted. | Return the care: check on {name} when nothing is wrong. They rarely ask for help, so offer it. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | is warm, caring and quick to notice how you feel | They're also warm, caring and quick to notice how you feel | {name} notices when something is off with you, often before you say a word. | {name} may put your needs before their own and not say when they're hurt or tired. | Ask {name} what they need, and mean it. They're so used to caring for others that a simple "How are you, really?" goes a long way. |
+| Business partner | is supportive and puts people first | They're also supportive and put people first | {name} builds trust with clients and colleagues. People like working with them and come back. | {name} may avoid hard conversations, like asking for money or saying no to a client. | {name} gives their best when their effort is recognized. Thank them for a specific detail, not just "good job". |
+| Family | is the caring heart of the family | They're also the caring heart of the family | {name} is the person everyone calls when something goes wrong. They always make time. | {name} may take on everyone's problems and end up exhausted. | Return the care: check on {name} when nothing is wrong. They rarely ask for help, so offer it. |
 
 **Kindness: medium** (40-59)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | is caring but also honest about what they think | {name} is kind without being a pushover. They'll support you and still tell you the truth. | {name} may sound blunter than they mean when they're tired or stressed. | If something {name} says stings, ask what they meant before reacting. The intention is usually kinder than the words. |
-| Business partner | is fair, friendly and clear about expectations | {name} balances people and results. They're pleasant to work with and still hold the line on quality. | {name} may hold back feedback to keep the peace, then let it out all at once. | Make feedback a regular habit with {name}, in both directions. Small notes often beat one big talk. |
-| Family | cares about the family and also speaks their mind | {name} supports the family and isn't afraid to say when something isn't fair. | {name}'s honesty can lead to tension at family gatherings. | When {name} raises a concern, take it seriously. They speak up because they care, not to start a fight. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | is caring but also honest about what they think | They're caring but also honest about what they think | {name} is kind without being a pushover. They'll support you and still tell you the truth. | {name} may sound blunter than they mean when they're tired or stressed. | If something {name} says stings, ask what they meant before reacting. The intention is usually kinder than the words. |
+| Business partner | is fair, friendly and clear about expectations | They're fair, friendly and clear about expectations | {name} balances people and results. They're pleasant to work with and still hold the line on quality. | {name} may hold back feedback to keep the peace, then let it out all at once. | Make feedback a regular habit with {name}, in both directions. Small notes often beat one big talk. |
+| Family | cares about the family and also speaks their mind | They care about the family and also speak their mind | {name} supports the family and isn't afraid to say when something isn't fair. | {name}'s honesty can lead to tension at family gatherings. | When {name} raises a concern, take it seriously. They speak up because they care, not to start a fight. |
 
 **Kindness: low** (< 40)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | is direct, honest and says what they think | You always know where you stand with {name}. They don't play games or hide what they feel. | {name}'s honesty can come out harsher than they intend, especially in an argument. | Tell {name} when their words hurt, calmly and clearly. They respect directness and will usually adjust once they know. |
-| Business partner | is direct, objective and focused on results | {name} makes tough calls without getting stuck on feelings. Negotiations are their strong suit. | {name} can come across as cold to clients or colleagues who need more warmth. | Be direct with {name}: say what you need in one sentence. They appreciate clarity much more than diplomacy. |
-| Family | is the honest one who says what others only think | {name} gives the family straight answers and practical help, without drama. | {name} may seem distant or blunt, especially in emotional family moments. | {name} shows care through actions more than words. Notice what they do for you, and tell them you noticed. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | is direct, honest and says what they think | They're also direct, honest and say what they think | You always know where you stand with {name}. They don't play games or hide what they feel. | {name}'s honesty can come out harsher than they intend, especially in an argument. | Tell {name} when their words hurt, calmly and clearly. They respect directness and will usually adjust once they know. |
+| Business partner | is direct, objective and focused on results | They're also direct, objective and focused on results | {name} makes tough calls without getting stuck on feelings. Negotiations are their strong suit. | {name} can come across as cold to clients or colleagues who need more warmth. | Be direct with {name}: say what you need in one sentence. They appreciate clarity much more than diplomacy. |
+| Family | is the honest one who says what others only think | They're also the honest one who says what others only think | {name} gives the family straight answers and practical help, without drama. | {name} may seem distant or blunt, especially in emotional family moments. | {name} shows care through actions more than words. Notice what they do for you, and tell them you noticed. |
 
 #### Chill
 
 **Chill: high** (≥ 60)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | is easygoing and hard to rattle | {name} stays calm when things go wrong. Stress at home rarely turns into a fight with them. | {name} may let problems slide for too long because they don't want to make a fuss. | Bring up issues with {name} early and calmly. They won't start the conversation, but they're happy to have it. |
-| Business partner | stays relaxed under pressure | {name} keeps a cool head in tense negotiations and tight deadlines, which calms the whole team. | {name} may seem too relaxed when something is actually urgent. | When something is urgent, say so clearly to {name}, with a deadline. They'll act fast once they know it matters. |
-| Family | is the calm one when family life gets busy | {name} lowers the temperature in family arguments. People feel calmer around them. | {name} may avoid family tension instead of helping solve it. | Ask {name} directly what they think when the family disagrees. Their calm view helps, but they rarely offer it unprompted. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | is easygoing and hard to rattle | They're also easygoing and hard to rattle | {name} stays calm when things go wrong. Stress at home rarely turns into a fight with them. | {name} may let problems slide for too long because they don't want to make a fuss. | Bring up issues with {name} early and calmly. They won't start the conversation, but they're happy to have it. |
+| Business partner | stays relaxed under pressure | They also stay relaxed under pressure | {name} keeps a cool head in tense negotiations and tight deadlines, which calms the whole team. | {name} may seem too relaxed when something is actually urgent. | When something is urgent, say so clearly to {name}, with a deadline. They'll act fast once they know it matters. |
+| Family | is the calm one when family life gets busy | They're also the calm one when family life gets busy | {name} lowers the temperature in family arguments. People feel calmer around them. | {name} may avoid family tension instead of helping solve it. | Ask {name} directly what they think when the family disagrees. Their calm view helps, but they rarely offer it unprompted. |
 
 **Chill: medium** (40-59)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | is mostly relaxed but has a fire when it matters | {name} lets small things go but stands firm on what really matters to them. | When {name} does get upset, it can surprise you, because it doesn't happen often. | When {name} gets heated, it usually means this topic really matters to them. Slow down and listen first. |
-| Business partner | is steady, with drive when the stakes are high | {name} keeps a steady pace and can push hard when a deadline or a deal requires it. | {name} may switch from calm to intense quickly when something goes wrong. | Agree with {name} on what counts as urgent. It helps you both know when to push and when to relax. |
-| Family | is calm most of the time but cares deeply | {name} stays easygoing day to day, but steps up when the family really needs them. | {name} may hold back irritation until it builds up. | Check in with {name} after a stressful family event. Small frustrations are easier to talk about before they build up. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | is mostly relaxed but has a fire when it matters | They're mostly relaxed but have a fire when it matters | {name} lets small things go but stands firm on what really matters to them. | When {name} does get upset, it can surprise you, because it doesn't happen often. | When {name} gets heated, it usually means this topic really matters to them. Slow down and listen first. |
+| Business partner | is steady, with drive when the stakes are high | They're steady, with drive when the stakes are high | {name} keeps a steady pace and can push hard when a deadline or a deal requires it. | {name} may switch from calm to intense quickly when something goes wrong. | Agree with {name} on what counts as urgent. It helps you both know when to push and when to relax. |
+| Family | is calm most of the time but cares deeply | They're calm most of the time but care deeply | {name} stays easygoing day to day, but steps up when the family really needs them. | {name} may hold back irritation until it builds up. | Check in with {name} after a stressful family event. Small frustrations are easier to talk about before they build up. |
 
 **Chill: low** (< 40)
 
-| Type | Who they are ("{Label} …") | Strength | Challenge | Tip |
-|---|---|---|---|---|
-| Lover | is intense, passionate and driven | {name} feels things deeply and brings real passion to your relationship and to their goals. | {name} reacts fast, and small disagreements can heat up quickly. | When things heat up with {name}, suggest a short break and come back to it. They calm down fast once they've had a moment. |
-| Business partner | is driven, fast and ambitious | {name} pushes the business forward. They bring urgency and won't settle for slow progress. | {name} can get impatient with slower partners or with plans that take time. | {name} gives their best with ambitious goals. Share the big target with them, then agree on the steps together. |
-| Family | is passionate and quick to act | {name} gets things done for the family. When something needs fixing, they're already on it. | {name} may react strongly in family arguments, then calm down just as fast. | Don't take {name}'s first reaction as their final word. Give them a little time, then talk it through. |
+| Type | Who they are, sentence 1 ("{Label} …") | Who they are, sentence 2 | Strength | Challenge | Tip |
+|---|---|---|---|---|---|
+| Lover | is intense, passionate and driven | They're also intense, passionate and driven | {name} feels things deeply and brings real passion to your relationship and to their goals. | {name} reacts fast, and small disagreements can heat up quickly. | When things heat up with {name}, suggest a short break and come back to it. They calm down fast once they've had a moment. |
+| Business partner | is driven, fast and ambitious | They're also driven, fast and ambitious | {name} pushes the business forward. They bring urgency and won't settle for slow progress. | {name} can get impatient with slower partners or with plans that take time. | {name} gives their best with ambitious goals. Share the big target with them, then agree on the steps together. |
+| Family | is passionate and quick to act | They're also passionate and quick to act | {name} gets things done for the family. When something needs fixing, they're already on it. | {name} may react strongly in family arguments, then calm down just as fast. | Don't take {name}'s first reaction as their final word. Give them a little time, then talk it through. |
 
 #### Balanced (no trait stands out)
 
@@ -255,7 +255,7 @@ Definitions:
 
 Steps:
 
-1. **Who they are.** Sort traits by stand-out. Sentence 1 = `{Label}` + who-text of the top trait. Sentence 2 = `{name}` + who-text of the 2nd trait, only if it also stands out. If no trait stands out, use the "balanced" text.
+1. **Who they are.** Sort traits by stand-out. Sentence 1 = `{Label}` + who-text of the top trait. Sentence 2 = the "They …" form of the 2nd trait's who-text (plural verb, e.g. "They're also warm, caring…"), only if it also stands out, so the name isn't repeated. If no trait stands out, use the "balanced" text.
 
    Every finished sentence starts with a capital letter, even when the name is lowercase (the email fallback). All comparisons are made in tenths of a point, so the JS reference and the SQL function treat 59.9 vs 60 the same way.
 2. **Strengths.** The top 2 traits by stand-out, plus the 3rd if it stands out. One strength text each.
@@ -306,7 +306,7 @@ These use the animal profiles from `animal_trait_profiles` as stand-ins for two 
 
 Input: them (Dolphin) Social 78 · Curiosity 58 · Organization 42 · Kindness 72 · Chill 48; you (Owl) Social 28 · Curiosity 66 · Organization 64 · Kindness 50 · Chill 68; areas communication 58, energy 49, conflict 75, values 72.
 
-**Who they are.** Your partner Sam recharges around people and makes friends in minutes. Sam is warm, caring and quick to notice how you feel.
+**Who they are.** Your partner Sam recharges around people and makes friends in minutes. They're also warm, caring and quick to notice how you feel.
 
 **Strengths**
 - Sam brings energy into your life together: new people, new plans, a full weekend if you want one.
@@ -329,7 +329,7 @@ Input: them (Dolphin) Social 78 · Curiosity 58 · Organization 42 · Kindness 7
 
 Input: them (Otter) Social 66 · Curiosity 58 · Organization 30 · Kindness 58 · Chill 72; you (Eagle) Social 42 · Curiosity 50 · Organization 78 · Kindness 30 · Chill 46; areas communication 61, energy 68, conflict 47, values 55.
 
-**Who they are.** Your business partner Alex stays relaxed under pressure. Alex is flexible, quick and good at improvising.
+**Who they are.** Your business partner Alex stays relaxed under pressure. They're also flexible, quick and good at improvising.
 
 **Strengths**
 - Alex keeps a cool head in tense negotiations and tight deadlines, which calms the whole team.
@@ -353,7 +353,7 @@ Input: them (Otter) Social 66 · Curiosity 58 · Organization 30 · Kindness 58 
 
 Input: them (Lion) Social 70 · Curiosity 36 · Organization 68 · Kindness 44 · Chill 58; you (Deer) Social 28 · Curiosity 44 · Organization 40 · Kindness 78 · Chill 38; areas communication 61, energy 55, conflict 61, values 64.
 
-**Who they are.** Noor is the one who brings everyone together. Noor is the family's organizer, the one with the calendar.
+**Who they are.** Noor is the one who brings everyone together. They're also the family's organizer, the one with the calendar.
 
 **Strengths**
 - Noor keeps the family connected: they remember the gatherings, start the group chats and make sure nobody drifts away.
@@ -385,7 +385,7 @@ Input: them (Lion) Social 70 · Curiosity 36 · Organization 68 · Kindness 44 �
 | Reference implementation (pure) | `lib/personalInsights.ts` (`buildPersonalInsights`, `parsePersonalInsights`) |
 | Shared fixture | `lib/__tests__/fixtures/personalInsights-fixture.json` (91 cases: profiles, noisy 1-decimal users, every threshold, ties, odd names, v1 rows) |
 | Jest | `lib/__tests__/personalInsights-test.ts` |
-| SQL | `supabase/migrations/20261122120000_personal_insights.sql` (tables + functions), `…120100_personal_insights_seed.sql` (generated), `…120200_personal_insights_check.sql` (generated) |
+| SQL | `supabase/migrations/20261122120000_personal_insights.sql` (tables + functions), `…130000_personal_insights_who_they.sql` ("They" sentence 2: section + function update), `…130100_personal_insights_seed.sql` (generated), `…130200_personal_insights_check.sql` (generated) |
 | App | `lib/supabase/personalInsights.ts` (RPC), `components/compatibility/PersonalInsights.tsx`, `app/(tabs)/compatibility.tsx` |
 
 **Changing texts or rules:** edit `library.json` (or the rules in the script, `lib/personalInsights.ts` and `personal_insights_build()` together), run `node scripts/personal-insights-preview.js`, then run Jest and the regenerated seed + check SQL. The fixture catches any drift between the three implementations.
@@ -410,7 +410,7 @@ Tested before commit in a local Postgres (PGlite) with the real `notification_fi
 
 ### Rollout
 
-1. Run, in order: `20261122120000_personal_insights.sql`, `20261122120100_personal_insights_seed.sql`, `20261122120200_personal_insights_check.sql` (read-only; must end with "all 91 cases match").
+1. Run, in order: `20261122120000_personal_insights.sql`, `20261122130000_personal_insights_who_they.sql`, `20261122130100_personal_insights_seed.sql`, `20261122130200_personal_insights_check.sql` (read-only; must end with "all 91 cases match"). A database that already ran the first version only needs the last three.
 2. Release the app (it calls the RPC, so the SQL must be live first).
 3. Later: drop `compatibility_insight_templates` once no old app version is in use.
 

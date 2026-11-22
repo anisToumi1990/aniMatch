@@ -5,7 +5,7 @@
  * get_personal_insights(result_id), which needs both people's traits. This file is
  * the reference implementation of the selection rules, checked against the shared
  * fixture (lib/__tests__/fixtures/personalInsights-fixture.json) in Jest and in SQL
- * (supabase/migrations/20261122120200_personal_insights_check.sql), so the SQL
+ * (supabase/migrations/20261122130200_personal_insights_check.sql), so the SQL
  * function personal_insights_build() and this code can't drift apart.
  * It also parses the RPC response for the UI (parsePersonalInsights).
  *
@@ -18,7 +18,8 @@ import { QUIZ_V2_TRAITS, QuizV2Trait, TraitScores } from './quizV2Scoring';
 import { AreaScores, COMPATIBILITY_AREAS, RelationshipType } from './compatibilityV2';
 
 export type TraitLevel = 'high' | 'medium' | 'low';
-export type InsightSection = 'who' | 'strength' | 'challenge' | 'tip';
+/** who: sentence 1 after {Label} (singular verb). who_they: sentence 2, starts with "They". */
+export type InsightSection = 'who' | 'who_they' | 'strength' | 'challenge' | 'tip';
 
 /** supabase/content/personal-insights/library.json */
 export interface PersonalInsightsLibrary {
@@ -109,7 +110,7 @@ export function buildPersonalInsights(library: PersonalInsightsLibrary, input: P
   const level = (trait: QuizV2Trait) => getTraitLevel(them[trait], library.levels);
   const entry = (trait: QuizV2Trait) => library.traits[trait][level(trait)][type];
   // Every finished sentence starts with a capital, even with a lowercase name (email fallback).
-  const text = (trait: QuizV2Trait, section: Exclude<InsightSection, 'who'>) => capitalizeFirst(fillName(entry(trait)[section], name));
+  const text = (trait: QuizV2Trait, section: Exclude<InsightSection, 'who' | 'who_they'>) => capitalizeFirst(fillName(entry(trait)[section], name));
 
   // All in tenths of a point.
   const standOut = (trait: QuizV2Trait) => Math.abs(tenths(them[trait]) - 500);
@@ -123,7 +124,8 @@ export function buildPersonalInsights(library: PersonalInsightsLibrary, input: P
     who = `${label} ${library.balanced[type]}.`;
   } else {
     who = `${label} ${entry(ordered[0].key).who}.`;
-    if (standsOut(ordered[1])) who += ` ${capitalizeFirst(`${name} ${entry(ordered[1].key).who}`)}.`;
+    // Sentence 2 starts with "They" (plural form), so the name isn't repeated.
+    if (standsOut(ordered[1])) who += ` ${entry(ordered[1].key).who_they}.`;
   }
 
   // 2. Strengths: top 2 traits, plus the 3rd if it stands out.
