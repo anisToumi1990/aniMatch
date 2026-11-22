@@ -4,17 +4,13 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { ThemedText } from '@/components/ThemedText';
 import { AuraAvatar } from '@/components/AuraAvatar';
 import { Colors, getAuraColor } from '@/constants/Colors';
-import { formatLongDate, weekdayName } from '@/lib/auraWeek';
 
 interface AuraHeroProps {
   animalName: string;
-  /** The selected day ("YYYY-MM-DD"). */
-  localDate: string;
-  isToday: boolean;
 }
 
-/** Home's top block: the aura avatar glowing over a radial wash of its color, the date and the animal. */
-export function AuraHero({ animalName, localDate, isToday }: AuraHeroProps) {
+/** Home's top block: the aura avatar glowing over a radial wash of its color, and the animal. Today's date is on the card below. */
+export function AuraHero({ animalName }: AuraHeroProps) {
   const auraColor = getAuraColor(animalName);
   // Unique per instance so two heroes never share a gradient id (web renders them in one document).
   const gradientId = `aura-hero-${useId().replace(/:/g, '')}`;
@@ -36,9 +32,8 @@ export function AuraHero({ animalName, localDate, isToday }: AuraHeroProps) {
         <AuraAvatar animalName={animalName} size="large" />
       </View>
 
-      <ThemedText type="secondary" style={styles.date}>{formatLongDate(localDate)}</ThemedText>
       <ThemedText style={styles.title}>
-        {isToday ? 'Today' : weekdayName(localDate)}
+        Your aura
         <ThemedText style={styles.dot}>{'  ·  '}</ThemedText>
         <ThemedText style={[styles.title, { color: auraColor }]}>{animalName}</ThemedText>
       </ThemedText>
@@ -60,11 +55,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.55,
     shadowRadius: 36,
     marginBottom: 18,
-  },
-  date: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 4,
   },
   title: {
     fontSize: 24,

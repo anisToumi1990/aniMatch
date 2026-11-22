@@ -6,34 +6,33 @@ import { ShareCardFrame } from './ShareCardFrame';
 
 interface DailyAuraShareCardProps {
   animalName: string;
-  /** "TODAY" by default; a weekday (e.g. "SATURDAY") when sharing a past day. */
-  dayLabel?: string;
+  /** Today's date, e.g. "Monday, 16 November". */
+  dateLabel: string;
   message: string;
-  doText: string;
-  dontText: string;
+  /** "Today's action" and why it helps; the block is left out when there's no action. */
+  actionText: string | null;
+  actionWhy: string | null;
 }
 
-/** "Today's aura" story card. Like the other share cards, no emojis. */
-export function DailyAuraShareCard({ animalName, dayLabel = 'TODAY', message, doText, dontText }: DailyAuraShareCardProps) {
+/** "Today's aura" story card: message, then today's action and why. Like the other share cards, no emojis. */
+export function DailyAuraShareCard({ animalName, dateLabel, message, actionText, actionWhy }: DailyAuraShareCardProps) {
   const auraColor = getAuraColor(animalName);
 
   return (
     <ShareCardFrame tintColor={auraColor} footerTitle="What's your aura?">
       <Text style={styles.eyebrow}>
-        {dayLabel} <Text style={styles.dot}>·</Text> <Text style={{ color: auraColor }}>{animalName.toUpperCase()}</Text>
+        TODAY <Text style={styles.dot}>·</Text> <Text style={{ color: auraColor }}>{animalName.toUpperCase()}</Text>
       </Text>
+      <Text style={styles.date}>{dateLabel}</Text>
       <AuraAvatar animalName={animalName} size="large" style={styles.avatar} />
       <Text style={styles.message}>{message}</Text>
-      <View style={styles.rows}>
-        <View style={[styles.row, { borderColor: withAlpha(auraColor, 0.35) }]}>
-          <Text style={[styles.label, { color: Colors.success }]}>DO</Text>
-          <Text style={styles.rowText}>{doText}</Text>
+      {actionText ? (
+        <View style={[styles.action, { borderColor: withAlpha(auraColor, 0.35) }]}>
+          <Text style={[styles.label, { color: auraColor }]}>TODAY&apos;S ACTION</Text>
+          <Text style={styles.actionText}>{actionText}</Text>
+          {actionWhy ? <Text style={styles.actionWhy}>{actionWhy}</Text> : null}
         </View>
-        <View style={[styles.row, { borderColor: withAlpha(auraColor, 0.35) }]}>
-          <Text style={[styles.label, { color: Colors.danger }]}>DON&apos;T</Text>
-          <Text style={styles.rowText}>{dontText}</Text>
-        </View>
-      </View>
+      ) : null}
     </ShareCardFrame>
   );
 }
@@ -45,6 +44,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 3,
     color: Colors.textSecondary,
+    marginBottom: 4,
+  },
+  date: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: Colors.textMuted,
     marginBottom: 14,
   },
   dot: {
@@ -62,32 +67,32 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     paddingHorizontal: 4,
   },
-  rows: {
+  action: {
     alignSelf: 'stretch',
-    gap: 8,
-    marginBottom: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 16,
     borderWidth: 1,
     backgroundColor: withAlpha(Colors.card, 0.6),
+    marginBottom: 12,
   },
   label: {
-    width: 52,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 15,
     fontWeight: '600',
     letterSpacing: 1.5,
+    marginBottom: 4,
   },
-  rowText: {
-    flex: 1,
+  actionText: {
     fontSize: 16,
     lineHeight: 22,
+    fontWeight: '600',
     color: Colors.text,
+  },
+  actionWhy: {
+    marginTop: 4,
+    fontSize: 13,
+    lineHeight: 18,
+    color: Colors.textSecondary,
   },
 });

@@ -12,10 +12,8 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { AuraQuizHero } from '@/components/AuraQuizHero';
 import { InviteModal } from '@/components/InviteModal';
 import { InviteLinkRoute } from '@/components/InviteForm';
-import { PaywallModal } from '@/components/PaywallModal';
 import { AuraHero } from '@/components/home/AuraHero';
-import { WeekStrip } from '@/components/home/WeekStrip';
-import { DayMessage } from '@/components/home/DayMessage';
+import { DayMessage, DayMessageState } from '@/components/home/DayMessage';
 import { MatchesRow } from '@/components/home/MatchesRow';
 import { QuizV2Banner } from '@/components/home/QuizV2Banner';
 import { ShareCardHost, ShareCardRef } from '@/components/share/ShareCardHost';
@@ -24,10 +22,9 @@ import { Colors, getAuraColor } from '@/constants/Colors';
 import { transparentHeaderOptions } from '@/constants/Theme';
 import { buildShareUrl } from '@/constants/AppLinks';
 import { useDailyAura } from '@/hooks/useDailyAura';
-import { useAuraWeek } from '@/hooks/useAuraWeek';
 import { PairTipItem, useDailyPairTips } from '@/hooks/useDailyPairTips';
 import { getDisplayName } from '@/lib/names';
-import { weekdayName } from '@/lib/auraWeek';
+import { formatLongDate } from '@/lib/dateLabels';
 import { dismissQuizV2Banner, isQuizV2BannerDismissed, shouldShowQuizV2Banner } from '@/lib/quizV2Banner';
 import { shareCardImage } from '@/lib/share/shareCardImage';
 import { waitForNextPaint } from '@/lib/share/shareCardTypes';
@@ -52,12 +49,10 @@ export default function HomeScreen() {
     dailyAura.status === 'ready' || dailyAura.status === 'empty' || dailyAura.status === 'error'
       ? dailyAura.aura
       : null;
-  const week = useAuraWeek(aura?.id ?? null, today);
   const { state: pairTips, retry: retryPairTips } = useDailyPairTips(aura !== null);
 
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [paywallDate, setPaywallDate] = useState<string | null>(null);
   const shareCardRef = useRef<ShareCardRef>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<ShareFeedback>(null);
@@ -83,9 +78,18 @@ export default function HomeScreen() {
     if (userId) dismissQuizV2Banner(userId);
   }
 
+  // Today's card: the hero shows the aura, the card the message of the day.
+  const dayState: DayMessageState =
+    dailyAura.status === 'ready'
+      ? { status: 'ready', message: dailyAura.message }
+      : dailyAura.status === 'empty' || dailyAura.status === 'error'
+        ? { status: dailyAura.status }
+        : { status: 'loading' };
+  const todayMessage = dailyAura.status === 'ready' ? dailyAura.message : null;
+
   async function handleShare() {
-    if (!aura || week.state.status !== 'ready' || isSharing) return;
-    const { message } = week.state.message;
+    if (!aura || !todayMessage || isSharing) return;
+    const { message } = todayMessage;
     setIsSharing(true);
     setShareFeedback(null);
     try {
@@ -94,7 +98,7 @@ export default function HomeScreen() {
       const outcome = await shareCardImage(shareCardRef.current, {
         fileName: 'animatch-aura.png',
         title: 'My aura',
-        message: `My ${aura.name} aura${week.isToday ? ' today' : ''}: "${message}" What's yours?`,
+        message: `My ${aura.name} aura today: "${message}" What's yours?`,
         url: buildShareUrl('share-daily'),
       });
       if (outcome === 'downloaded') setShareFeedback({ kind: 'info', text: 'Saved as an image. Post it to your story!' });
@@ -104,11 +108,6 @@ export default function HomeScreen() {
     } finally {
       setIsSharing(false);
     }
-  }
-
-  function handleSelectDay(localDate: string) {
-    setShareFeedback(null);
-    week.selectDate(localDate);
   }
 
   function handleOpenMatch(item: PairTipItem) {
@@ -152,17 +151,12 @@ export default function HomeScreen() {
             onDismiss={handleDismissBanner}
           />
         ) : null}
-        <AuraHero animalName={aura.name} localDate={week.selectedDate} isToday={week.isToday} />
-        <WeekStrip
-          days={week.days}
-          selectedDate={week.selectedDate}
-          auraColor={getAuraColor(aura.name)}
-          onSelectDay={day => handleSelectDay(day.localDate)}
-          onLockedDay={day => setPaywallDate(day.localDate)}
-        />
+        <AuraHero animalName={aura.name} />
         <DayMessage
-          state={week.state}
-          onRetry={week.retry}
+          state={dayState}
+          localDate={today}
+          auraColor={getAuraColor(aura.name)}
+          onRetry={retryDailyAura}
           onShare={handleShare}
           isSharing={isSharing}
           shareFeedback={shareFeedback}
@@ -206,24 +200,17 @@ export default function HomeScreen() {
         />
         <ScrollView contentContainerStyle={styles.scrollContent}>{renderBody()}</ScrollView>
 
-        {aura && week.state.status === 'ready' ? (
+        {aura && todayMessage ? (
           <ShareCardHost ref={shareCardRef}>
             <DailyAuraShareCard
               animalName={aura.name}
-              dayLabel={week.isToday ? 'TODAY' : weekdayName(week.selectedDate).toUpperCase()}
-              message={week.state.message.message}
-              doText={week.state.message.doText}
-              dontText={week.state.message.dontText}
+              dateLabel={formatLongDate(todayMessage.localDate)}
+              message={todayMessage.message}
+              actionText={todayMessage.actionText}
+              actionWhy={todayMessage.actionWhy}
             />
           </ShareCardHost>
         ) : null}
-        <PaywallModal
-          visible={paywallDate !== null}
-          lockedDate={paywallDate}
-          animalName={aura?.name ?? null}
-          source="week_strip"
-          onClose={() => setPaywallDate(null)}
-        />
         <InviteModal visible={isInviteOpen} onClose={() => setIsInviteOpen(false)} onLinkPress={handleInviteLink} />
         <AccountModal visible={showAccountModal} onClose={() => setShowAccountModal(false)} />
       </SafeAreaView>

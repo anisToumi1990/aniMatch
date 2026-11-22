@@ -10,9 +10,12 @@ export interface DailyAuraMessage {
   auraId: number;
   season: number;
   dayIndex: number;
+  /** The witty line, shown big. */
   message: string;
-  doText: string;
-  dontText: string;
+  /** "Today's action": one concrete thing to do today. Null if the row has none yet. */
+  actionText: string | null;
+  /** Why the action helps (1-2 sentences), shown smaller under it. */
+  actionWhy: string | null;
   /** The local date ("YYYY-MM-DD") this message is for. */
   localDate: string;
 }
@@ -26,15 +29,20 @@ export interface DailyAuraSettings {
 /** Message per "auraId|YYYY-MM-DD"; null = no content for that aura on that day. */
 type MessageCache = Record<string, DailyAuraMessage | null>;
 
-const CACHE_KEY = 'animatch.dailyAura.v2';
-/** Days kept in the cache (the week strip shows 4 past days + today). */
-const CACHE_DAYS = 10;
+// v3: messages carry actionText / actionWhy instead of doText / dontText.
+const CACHE_KEY = 'animatch.dailyAura.v3';
+/** Days kept in the cache (Home only shows today; a little slack for time zone changes). */
+const CACHE_DAYS = 2;
 let memoryCache: MessageCache | null = null;
 
 const cacheKey = (auraId: number, localDate: string) => `${auraId}|${localDate}`;
 
+const LEGACY_CACHE_KEYS = ['animatch.dailyAura.v2'];
+
 async function loadCache(): Promise<MessageCache> {
   if (memoryCache) return memoryCache;
+  // Older caches hold the previous message shape; drop them (best effort).
+  AsyncStorage.multiRemove(LEGACY_CACHE_KEYS).catch(() => {});
   try {
     const raw = await AsyncStorage.getItem(CACHE_KEY);
     memoryCache = raw ? (JSON.parse(raw) as MessageCache) : {};
@@ -166,7 +174,7 @@ export async function fetchAuraMessageForDate(auraId: number, localDate: string)
 
   const { data, error } = await supabase
     .from('daily_aura_messages')
-    .select('id, aura_id, season, day_index, message, do_text, dont_text')
+    .select('id, aura_id, season, day_index, message, action_text, action_why')
     .eq('aura_id', auraId)
     .eq('season', season)
     .eq('is_active', true)
@@ -182,8 +190,8 @@ export async function fetchAuraMessageForDate(auraId: number, localDate: string)
         season: row.season,
         dayIndex: row.day_index,
         message: row.message,
-        doText: row.do_text,
-        dontText: row.dont_text,
+        actionText: row.action_text ?? null,
+        actionWhy: row.action_why ?? null,
         localDate,
       }
     : null;

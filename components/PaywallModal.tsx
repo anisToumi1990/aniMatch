@@ -7,7 +7,7 @@ import { AuraAvatar } from '@/components/AuraAvatar';
 import { AuraButton } from '@/components/AuraButton';
 import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
-import { weekdayName } from '@/lib/auraWeek';
+import { weekdayName } from '@/lib/dateLabels';
 import { PremiumPlan, PremiumSource, recordPremiumInterest } from '@/lib/supabase/premium';
 
 interface PaywallModalProps {
