@@ -85,13 +85,14 @@ The Invites tab only lists invite notifications (`invite_id` set) whose invite i
 
 ## Daily aura
 
-- Home (`app/(tabs)/index.tsx`, blocks in `components/home/`) reads `daily_aura_messages` / `daily_aura_settings`; day N of the current season shows the Nth active row by `day_index` (`lib/dailyAuraSchedule.ts`, pure, local date). Messages are cached per date in `lib/supabase/dailyAura.ts`. The week strip (`lib/auraWeek.ts`, `hooks/useAuraWeek.ts`) shows 4 past days (greyed out before the season start), today and 2 locked days that open `components/PaywallModal.tsx`.
+- Home (`app/(tabs)/index.tsx`, blocks in `components/home/`) reads `daily_aura_messages` / `daily_aura_settings`; day N of the current season shows the Nth active row by `day_index` (`lib/dailyAuraSchedule.ts`, pure, local date). Messages are cached per date in `lib/supabase/dailyAura.ts`. Home shows today only: the card (`components/home/DayMessage.tsx`) has the date on top, the witty `message` (big), then "Today's action" (`action_text`) and, smaller, why it helps (`action_why`). "Share my aura" renders `components/share/DailyAuraShareCard.tsx` with the same content. `do_text` / `dont_text` are still required columns but no longer shown. No zodiac / horoscope wording anywhere (the seed script rejects it).
+- Content: each JSON row is `[message, do_text, dont_text, action_text, action_why]` (limits 110 / 40 / 40 / 60 / 160, gender-neutral; checked by the script). Season 1 is already seeded, so edits to it go through `node scripts/build-daily-aura-seed.js --update` (regenerates `supabase/migrations/20261122110100_daily_aura_season1_actions.sql` and `docs/daily-action-review.md`).
 - Content drop, no app release: add `supabase/content/daily-aura/season-<n>/*.json`, run `node scripts/build-daily-aura-seed.js <n> <migration-file>.sql`, run that SQL, then `update daily_aura_settings set current_season = <n>, season_start_date = '<launch date>'`.
 - Pair tips (`daily_pair_tips`, Home's matches row, "See all" = `app/(tabs)/pair-tips.tsx`) use the same rule on the other person's animal, shifted per match (`getPairTipOffsets`, hash of their user id) so same-animal matches differ. Both features fall back to the latest earlier season with content when the current `daily_aura_settings` season has none for an animal.
 
 ## Premium (design only)
 
-No payments yet. The paywall's call to action inserts into `premium_interest` (insert-only RLS, so the insert uses `returning: 'minimal'`) via `lib/supabase/premium.ts` and shows a "coming soon" message. Prices are placeholders.
+No payments yet, and since the week strip was removed nothing opens `components/PaywallModal.tsx` any more (it's kept for a future entry point). The paywall's call to action inserts into `premium_interest` (insert-only RLS, so the insert uses `returning: 'minimal'`) via `lib/supabase/premium.ts` and shows a "coming soon" message. Prices are placeholders.
 
 ## Roadmap docs
 
