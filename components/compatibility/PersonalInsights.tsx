@@ -19,9 +19,9 @@ type LoadState =
   | { status: 'error' };
 
 /**
- * Match detail: texts about the other person, from the viewer's point of view
- * (docs/personal-insights-proposal.md). Who they are, Strengths, Challenges,
- * 3 Tips and Your pair, all picked and filled by the database.
+ * Match detail insights (docs/pair-insights-proposal.md): "The two of you" (their card
+ * and a "You" card), pair Strengths and Challenges, then 3 Tips about them. All texts
+ * are picked and filled by the database; the app never sees trait scores.
  */
 export function PersonalInsights({ resultId }: PersonalInsightsProps) {
   const [reloadCount, setReloadCount] = useState(0);
@@ -77,11 +77,12 @@ export function PersonalInsights({ resultId }: PersonalInsightsProps) {
     );
   }
 
-  const { who, strengths, challenges, tips, pair } = state.insights;
+  const { them, you, strengths, challenges, tips } = state.insights;
   return (
     <View style={styles.container}>
-      <Section title="Who they are">
-        <ThemedText type="secondary" style={styles.paragraph}>{who}</ThemedText>
+      <Section title="The two of you">
+        <PersonCard title={them.name} text={them.who} />
+        <PersonCard title="You" text={you.who} />
       </Section>
       <Section title="Strengths">
         {strengths.map(text => (
@@ -98,9 +99,6 @@ export function PersonalInsights({ resultId }: PersonalInsightsProps) {
           <Bullet key={text} marker={`${index + 1}.`} text={text} />
         ))}
       </Section>
-      <Section title="Your pair">
-        <ThemedText type="secondary" style={styles.paragraph}>{pair}</ThemedText>
-      </Section>
       <View style={styles.footnote}>
         <Ionicons name="information-circle-outline" size={14} color={Colors.textMuted} />
         <ThemedText type="muted" style={styles.footnoteText}>Based on both of your quiz results</ThemedText>
@@ -114,6 +112,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <View style={styles.section}>
       <ThemedText style={styles.sectionTitle} accessibilityRole="header">{title}</ThemedText>
       {children}
+    </View>
+  );
+}
+
+function PersonCard({ title, text }: { title: string; text: string }) {
+  return (
+    <View style={styles.personCard}>
+      <ThemedText style={styles.personName} numberOfLines={1}>{title}</ThemedText>
+      <ThemedText type="secondary" style={styles.paragraph}>{text}</ThemedText>
     </View>
   );
 }
@@ -148,6 +155,20 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '500',
     marginBottom: 8,
+  },
+  personCard: {
+    backgroundColor: Colors.cardRaised,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+  },
+  personName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   paragraph: {
     fontSize: 15,

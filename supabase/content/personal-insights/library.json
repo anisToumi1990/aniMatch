@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "levels": {
     "high": 60,
     "low": 40
@@ -15,23 +15,29 @@
         "lover": {
           "who": "recharges around people and makes friends in minutes",
           "who_they": "They also recharge around people and make friends in minutes",
-          "strength": "{name} brings energy into your life together: new people, new plans, a full weekend if you want one.",
+          "strength": "{name} brings energy into your life: new people, new plans, a full weekend if you want one.",
           "challenge": "A quiet evening at home can feel like a lost evening to {name}, and they may say yes to plans before checking with you.",
-          "tip": "Give {name} a social outlet without you having to be there every time. Encourage their nights out and they come home happier and more present."
+          "tip": "Give {name} a social outlet without you having to be there every time. Encourage their nights out and they come home happier and more present.",
+          "you": "You recharge around people and make friends in minutes.",
+          "you_also": "You also recharge around people and make friends in minutes."
         },
         "business_partner": {
           "who": "is at their best in front of people: clients, events, pitches",
           "who_they": "They're also at their best in front of people: clients, events, pitches",
           "strength": "{name} opens doors. They network easily and can turn a cold contact into a warm one in a single conversation.",
           "challenge": "{name} can over-promise in the moment when a client is excited, and the follow-up work then lands on someone else.",
-          "tip": "Put {name} on the calls and meetings where people decide. Agree beforehand on what they can promise, so their energy closes deals you can deliver."
+          "tip": "Put {name} on the calls and meetings where people decide. Agree beforehand on what they can promise, so their energy closes deals you can deliver.",
+          "you": "You're at your best in front of people: clients, events, pitches.",
+          "you_also": "You're also at your best in front of people: clients, events, pitches."
         },
         "family": {
-          "who": "is the one who brings everyone together",
-          "who_they": "They're also the one who brings everyone together",
+          "who": "is the one who gets the whole family in one room",
+          "who_they": "They're also the one who gets the whole family in one room",
           "strength": "{name} keeps the family connected: they remember the gatherings, start the group chats and make sure nobody drifts away.",
           "challenge": "{name} may take it personally when you skip a family event or need some time alone.",
-          "tip": "When you can't come, tell {name} early and suggest another time to see each other. They care more about the connection than the specific event."
+          "tip": "When you can't come, tell {name} early and suggest another time to see each other. They care more about the connection than the specific event.",
+          "you": "You're the one who gets the whole family in one room.",
+          "you_also": "You're also the one who gets the whole family in one room."
         }
       },
       "medium": {
@@ -40,21 +46,27 @@
           "who_they": "They're as happy at a party as on a quiet night in",
           "strength": "{name} adapts easily to your social rhythm, whether you want a crowd or just the two of you.",
           "challenge": "Because {name} is fine either way, they may not say when they actually need people, or need a break from them.",
-          "tip": "Ask {name} directly: \"Out or in tonight?\" They often don't push for it, but they usually have a preference."
+          "tip": "Ask {name} directly: \"Out or in tonight?\" They often don't push for it, but they usually have a preference.",
+          "you": "You're as happy at a party as on a quiet night in.",
+          "you_also": "You're also as happy at a party as on a quiet night in."
         },
         "business_partner": {
           "who": "can work a room or work alone, depending on what the job needs",
           "who_they": "They can work a room or work alone, depending on what the job needs",
           "strength": "{name} is comfortable with clients and just as comfortable with a quiet day of focused work.",
           "challenge": "{name} may not volunteer for the visible roles, even when they'd do them well.",
-          "tip": "Ask {name} to take one client-facing task this month. They're good at it, but they rarely ask for the spotlight."
+          "tip": "Ask {name} to take one client-facing task this month. They're good at it, but they rarely ask for the spotlight.",
+          "you": "You can work a room or work alone, depending on what the job needs.",
+          "you_also": "You can also work a room or work alone, depending on what the job needs."
         },
         "family": {
           "who": "enjoys family time but also likes their own space",
           "who_they": "They enjoy family time but also like their own space",
           "strength": "{name} shows up for the important moments without needing to be at every single one.",
           "challenge": "{name} may go quiet for a while without meaning anything by it, which can look like distance.",
-          "tip": "A short, regular check-in works well with {name}. Something like a weekly call keeps you close without feeling like an obligation."
+          "tip": "A short, regular check-in works well with {name}. Something like a weekly call keeps you close without feeling like an obligation.",
+          "you": "You enjoy family time but also like your own space.",
+          "you_also": "You also like family time as much as your own space."
         }
       },
       "low": {
@@ -63,21 +75,27 @@
           "who_they": "They recharge in quiet and prefer a few deep conversations to a crowd",
           "strength": "{name} gives you their full attention. When you talk, they really listen, and they remember what you said.",
           "challenge": "Big groups and long parties drain {name}, even when they enjoy them, and they may need a quiet day after.",
-          "tip": "Plan time alone together, not just events. If you go to a party, agree on a time to leave so {name} can relax and enjoy it."
+          "tip": "Plan quiet time for just the two of you, not just events. If you go to a party, agree on a time to leave so {name} can relax and enjoy it.",
+          "you": "You recharge in quiet and prefer a few deep talks to a crowd.",
+          "you_also": "You also recharge in quiet and prefer a few deep talks to a crowd."
         },
         "business_partner": {
           "who": "does their best work with focus and few interruptions",
           "who_they": "They do their best work with focus and few interruptions",
           "strength": "{name} thinks before speaking. When they share an opinion in a meeting, it's usually well thought out.",
           "challenge": "{name} may not speak up in big meetings, so their best ideas can stay unsaid.",
-          "tip": "Ask {name} for their view one-on-one or in writing before a big meeting. You'll get their real thinking, not just a nod."
+          "tip": "Ask {name} for their view one-on-one or in writing before a big meeting. You'll get their real thinking, not just a nod.",
+          "you": "You do your best work with focus and few interruptions.",
+          "you_also": "You also do your best work with focus and few interruptions."
         },
         "family": {
           "who": "shows love quietly rather than loudly",
           "who_they": "They show love quietly rather than loudly",
           "strength": "{name} is the calm, steady presence at family gatherings, the one who notices who's left out.",
           "challenge": "Long family days can tire {name} out, and they may leave early or go quiet.",
-          "tip": "Don't read {name}'s quietness as a lack of interest. A one-on-one coffee will mean more to them than a big family dinner."
+          "tip": "Don't read {name}'s quietness as a lack of interest. A one-on-one coffee will mean more to them than a big family dinner.",
+          "you": "You show love quietly rather than loudly.",
+          "you_also": "You also show love quietly rather than loudly."
         }
       }
     },
@@ -88,21 +106,27 @@
           "who_they": "They also always want to learn, try and explore something new",
           "strength": "{name} keeps your relationship fresh: new places, new ideas, new things to talk about over dinner.",
           "challenge": "{name} gets bored with routine quickly and may push for change when you'd rather keep things as they are.",
-          "tip": "Plan one new experience together each month: a place, a class, a recipe. It feeds {name}'s curiosity and gives you shared stories."
+          "tip": "Try one new thing with {name} each month: a place, a class, a recipe. It feeds their curiosity and gives you shared stories.",
+          "you": "You always want to learn, try and explore something new.",
+          "you_also": "You also always want to try something new."
         },
         "business_partner": {
           "who": "is full of ideas and always looking for a better way",
           "who_they": "They're also full of ideas and always looking for a better way",
           "strength": "{name} spots opportunities others miss and isn't afraid to question how things have always been done.",
           "challenge": "{name} may start new ideas before the current ones are finished.",
-          "tip": "Keep a shared \"later\" list for {name}'s new ideas. They feel heard, and the current project stays on track."
+          "tip": "Keep a shared \"later\" list for {name}'s new ideas. They feel heard, and the current project stays on track.",
+          "you": "You're full of ideas and always looking for a better way.",
+          "you_also": "You're also full of ideas and always looking for a better way."
         },
         "family": {
           "who": "loves new ideas, places and conversations",
           "who_they": "They also love new ideas, places and conversations",
           "strength": "{name} is the one who suggests the trip, the new restaurant or the topic that gets the whole table talking.",
           "challenge": "{name} may find family traditions a bit repetitive and want to change them.",
-          "tip": "Let {name} plan part of the next family get-together. They'll bring something new, and they'll feel their ideas count."
+          "tip": "Let {name} plan part of the next family gathering. They'll bring something new, and they'll feel their ideas count.",
+          "you": "You love new ideas, places and conversations.",
+          "you_also": "You also love new ideas, places and conversations."
         }
       },
       "medium": {
@@ -111,21 +135,27 @@
           "who_they": "They enjoy new things but also value what already works",
           "strength": "{name} is open to trying something new with you without needing constant change.",
           "challenge": "{name} may go along with your plans without saying what they'd really like to try.",
-          "tip": "Ask {name} to pick the next date idea. They have preferences, they just don't always push them."
+          "tip": "Ask {name} to pick the next date idea. They have preferences, they just don't always push them.",
+          "you": "You enjoy new things but also value what already works.",
+          "you_also": "You also like new things without needing constant change."
         },
         "business_partner": {
           "who": "is open to new ideas when there's a good reason",
           "who_they": "They're open to new ideas when there's a good reason",
           "strength": "{name} balances fresh ideas with common sense. They'll try something new, but they'll ask why first.",
           "challenge": "{name} may need a clear reason before joining a new idea, which can feel slow when you're excited.",
-          "tip": "When you pitch a new idea to {name}, lead with the problem it solves. They join fast once the reason is clear."
+          "tip": "When you pitch a new idea to {name}, lead with the problem it solves. They join fast once the reason is clear.",
+          "you": "You're open to new ideas when there's a good reason.",
+          "you_also": "You're also open to new ideas when there's a good reason."
         },
         "family": {
           "who": "likes some change, but not too much at once",
           "who_they": "They like some change, but not too much at once",
           "strength": "{name} helps the family try new things without losing what makes it feel like home.",
           "challenge": "{name} can feel caught between the people who want change and those who want things as they are.",
-          "tip": "Ask {name} for their opinion when the family disagrees about plans. They often find the middle ground."
+          "tip": "Ask {name} for their opinion when the family disagrees about plans. They often find the middle ground.",
+          "you": "You like some change, but not too much at once.",
+          "you_also": "You also like some change, but not too much at once."
         }
       },
       "low": {
@@ -134,21 +164,27 @@
           "who_they": "They're also grounded, practical and happy with the simple things",
           "strength": "{name} is steady and easy to be with. They don't need constant novelty to be happy with you.",
           "challenge": "{name} may resist new plans or changes, especially if they come with little warning.",
-          "tip": "Give {name} time to warm up to new ideas. Mention a plan a few days ahead instead of springing it on them."
+          "tip": "Give {name} time to warm up to new ideas. Mention a plan a few days ahead instead of springing it on them.",
+          "you": "You're grounded, practical and happy with the simple things.",
+          "you_also": "You're also grounded, practical and happy with the simple things."
         },
         "business_partner": {
           "who": "is practical and focused on what works today",
           "who_they": "They're also practical and focused on what works today",
           "strength": "{name} keeps the business grounded. They focus on what works and finish what they start.",
           "challenge": "{name} may push back on new ideas that haven't been tested yet.",
-          "tip": "Show {name} a concrete example or a small test before a big change. Proof convinces them more than vision."
+          "tip": "Show {name} a concrete example or a small test before a big change. Proof convinces them more than vision.",
+          "you": "You're practical and focused on what works today.",
+          "you_also": "You're also practical and focused on what works today."
         },
         "family": {
           "who": "values traditions and things that have stood the test of time",
           "who_they": "They also value traditions and things that have stood the test of time",
           "strength": "{name} keeps family traditions alive, the recipes, the rituals, the yearly plans everyone counts on.",
           "challenge": "{name} may feel unsettled when the family changes plans or habits.",
-          "tip": "When something changes, explain to {name} what stays the same. Keeping one familiar thing makes change easier for them."
+          "tip": "When something changes, explain to {name} what stays the same. Keeping one familiar thing makes change easier for them.",
+          "you": "You value traditions and the things that have stood the test of time.",
+          "you_also": "You also value traditions and the things that have stood the test of time."
         }
       }
     },
@@ -157,23 +193,29 @@
         "lover": {
           "who": "likes plans, clear agreements and a tidy home",
           "who_they": "They also like plans, clear agreements and a tidy home",
-          "strength": "{name} makes life together run smoothly: bills paid, trips booked, plans that actually happen.",
+          "strength": "{name} keeps daily life running smoothly: bills paid, trips booked, plans that actually happen.",
           "challenge": "Last-minute changes and loose plans stress {name} more than they show.",
-          "tip": "If plans change, tell {name} as early as you can and suggest a new plan, not just a cancellation. They relax once there's a plan B."
+          "tip": "If plans change, tell {name} as early as you can and suggest a new plan, not just a cancellation. They relax once there's a plan B.",
+          "you": "You like plans, clear agreements and a tidy home.",
+          "you_also": "You also like plans, clear agreements and a tidy home."
         },
         "business_partner": {
           "who": "runs on lists, deadlines and clear processes",
           "who_they": "They also run on lists, deadlines and clear processes",
           "strength": "{name} is reliable. When they say it will be done by Friday, it's done by Friday.",
           "challenge": "{name} can get frustrated with partners who work in a looser way, and may end up redoing things themselves.",
-          "tip": "{name} gives their best with clear roles and deadlines. Agree in writing who does what, and stick to it."
+          "tip": "{name} gives their best with clear roles and deadlines. Agree in writing who does what, and stick to it.",
+          "you": "You run on lists, deadlines and clear processes.",
+          "you_also": "You also run on lists, deadlines and clear processes."
         },
         "family": {
           "who": "is the family's organizer, the one with the calendar",
           "who_they": "They're also the family's organizer, the one with the calendar",
           "strength": "{name} remembers birthdays, plans the holidays and makes sure everyone knows where to be.",
-          "challenge": "{name} may feel they're the only one keeping things together, and get tired of it.",
-          "tip": "Take one organizing task off {name}'s plate, and say thank you for the rest. Being noticed matters to them."
+          "challenge": "{name} may feel they're the only one keeping the family organized, and get tired of it.",
+          "tip": "Take one organizing task off {name}'s plate, and say thank you for the rest. Being noticed matters to them.",
+          "you": "You're the family's organizer, the one with the calendar.",
+          "you_also": "You're also the family's organizer, the one with the calendar."
         }
       },
       "medium": {
@@ -182,21 +224,27 @@
           "who_they": "They like some structure but can go with the flow",
           "strength": "{name} plans enough to keep things on track but can still say yes to a spontaneous evening.",
           "challenge": "{name} may expect you to share the planning without saying so out loud.",
-          "tip": "Split the planning clearly with {name}: one of you does trips, the other does weekends. It avoids quiet frustration."
+          "tip": "Split the planning clearly with {name}: one of you does trips, the other does weekends. It avoids quiet frustration.",
+          "you": "You like some structure but can go with the flow.",
+          "you_also": "You also like some structure but can go with the flow."
         },
         "business_partner": {
           "who": "is organized when it counts and flexible when it doesn't",
           "who_they": "They're organized when it counts and flexible when it doesn't",
           "strength": "{name} adapts well: they can follow a process or improvise when a deal needs it.",
           "challenge": "{name} may not insist on structure until things start to slip.",
-          "tip": "Set a short weekly check-in with {name} to review priorities. It keeps you both on track before things slip."
+          "tip": "Set a short weekly check-in with {name} to review priorities. It keeps you both on track before things slip.",
+          "you": "You're organized when it counts and flexible when it doesn't.",
+          "you_also": "You're also organized when it counts and flexible when it doesn't."
         },
         "family": {
           "who": "helps with plans without needing to control them",
           "who_they": "They help with plans without needing to control them",
           "strength": "{name} is easy to plan with: they help when asked and don't fuss about the details.",
           "challenge": "{name} may leave the planning to others and then not love the result.",
-          "tip": "Ask {name} for one concrete thing when planning a family event. They're happy to help, they just wait to be asked."
+          "tip": "Ask {name} for one concrete thing when planning a family event. They're happy to help, they just wait to be asked.",
+          "you": "You help with plans without needing to control them.",
+          "you_also": "You also help with plans without needing to control them."
         }
       },
       "low": {
@@ -205,21 +253,27 @@
           "who_they": "They're also spontaneous and happy to see where the day goes",
           "strength": "{name} keeps life fun and flexible. A rainy Sunday can turn into an adventure with them.",
           "challenge": "{name} may forget dates, run late or leave plans to the last minute.",
-          "tip": "Put important dates in a shared calendar with reminders. It's not about trust: it frees {name} to be spontaneous without missing what matters."
+          "tip": "Put important dates in a shared calendar with reminders. It's not about trust: it frees {name} to be spontaneous without missing what matters.",
+          "you": "You're spontaneous and happy to see where the day goes.",
+          "you_also": "You're also spontaneous and happy to see where the day goes."
         },
         "business_partner": {
           "who": "is flexible, quick and good at improvising",
           "who_they": "They're also flexible, quick and good at improvising",
           "strength": "{name} handles surprises well. When a plan breaks, they find another way, fast.",
           "challenge": "Deadlines and paperwork are not {name}'s favorite, and they can slip when no one checks in.",
-          "tip": "Give {name} short deadlines and quick check-ins instead of one big due date. They do great work in sprints."
+          "tip": "Give {name} short deadlines and quick check-ins instead of one big due date. They do great work in sprints.",
+          "you": "You're flexible, quick and good at improvising.",
+          "you_also": "You're also flexible, quick and good at improvising."
         },
         "family": {
           "who": "is relaxed about plans and happy to improvise",
           "who_they": "They're also relaxed about plans and happy to improvise",
           "strength": "{name} stays calm when family plans fall apart. They're the one who says \"we'll figure it out.\"",
           "challenge": "{name} may confirm late, forget a date or change plans last minute.",
-          "tip": "Send {name} a short reminder the day before family plans. It helps them show up, and it avoids a last-minute scramble."
+          "tip": "Send {name} a short reminder the day before family plans. It helps them show up, and it avoids a last-minute scramble.",
+          "you": "You're relaxed about plans and happy to improvise.",
+          "you_also": "You're also relaxed about plans and happy to improvise."
         }
       }
     },
@@ -230,21 +284,27 @@
           "who_they": "They're also warm, caring and quick to notice how you feel",
           "strength": "{name} notices when something is off with you, often before you say a word.",
           "challenge": "{name} may put your needs before their own and not say when they're hurt or tired.",
-          "tip": "Ask {name} what they need, and mean it. They're so used to caring for others that a simple \"How are you, really?\" goes a long way."
+          "tip": "Ask {name} what they need, and mean it. They're so used to caring for others that a simple \"How are you, really?\" goes a long way.",
+          "you": "You're warm, caring and quick to notice how people feel.",
+          "you_also": "You're also warm and quick to notice how people feel."
         },
         "business_partner": {
           "who": "is supportive and puts people first",
           "who_they": "They're also supportive and put people first",
           "strength": "{name} builds trust with clients and colleagues. People like working with them and come back.",
           "challenge": "{name} may avoid hard conversations, like asking for money or saying no to a client.",
-          "tip": "{name} gives their best when their effort is recognized. Thank them for a specific detail, not just \"good job\"."
+          "tip": "{name} gives their best when their effort is recognized. Thank them for a specific detail, not just \"good job\".",
+          "you": "You're supportive and put people first.",
+          "you_also": "You're also supportive and put people first."
         },
         "family": {
           "who": "is the caring heart of the family",
           "who_they": "They're also the caring heart of the family",
           "strength": "{name} is the person everyone calls when something goes wrong. They always make time.",
           "challenge": "{name} may take on everyone's problems and end up exhausted.",
-          "tip": "Return the care: check on {name} when nothing is wrong. They rarely ask for help, so offer it."
+          "tip": "Return the care: check on {name} when nothing is wrong. They rarely ask for help, so offer it.",
+          "you": "You're the caring heart of the family.",
+          "you_also": "You're also the caring heart of the family."
         }
       },
       "medium": {
@@ -253,21 +313,27 @@
           "who_they": "They're caring but also honest about what they think",
           "strength": "{name} is kind without being a pushover. They'll support you and still tell you the truth.",
           "challenge": "{name} may sound blunter than they mean when they're tired or stressed.",
-          "tip": "If something {name} says stings, ask what they meant before reacting. The intention is usually kinder than the words."
+          "tip": "If something {name} says stings, ask what they meant before reacting. The intention is usually kinder than the words.",
+          "you": "You're caring but also honest about what you think.",
+          "you_also": "You're also caring and honest about what you think."
         },
         "business_partner": {
           "who": "is fair, friendly and clear about expectations",
           "who_they": "They're fair, friendly and clear about expectations",
           "strength": "{name} balances people and results. They're pleasant to work with and still hold the line on quality.",
           "challenge": "{name} may hold back feedback to keep the peace, then let it out all at once.",
-          "tip": "Make feedback a regular habit with {name}, in both directions. Small notes often beat one big talk."
+          "tip": "Make feedback a regular habit with {name}, in both directions. Small notes often beat one big talk.",
+          "you": "You're fair, friendly and clear about expectations.",
+          "you_also": "You're also fair, friendly and clear about expectations."
         },
         "family": {
           "who": "cares about the family and also speaks their mind",
           "who_they": "They care about the family and also speak their mind",
           "strength": "{name} supports the family and isn't afraid to say when something isn't fair.",
           "challenge": "{name}'s honesty can lead to tension at family gatherings.",
-          "tip": "When {name} raises a concern, take it seriously. They speak up because they care, not to start a fight."
+          "tip": "When {name} raises a concern, take it seriously. They speak up because they care, not to start a fight.",
+          "you": "You care about the family and also speak your mind.",
+          "you_also": "You also care about the family and speak your mind."
         }
       },
       "low": {
@@ -276,21 +342,27 @@
           "who_they": "They're also direct, honest and say what they think",
           "strength": "You always know where you stand with {name}. They don't play games or hide what they feel.",
           "challenge": "{name}'s honesty can come out harsher than they intend, especially in an argument.",
-          "tip": "Tell {name} when their words hurt, calmly and clearly. They respect directness and will usually adjust once they know."
+          "tip": "Tell {name} when their words hurt, calmly and clearly. They respect directness and will usually adjust once they know.",
+          "you": "You're direct, honest and say what you think.",
+          "you_also": "You're also direct, honest and say what you think."
         },
         "business_partner": {
           "who": "is direct, objective and focused on results",
           "who_they": "They're also direct, objective and focused on results",
           "strength": "{name} makes tough calls without getting stuck on feelings. Negotiations are their strong suit.",
           "challenge": "{name} can come across as cold to clients or colleagues who need more warmth.",
-          "tip": "Be direct with {name}: say what you need in one sentence. They appreciate clarity much more than diplomacy."
+          "tip": "Be direct with {name}: say what you need in one sentence. They appreciate clarity much more than diplomacy.",
+          "you": "You're direct, objective and focused on results.",
+          "you_also": "You're also direct, objective and focused on results."
         },
         "family": {
           "who": "is the honest one who says what others only think",
           "who_they": "They're also the honest one who says what others only think",
           "strength": "{name} gives the family straight answers and practical help, without drama.",
           "challenge": "{name} may seem distant or blunt, especially in emotional family moments.",
-          "tip": "{name} shows care through actions more than words. Notice what they do for you, and tell them you noticed."
+          "tip": "{name} shows care through actions more than words. Notice what they do for you, and tell them you noticed.",
+          "you": "You're the honest one who says what others only think.",
+          "you_also": "You're also the honest one who says what others only think."
         }
       }
     },
@@ -301,21 +373,27 @@
           "who_they": "They're also easygoing and hard to rattle",
           "strength": "{name} stays calm when things go wrong. Stress at home rarely turns into a fight with them.",
           "challenge": "{name} may let problems slide for too long because they don't want to make a fuss.",
-          "tip": "Bring up issues with {name} early and calmly. They won't start the conversation, but they're happy to have it."
+          "tip": "Bring up issues with {name} early and calmly. They won't start the conversation, but they're happy to have it.",
+          "you": "You're easygoing and hard to rattle.",
+          "you_also": "You're also easygoing and hard to rattle."
         },
         "business_partner": {
           "who": "stays relaxed under pressure",
           "who_they": "They also stay relaxed under pressure",
           "strength": "{name} keeps a cool head in tense negotiations and tight deadlines, which calms the whole team.",
           "challenge": "{name} may seem too relaxed when something is actually urgent.",
-          "tip": "When something is urgent, say so clearly to {name}, with a deadline. They'll act fast once they know it matters."
+          "tip": "When something is urgent, say so clearly to {name}, with a deadline. They'll act fast once they know it matters.",
+          "you": "You stay relaxed under pressure.",
+          "you_also": "You also stay relaxed under pressure."
         },
         "family": {
           "who": "is the calm one when family life gets busy",
           "who_they": "They're also the calm one when family life gets busy",
           "strength": "{name} lowers the temperature in family arguments. People feel calmer around them.",
           "challenge": "{name} may avoid family tension instead of helping solve it.",
-          "tip": "Ask {name} directly what they think when the family disagrees. Their calm view helps, but they rarely offer it unprompted."
+          "tip": "Ask {name} directly what they think when the family disagrees. Their calm view helps, but they rarely offer it unprompted.",
+          "you": "You're the calm one when family life gets busy.",
+          "you_also": "You're also the calm one when family life gets busy."
         }
       },
       "medium": {
@@ -324,21 +402,27 @@
           "who_they": "They're mostly relaxed but have a fire when it matters",
           "strength": "{name} lets small things go but stands firm on what really matters to them.",
           "challenge": "When {name} does get upset, it can surprise you, because it doesn't happen often.",
-          "tip": "When {name} gets heated, it usually means this topic really matters to them. Slow down and listen first."
+          "tip": "When {name} gets heated, it usually means this topic really matters to them. Slow down and listen first.",
+          "you": "You're mostly relaxed but have a fire when it matters.",
+          "you_also": "You're also mostly relaxed, with a fire when it matters."
         },
         "business_partner": {
           "who": "is steady, with drive when the stakes are high",
           "who_they": "They're steady, with drive when the stakes are high",
           "strength": "{name} keeps a steady pace and can push hard when a deadline or a deal requires it.",
           "challenge": "{name} may switch from calm to intense quickly when something goes wrong.",
-          "tip": "Agree with {name} on what counts as urgent. It helps you both know when to push and when to relax."
+          "tip": "Agree with {name} on what counts as urgent. It helps you both know when to push and when to relax.",
+          "you": "You're steady, with drive when the stakes are high.",
+          "you_also": "You're also steady, with drive when the stakes are high."
         },
         "family": {
           "who": "is calm most of the time but cares deeply",
           "who_they": "They're calm most of the time but care deeply",
           "strength": "{name} stays easygoing day to day, but steps up when the family really needs them.",
           "challenge": "{name} may hold back irritation until it builds up.",
-          "tip": "Check in with {name} after a stressful family event. Small frustrations are easier to talk about before they build up."
+          "tip": "Check in with {name} after a stressful family event. Small frustrations are easier to talk about before they build up.",
+          "you": "You're calm most of the time but care deeply.",
+          "you_also": "You're also calm most of the time but care deeply."
         }
       },
       "low": {
@@ -347,21 +431,27 @@
           "who_they": "They're also intense, passionate and driven",
           "strength": "{name} feels things deeply and brings real passion to your relationship and to their goals.",
           "challenge": "{name} reacts fast, and small disagreements can heat up quickly.",
-          "tip": "When things heat up with {name}, suggest a short break and come back to it. They calm down fast once they've had a moment."
+          "tip": "When things heat up with {name}, suggest a short break and come back to it. They calm down fast once they've had a moment.",
+          "you": "You're intense, passionate and driven.",
+          "you_also": "You're also intense, passionate and driven."
         },
         "business_partner": {
           "who": "is driven, fast and ambitious",
           "who_they": "They're also driven, fast and ambitious",
           "strength": "{name} pushes the business forward. They bring urgency and won't settle for slow progress.",
           "challenge": "{name} can get impatient with slower partners or with plans that take time.",
-          "tip": "{name} gives their best with ambitious goals. Share the big target with them, then agree on the steps together."
+          "tip": "{name} gives their best with ambitious goals. Share the big target with them, then agree on the steps as a team.",
+          "you": "You're driven, fast and ambitious.",
+          "you_also": "You're also driven, fast and ambitious."
         },
         "family": {
           "who": "is passionate and quick to act",
           "who_they": "They're also passionate and quick to act",
           "strength": "{name} gets things done for the family. When something needs fixing, they're already on it.",
           "challenge": "{name} may react strongly in family arguments, then calm down just as fast.",
-          "tip": "Don't take {name}'s first reaction as their final word. Give them a little time, then talk it through."
+          "tip": "Don't take {name}'s first reaction as their final word. Give them a little time, then talk it through.",
+          "you": "You're passionate and quick to act.",
+          "you_also": "You're also passionate and quick to act."
         }
       }
     }
@@ -370,6 +460,11 @@
     "lover": "has a balanced personality, with no extreme in any direction",
     "business_partner": "is a well-rounded partner who can adapt to most situations",
     "family": "is balanced and easy to get along with in most situations"
+  },
+  "you_balanced": {
+    "lover": "You have a balanced personality, with no extreme in any direction.",
+    "business_partner": "You're a well-rounded partner who can adapt to most situations.",
+    "family": "You're balanced and easy to get along with in most situations."
   },
   "difference": {
     "social": {
@@ -455,14 +550,14 @@
     },
     "energy": {
       "strong": {
-        "lover": "You like the same pace, so planning time together is easy.",
+        "lover": "You like the same pace, so planning your free time is easy.",
         "business_partner": "You work at the same pace, which keeps projects moving.",
-        "family": "You enjoy the same kind of time together."
+        "family": "You enjoy the same kind of family time."
       },
       "weak": {
         "lover": "Your energy levels differ the most, so take turns choosing how you spend your time.",
         "business_partner": "Your work rhythms differ, so agree on working hours and response times.",
-        "family": "You enjoy different kinds of time together, so mix quiet visits and bigger plans."
+        "family": "You enjoy different kinds of family time, so mix quiet visits and bigger plans."
       }
     },
     "conflict": {
@@ -488,6 +583,406 @@
         "business_partner": "Your goals for the business may differ, so write down a shared plan.",
         "family": "You see some family priorities differently, so talk about expectations openly."
       }
+    }
+  },
+  "pairs": {
+    "social": {
+      "they_higher": {
+        "lover": {
+          "strength": "{name} brings new people and plans into your life, and you make sure there's still time for just the two of you.",
+          "challenge": "{name} wants more people and plans than you do. Pick one quiet night a week that stays just for the two of you."
+        },
+        "business_partner": {
+          "strength": "{name} takes the client side and you take the deep work, so the business has both covered.",
+          "challenge": "{name} says yes to more meetings and events than you would. Agree who goes to what, so you're not both stretched."
+        },
+        "family": {
+          "strength": "{name} keeps the family calendar full, and you make the quiet one-on-one visits count.",
+          "challenge": "{name} wants more family gatherings than you do. Agree on the big ones each year and skip the rest without guilt."
+        }
+      },
+      "you_higher": {
+        "lover": {
+          "strength": "You bring the people and the plans, and {name} makes the quiet evenings feel special.",
+          "challenge": "You want more people and plans than {name} does. See friends on your own sometimes, and keep one quiet night for the two of you."
+        },
+        "business_partner": {
+          "strength": "You take the client side and {name} takes the deep work, so the business has both covered.",
+          "challenge": "You say yes to more meetings and events than {name} would. Bring them to the ones that matter and let them skip the rest."
+        },
+        "family": {
+          "strength": "You keep the family gatherings going, and {name} makes the quiet one-on-one visits count.",
+          "challenge": "You want more family gatherings than {name} does. Pick the ones that matter most and give them a pass on the rest."
+        }
+      },
+      "both_high": {
+        "lover": {
+          "strength": "You both love a full calendar, so there's always a plan and nobody feels dragged along."
+        },
+        "business_partner": {
+          "strength": "You're both at ease with people, so clients get two strong faces instead of one."
+        },
+        "family": {
+          "strength": "You both love a full house, so family events actually happen."
+        }
+      },
+      "both_low": {
+        "lover": {
+          "strength": "You both love a quiet evening, so nobody gets dragged to a party they didn't want."
+        },
+        "business_partner": {
+          "strength": "You both prefer focused work to small talk, so meetings stay short and the work gets done."
+        },
+        "family": {
+          "strength": "You both prefer small, calm visits, so family time never feels like a chore."
+        }
+      }
+    },
+    "curiosity": {
+      "they_higher": {
+        "lover": {
+          "strength": "{name} brings the new ideas and you keep them grounded, so plans stay exciting and doable.",
+          "challenge": "{name} gets bored with routine faster than you do. Agree on one new thing a month and keep the rest steady."
+        },
+        "business_partner": {
+          "strength": "{name} spots new opportunities and you check which ones are worth the money.",
+          "challenge": "{name} starts new ideas faster than you can check them. Agree that a new project starts only when another one is finished."
+        },
+        "family": {
+          "strength": "{name} brings new places and ideas to family time, and you keep the traditions that matter.",
+          "challenge": "{name} wants to change family habits more than you do. Keep the traditions you love and let them reinvent one."
+        }
+      },
+      "you_higher": {
+        "lover": {
+          "strength": "You bring the new ideas and {name} keeps them grounded, so plans stay exciting and doable.",
+          "challenge": "You want more new things than {name} does. Pitch one idea at a time, a few days ahead, not on the spot."
+        },
+        "business_partner": {
+          "strength": "You spot new opportunities and {name} checks which ones are worth the money.",
+          "challenge": "You start new ideas faster than {name} can check them. Bring each one with a small test, not just a vision."
+        },
+        "family": {
+          "strength": "You bring new places and ideas to family time, and {name} keeps the traditions that matter.",
+          "challenge": "You want to change family habits more than {name} does. Keep what matters to them and change one thing at a time."
+        }
+      },
+      "both_high": {
+        "lover": {
+          "strength": "You both love trying new things, so there's always a new place, idea or story to share."
+        },
+        "business_partner": {
+          "strength": "You both love new ideas, so the business keeps finding better ways to work."
+        },
+        "family": {
+          "strength": "You both love new places and ideas, so family time rarely feels like a rerun."
+        }
+      },
+      "both_low": {
+        "lover": {
+          "strength": "You both like what already works, so there's no pressure to keep changing things."
+        },
+        "business_partner": {
+          "strength": "You both stick to what's proven, so the business grows steadily without risky detours."
+        },
+        "family": {
+          "strength": "You both value traditions, so the family rituals stay alive year after year."
+        }
+      }
+    },
+    "organization": {
+      "they_higher": {
+        "lover": {
+          "strength": "{name} keeps the plans on track, and you make room for the fun ones.",
+          "challenge": "{name} plans more than you do, so your late changes can sting. Fix the big dates early and leave weekends open."
+        },
+        "business_partner": {
+          "strength": "{name} builds the process and you handle the surprises, so the work keeps moving either way.",
+          "challenge": "{name} wants more structure than you do. Write down who owns what, and update it when plans change."
+        },
+        "family": {
+          "strength": "{name} keeps the family plans on track, and you stay relaxed when they change.",
+          "challenge": "{name} likes plans settled earlier than you do. Confirm family dates early, even if the details come later."
+        }
+      },
+      "you_higher": {
+        "lover": {
+          "strength": "You keep the plans on track, and {name} makes room for the fun ones.",
+          "challenge": "You plan more than {name} does, so their late changes can sting. Fix the big dates early and leave weekends open."
+        },
+        "business_partner": {
+          "strength": "You build the process and {name} handles the surprises, so the work keeps moving either way.",
+          "challenge": "You want more structure than {name} does, and their loose ends can land on your desk. Give each task one owner and a date."
+        },
+        "family": {
+          "strength": "You keep the family plans on track, and {name} stays relaxed when they change.",
+          "challenge": "You like plans settled earlier than {name} does. Fix the date a month ahead, and let them pick the place."
+        }
+      },
+      "both_high": {
+        "lover": {
+          "strength": "You both like a plan, so bills get paid, trips get booked and nothing is left to chance."
+        },
+        "business_partner": {
+          "strength": "You both run on lists and deadlines, so nothing falls through the cracks."
+        },
+        "family": {
+          "strength": "You both like plans settled early, so family events run smoothly and on time."
+        }
+      },
+      "both_low": {
+        "lover": {
+          "strength": "You're both happy to improvise, so a free Saturday can turn into anything.",
+          "challenge": "Neither of you loves planning, so dates and bills can slip. Put the important ones in a shared calendar with reminders."
+        },
+        "business_partner": {
+          "strength": "You both adapt fast, so a broken plan never stops you for long.",
+          "challenge": "Neither of you loves deadlines or paperwork. Set a short weekly check-in, or get help with the admin."
+        },
+        "family": {
+          "strength": "Neither of you minds a last-minute change, so family plans never become a source of stress.",
+          "challenge": "Neither of you loves planning, so family dates slip. For each event, pick one of you to send the reminder."
+        }
+      }
+    },
+    "kindness": {
+      "they_higher": {
+        "lover": {
+          "strength": "{name} brings the warmth and you bring the honesty, so you get both care and the truth.",
+          "challenge": "{name} is softer than you, so your honesty can land harder than you mean. Say the kind part first, then the hard part."
+        },
+        "business_partner": {
+          "strength": "{name} builds trust with clients and you handle the tough calls, so both sides are covered.",
+          "challenge": "{name} avoids hard conversations more than you do. Decide who handles pricing and the tough emails before they come up."
+        },
+        "family": {
+          "strength": "{name} brings the comfort and you bring the straight answers, and the family needs both.",
+          "challenge": "{name} softens things and you say them straight. Start with what you appreciate, then say the hard part."
+        }
+      },
+      "you_higher": {
+        "lover": {
+          "strength": "You bring the warmth and {name} brings the honesty, so you get both care and the truth.",
+          "challenge": "{name} is more direct than you, so their words can sting. Tell them calmly when it happens: they'd rather know."
+        },
+        "business_partner": {
+          "strength": "You build trust with clients and {name} handles the tough calls, so both sides are covered.",
+          "challenge": "{name} is more blunt with clients than you are. Agree that you take the delicate calls and they take the tough negotiations."
+        },
+        "family": {
+          "strength": "You bring the comfort and {name} brings the straight answers, and the family needs both.",
+          "challenge": "{name} says things more bluntly than you do. When it stings, say so right away instead of letting it build up."
+        }
+      },
+      "both_high": {
+        "lover": {
+          "strength": "You both care a lot, so you look out for each other without being asked."
+        },
+        "business_partner": {
+          "strength": "You both put people first, so clients and colleagues like working with you."
+        },
+        "family": {
+          "strength": "You're both the caring kind, so nobody in the family is left alone with a problem."
+        }
+      },
+      "both_low": {
+        "lover": {
+          "strength": "You're both direct, so you always know where you stand with each other.",
+          "challenge": "You're both blunt, so arguments can sting more than either of you means. Say one kind thing before any hard one."
+        },
+        "business_partner": {
+          "strength": "You're both direct, so problems get named early and meetings stay short.",
+          "challenge": "You're both blunt, and clients can feel it. Have one of you reread the hard emails before they go out."
+        },
+        "family": {
+          "strength": "You're both straight talkers, so family problems get named instead of whispered about.",
+          "challenge": "You're both blunt, so family talks can get sharp. When it heats up, ask a question before you answer."
+        }
+      }
+    },
+    "chill": {
+      "they_higher": {
+        "lover": {
+          "strength": "{name} stays calm when things go wrong, and you bring the passion that gets things started.",
+          "challenge": "You react faster than {name} does, and they may go quiet when you get heated. Take a short break, then come back to it."
+        },
+        "business_partner": {
+          "strength": "{name} stays calm when deadlines get tight, and you bring the push to finish.",
+          "challenge": "{name} stays relaxed when you think something is urgent. Say out loud that it's urgent, and give a deadline."
+        },
+        "family": {
+          "strength": "{name} stays calm when family life gets loud, and you get things moving when something needs fixing.",
+          "challenge": "You react faster than {name} in family arguments. Wait a day before the big talk: they open up once things are calm."
+        }
+      },
+      "you_higher": {
+        "lover": {
+          "strength": "You stay calm when things go wrong, and {name} brings the passion that gets things started.",
+          "challenge": "{name} reacts faster than you do, and small things can heat up quickly. Agree that either of you can call a ten-minute break."
+        },
+        "business_partner": {
+          "strength": "You stay steady under pressure and {name} brings the urgency, so deals move without panic.",
+          "challenge": "{name} pushes harder and faster than you do. Agree on what's truly urgent, so you don't burn out or slow them down."
+        },
+        "family": {
+          "strength": "You stay calm when family life gets loud, and {name} gets things moving when something needs fixing.",
+          "challenge": "{name} reacts faster than you in family arguments. Let the first reaction pass and talk it through the next day."
+        }
+      },
+      "both_high": {
+        "lover": {
+          "strength": "You're both easygoing, so small stresses rarely turn into fights."
+        },
+        "business_partner": {
+          "strength": "You both stay cool under pressure, which calms everyone around you."
+        },
+        "family": {
+          "strength": "You're both calm, so family visits stay relaxed even when plans go wrong."
+        }
+      },
+      "both_low": {
+        "lover": {
+          "strength": "You're both passionate, so nothing between you is ever lukewarm.",
+          "challenge": "You both react fast, so small arguments heat up quickly. Agree on a pause word now and use it when it starts."
+        },
+        "business_partner": {
+          "strength": "You're both driven, so the business moves fast and nobody waits around.",
+          "challenge": "You're both intense, so tight deadlines can turn into clashes. Decide in advance who has the final call on what."
+        },
+        "family": {
+          "strength": "You're both quick to act, so family problems get fixed fast.",
+          "challenge": "You both react fast in family arguments. Agree that anyone can pause a heated talk and pick it up the next day."
+        }
+      }
+    }
+  },
+  "cross": {
+    "social+curiosity": {
+      "they_first": {
+        "lover": "{name} brings the people and you bring the ideas, so your evenings out never run out of things to talk about.",
+        "business_partner": "{name} brings in the contacts and you bring the new ideas to pitch them.",
+        "family": "{name} gathers the family and you bring the new topics, so dinners never feel like a rerun."
+      },
+      "you_first": {
+        "lover": "You bring the people and {name} brings the ideas, so your evenings out never run out of things to talk about.",
+        "business_partner": "You bring in the contacts and {name} brings the new ideas to pitch them.",
+        "family": "You gather the family and {name} brings the new topics, so dinners never feel like a rerun."
+      }
+    },
+    "social+organization": {
+      "they_first": {
+        "lover": "{name} fills the weekend with people and you make sure the plans actually happen.",
+        "business_partner": "{name} wins the clients and you make sure every promise gets delivered.",
+        "family": "{name} gets everyone to say yes and you make sure everyone knows when and where."
+      },
+      "you_first": {
+        "lover": "You fill the weekend with people and {name} makes sure the plans actually happen.",
+        "business_partner": "You win the clients and {name} makes sure every promise gets delivered.",
+        "family": "You get everyone to say yes and {name} makes sure everyone knows when and where."
+      }
+    },
+    "social+kindness": {
+      "they_first": {
+        "lover": "{name} brings the crowd and you make sure everyone in it feels welcome.",
+        "business_partner": "{name} opens doors with new clients and you're the reason they stay.",
+        "family": "{name} gets the family in one room and you notice who needs a quiet word."
+      },
+      "you_first": {
+        "lover": "You bring the crowd and {name} makes sure everyone in it feels welcome.",
+        "business_partner": "You open doors with new clients and {name} is the reason they stay.",
+        "family": "You get the family in one room and {name} notices who needs a quiet word."
+      }
+    },
+    "social+chill": {
+      "they_first": {
+        "lover": "{name} brings the energy and you bring the calm, so a busy weekend never turns into stress.",
+        "business_partner": "{name} brings the energy to client meetings and you keep a cool head when they get tense.",
+        "family": "{name} brings the noise to family gatherings and you bring the calm."
+      },
+      "you_first": {
+        "lover": "You bring the energy and {name} brings the calm, so a busy weekend never turns into stress.",
+        "business_partner": "You bring the energy to client meetings and {name} keeps a cool head when they get tense.",
+        "family": "You bring the noise to family gatherings and {name} brings the calm."
+      }
+    },
+    "curiosity+organization": {
+      "they_first": {
+        "lover": "{name} dreams up the trip and you get it booked, so new ideas actually happen.",
+        "business_partner": "{name} brings new ideas and you turn them into a plan with dates and owners.",
+        "family": "{name} suggests the new place and you make sure the whole family actually gets there."
+      },
+      "you_first": {
+        "lover": "You dream up the trip and {name} gets it booked, so new ideas actually happen.",
+        "business_partner": "You bring new ideas and {name} turns them into a plan with dates and owners.",
+        "family": "You suggest the new place and {name} makes sure the whole family actually gets there."
+      }
+    },
+    "curiosity+kindness": {
+      "they_first": {
+        "lover": "{name} brings the new experiences, and you make sure each one feels good for both of you.",
+        "business_partner": "{name} finds new markets and you make sure the people in them feel looked after.",
+        "family": "{name} brings new ideas to the family and you help everyone feel at ease with them."
+      },
+      "you_first": {
+        "lover": "You bring the new experiences, and {name} makes sure each one feels good for both of you.",
+        "business_partner": "You find new markets and {name} makes sure the people in them feel looked after.",
+        "family": "You bring new ideas to the family and {name} helps everyone feel at ease with them."
+      }
+    },
+    "curiosity+chill": {
+      "they_first": {
+        "lover": "{name} brings the adventures and you stay relaxed when one doesn't go to plan.",
+        "business_partner": "{name} tries new things and you stay calm when an experiment fails.",
+        "family": "{name} brings new plans to the family and you keep everyone relaxed about them."
+      },
+      "you_first": {
+        "lover": "You bring the adventures and {name} stays relaxed when one doesn't go to plan.",
+        "business_partner": "You try new things and {name} stays calm when an experiment fails.",
+        "family": "You bring new plans to the family and {name} keeps everyone relaxed about them."
+      }
+    },
+    "organization+kindness": {
+      "they_first": {
+        "lover": "{name} keeps daily life organized and you make sure it still feels warm.",
+        "business_partner": "{name} keeps the processes tight and you keep the people on board.",
+        "family": "{name} plans the family events and you make sure everyone feels welcome at them."
+      },
+      "you_first": {
+        "lover": "You keep daily life organized and {name} makes sure it still feels warm.",
+        "business_partner": "You keep the processes tight and {name} keeps the people on board.",
+        "family": "You plan the family events and {name} makes sure everyone feels welcome at them."
+      }
+    },
+    "organization+chill": {
+      "they_first": {
+        "lover": "{name} makes the plans and you stay easygoing when they change, which saves a lot of arguments.",
+        "business_partner": "{name} keeps the deadlines and you keep the calm when one slips.",
+        "family": "{name} plans the holidays and you stay relaxed when something goes wrong."
+      },
+      "you_first": {
+        "lover": "You make the plans and {name} stays easygoing when they change, which saves a lot of arguments.",
+        "business_partner": "You keep the deadlines and {name} keeps the calm when one slips.",
+        "family": "You plan the holidays and {name} stays relaxed when something goes wrong."
+      }
+    },
+    "kindness+chill": {
+      "they_first": {
+        "lover": "{name} notices how you feel and you keep things calm, so hard days are easier on both of you.",
+        "business_partner": "{name} looks after the team and you keep calm under pressure, a good mix when things get tense.",
+        "family": "{name} comforts the family and you keep things calm, so tough moments pass more easily."
+      },
+      "you_first": {
+        "lover": "You notice how {name} feels and they keep things calm, so hard days are easier on both of you.",
+        "business_partner": "You look after the team and {name} keeps calm under pressure, a good mix when things get tense.",
+        "family": "You comfort the family and {name} keeps things calm, so tough moments pass more easily."
+      }
+    }
+  },
+  "generic": {
+    "challenge": {
+      "lover": "You're alike in most ways, so small wishes can go unsaid. Each name one thing you'd like more of this month.",
+      "business_partner": "You work in similar ways, so you can share the same blind spots. Ask an outsider to review one big decision each quarter.",
+      "family": "You're alike in most ways, so small frustrations can go unsaid. Ask each other now and then what could be easier."
     }
   }
 }
