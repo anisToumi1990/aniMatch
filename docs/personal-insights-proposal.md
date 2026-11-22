@@ -1,6 +1,6 @@
 # Personal compatibility insights
 
-Status: **proposal only (phase 1)**. Nothing in the app or the database changes yet.
+Status: **phase 2 built** (migrations written, not run yet). Phase 1 decisions: no real examples in the repo, thresholds kept, one text per cell, no "how they see you" line for now.
 
 When you open a match in Compatibility, today's screen shows a generic text from `compatibility_insight_templates`, picked only by score range and relationship type. Two pairs with the same score read the same thing. This proposal replaces it with texts **about the other person, from your point of view**:
 
@@ -256,9 +256,11 @@ Definitions:
 Steps:
 
 1. **Who they are.** Sort traits by stand-out. Sentence 1 = `{Label}` + who-text of the top trait. Sentence 2 = `{name}` + who-text of the 2nd trait, only if it also stands out. If no trait stands out, use the "balanced" text.
+
+   Every finished sentence starts with a capital letter, even when the name is lowercase (the email fallback). All comparisons are made in tenths of a point, so the JS reference and the SQL function treat 59.9 vs 60 the same way.
 2. **Strengths.** The top 2 traits by stand-out, plus the 3rd if it stands out. One strength text each.
 3. **Challenges.** Score each trait by stand-out + 0.5 × |gap|: a challenge matters most when it's a strong trait *and* far from yours. Take the top one, plus the 2nd if its score ≥ 25.
-4. **Tips (always 3, on 3 different traits).** (a) their top trait: what makes them give their best; (b) the trait with your biggest |gap| not used yet: how to handle the difference; (c) their first challenge trait if not used yet. Missing slots are filled with the next traits by stand-out.
+4. **Tips (always 3, on 3 different traits).** (a) their top trait: what makes them give their best; (b) the trait with your biggest |gap| not used yet: how to handle the difference; (c) their first challenge trait not used yet. Missing slots are filled with the next traits by stand-out.
 5. **Your pair.** Sentence 1: if the biggest |gap| is ≥ 20 points, the difference text for that trait and direction ("they score higher" / "you score higher"), else the "similar" text for the trait where you're closest. Sentence 2: if the weakest area is < 55, its "weak" text (advice); else, if the strongest area is ≥ 70, its "strong" text; otherwise (all areas 55-69) no second sentence, rather than overclaiming. v1 rows (no stored areas) skip sentence 2.
 
 **No repeats.** Within a screen, every text is used once: each section draws from its own column, the 3 tips are on 3 different traits, and the script checks it on 5,000 simulated pairs. The same trait can appear as a strength and as a challenge: that's intended, since a trait's upside and downside usually go together ("organized" and "stressed by last-minute changes").
@@ -267,9 +269,9 @@ Steps:
 
 ## 4. Examples
 
-### Real pairs (Omar's matches): pending
+### Real pairs: reviewed outside the repo
 
-These can't be generated from this branch. The app only has the anon key, and RLS rightly stops a user from reading anyone else's `trait_scores`. To generate them, run this read-only query in the Supabase SQL editor (replace the email), save the result as `pairs.json` outside the repo, and run `node scripts/personal-insights-preview.js --pairs pairs.json`:
+Decision: no real examples in the repo. They can't be generated from this branch anyway. The app only has the anon key, and RLS rightly stops a user from reading anyone else's `trait_scores`. To generate them, run this read-only query in the Supabase SQL editor (replace the email), save the result as `pairs.json` outside the repo, and run `node scripts/personal-insights-preview.js --pairs pairs.json`:
 
 ```sql
 -- Read-only. Returns up to 3 of your matches with both trait sets and the stored areas.
@@ -293,7 +295,7 @@ from (
 ) p;
 ```
 
-The script prints the insights to the terminal only. Committing them would put other people's names and personality reads in the repo history, so by default they stay out of this doc (see the open question in section 6).
+The script prints the insights to the terminal only, so other people's names and personality reads never land in the repo history.
 
 ### Profile-only examples (no real users)
 
@@ -372,52 +374,53 @@ Input: them (Lion) Social 70 · Curiosity 36 · Organization 68 · Kindness 44 �
 <sub>Picked: who = social high, organization high; strengths = social high, organization high, curiosity low; challenges = social high, organization high; tips = social high, kindness medium, organization high; pair = difference social they_higher (42 pts), no area sentence (all areas 55-69).</sub>
 <!-- /generated:examples -->
 
-## 5. Technical plan (phase 2)
+## 5. Implementation (phase 2)
+
+### Files
+
+| What | Where |
+|---|---|
+| Content (source of truth) | `supabase/content/personal-insights/library.json` |
+| Generator / validator | `scripts/personal-insights-preview.js`: validates the library, regenerates this doc's generated parts, the fixture, the seed and the SQL check |
+| Reference implementation (pure) | `lib/personalInsights.ts` (`buildPersonalInsights`, `parsePersonalInsights`) |
+| Shared fixture | `lib/__tests__/fixtures/personalInsights-fixture.json` (91 cases: profiles, noisy 1-decimal users, every threshold, ties, odd names, v1 rows) |
+| Jest | `lib/__tests__/personalInsights-test.ts` |
+| SQL | `supabase/migrations/20261122120000_personal_insights.sql` (tables + functions), `…120100_personal_insights_seed.sql` (generated), `…120200_personal_insights_check.sql` (generated) |
+| App | `lib/supabase/personalInsights.ts` (RPC), `components/compatibility/PersonalInsights.tsx`, `app/(tabs)/compatibility.tsx` |
+
+**Changing texts or rules:** edit `library.json` (or the rules in the script, `lib/personalInsights.ts` and `personal_insights_build()` together), run `node scripts/personal-insights-preview.js`, then run Jest and the regenerated seed + check SQL. The fixture catches any drift between the three implementations.
 
 ### Database
 
-**Content tables** (seeded from `library.json` by a build script, like the daily aura content):
+- **`personal_insight_trait_texts`** (trait, level, relationship_type, section, text; primary key on the first four) and **`personal_insight_pair_texts`** (kind = label / balanced / difference / similar / area, key, variant, relationship_type, text; `''` = not applicable). RLS on, **no policies**, `revoke all` from public / anon / authenticated: clients can't read the library.
+- **`personal_insights_build(me jsonb, them jsonb, relationship_type text, name text, areas jsonb) returns jsonb`**: the section 3 rules in plpgsql, with the thresholds in tenths of a point. SECURITY DEFINER, `search_path = public`, **no client execute** (the SQL check calls it from the editor). The text helpers `personal_insights_trait_text` / `personal_insights_pair_text` / `personal_insights_capitalize` are internal too, and raise an error if a text is missing instead of returning half a sentence.
+- **`get_personal_insights(p_result_id bigint) returns jsonb`**: the only client entry point. SECURITY DEFINER, `search_path = public`, `revoke execute from public, anon`, `grant execute to authenticated`.
+  - Raises `42501` unless `auth.uid()` is `user_a_id` or `user_b_id` of that `compatibility_results` row. A missing row gets the same error, so result ids can't be probed. Calls without a user (anon, SQL editor) are refused.
+  - "Me" = the caller. Traits for both from `compatibility_v2_traits()` (v1 → animal profile), name from `notification_first_name()`, areas only for v2 rows.
+  - Returns `{ version, who, strengths[], challenges[], tips[], pair }`: **finished texts only**, no scores, levels or trait names. `null` if either person has no quiz result.
+  - Computed on read, nothing stored: content fixes and quiz retakes show up immediately.
 
-- `personal_insight_trait_texts`: `trait`, `level` (high/medium/low), `relationship_type`, `section` (who/strength/challenge/tip), `text`, `is_active`, unique on (trait, level, relationship_type, section).
-- `personal_insight_pair_texts`: `kind` (difference / similar / area / balanced), `key` (trait or area), `variant` (they_higher / you_higher / strong / weak, or null), `relationship_type` (null for "similar"), `text`.
-- Both tables: RLS enabled **with no client policies**, and `revoke all ... from anon, authenticated`. Clients never read the library; only the function does.
-
-**`get_personal_insights(p_result_id uuid) returns jsonb`**:
-
-- `language plpgsql`, `stable`, `security definer`, `set search_path = public` (same pattern as the hardened RPCs in `20261121090000_security_hardening.sql`).
-- Loads the `compatibility_results` row. Raises "not allowed" unless `auth.uid()` is `user_a_id` or `user_b_id` (no null-uid exception here: the SQL editor can call `compatibility_v2_traits` directly).
-- "Me" = the caller, "them" = the other user. Traits from `compatibility_v2_traits()` for both, so v1 users fall back to their animal's profile.
-- First name from `notification_first_name()` (same rule as `lib/names.ts`).
-- Applies the section 3 rules, fills `{Label}` / `{name}` and returns **only finished texts**:
-  ```json
-  { "version": 1, "who": "…", "strengths": ["…"], "challenges": ["…"], "tips": ["…", "…", "…"], "pair": "…" }
-  ```
-  No scores, no levels, no trait names, no picks. Returns `null` if either person has no traits.
-- `revoke execute ... from public, anon; grant execute ... to authenticated;`
-- Computed on read (a few small lookups), not stored: content fixes and quiz retakes show up immediately, and there's no extra table holding derived personality data.
-
-**Keeping it correct**, like compatibility v2: a pure TypeScript reference (`lib/personalInsights.ts`, same rules as `buildInsights` in the script), a shared fixture generated by the script, a Jest test, and a SQL check migration that compares the function's output for the fixture inputs. The check runs the internal selection on fixture traits, so it needs an internal helper (`personal_insights_build(me jsonb, them jsonb, type text, name text, areas jsonb)`) with **no client execute**; `get_personal_insights` is just the access check plus that helper.
+Tested before commit in a local Postgres (PGlite) with the real `notification_first_name()` / `compatibility_v2_traits()`: the check passes on all 91 cases (and fails when one text is changed), both members of a pair get texts about each other, a stranger / no user / unknown id get `42501`, and authenticated users get "permission denied" on both tables and on every internal function.
 
 ### App
 
-- `app/(tabs)/compatibility.tsx`: replace `fetchInsight` (the `compatibility_insight_templates` query) with
-  `supabase.rpc('get_personal_insights', { p_result_id: result.id })` (Supabase JS v1: `{ data, error }`).
-- New `components/compatibility/PersonalInsights.tsx` renders the 5 blocks under `AreaBreakdown`, with the one-line "Based on both of your quiz results" note. Loading and error states match the current insight block.
-- If the RPC returns `null` or fails, fall back to today's template text during the rollout, then remove `compatibility_insight_templates` usage once the content is live.
-- Share cards are unchanged (insights are personal, not for sharing).
+- The match detail (`renderDetailView` in `app/(tabs)/compatibility.tsx`) renders `<PersonalInsights resultId={result.id} />` under the score: Who they are, Strengths, Challenges, Tips (numbered), Your pair, then "Based on both of your quiz results".
+- Loading, error (with Try again) and empty ("Your insights will appear once you've both taken the quiz.") states. The response is validated with `parsePersonalInsights`; an unexpected shape shows the empty state.
+- The generic `compatibility_insight_templates` text is gone from the screen. The table stays in the database; nothing in the app reads it any more.
 
 ### Rollout
 
-1. Migration: content tables + seed (generated) + function + check.
-2. App release reading the RPC with the template fallback.
-3. After a release cycle, drop the fallback; keep `compatibility_insight_templates` in the database until nothing reads it.
+1. Run, in order: `20261122120000_personal_insights.sql`, `20261122120100_personal_insights_seed.sql`, `20261122120200_personal_insights_check.sql` (read-only; must end with "all 91 cases match").
+2. Release the app (it calls the RPC, so the SQL must be live first).
+3. Later: drop `compatibility_insight_templates` once no old app version is in use.
 
-## 6. Open questions
+## 6. Decisions and follow-ups
 
-1. **Real examples in the repo.** Should the 3 real pairs go into this doc with first names (they're your friends and family, and the repo is shared with a collaborator), with initials only, or stay out of git and just be reviewed in the terminal?
-2. **Thresholds.** High ≥ 60 / low < 40 and the "stand out" cutoff of 10 are tuned on animal profiles; worth re-checking on real v2 scores once there are enough.
-3. **One text per cell.** Each cell has one text, so two people with the same top traits read the same strength. A second variant per cell (picked by a hash of the pair) would add variety for about 180 more texts.
-4. **Both directions.** Should "Your pair" also show a line about *you* from their point of view ("{name} may find you…")? It's useful but more sensitive; proposed for later.
+1. **Real examples:** not in the repo; review them with `--pairs` in the terminal (section 4).
+2. **Thresholds:** kept (high ≥ 60, low < 40, stand-out 10). Re-check on real v2 scores once there are enough.
+3. **One text per cell** for now. A second variant per cell (picked by a hash of the pair) is the next step for variety (~180 texts).
+4. **No "how they see you" line** for now.
+5. Names come from the `lib/names.ts` rule, so a user without a full name shows as their email prefix (e.g. "taieb.k"). Sentences are capitalized, but the name itself isn't changed.
 
 ## Variety check
 

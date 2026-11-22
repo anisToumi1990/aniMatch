@@ -5,7 +5,8 @@
  * docs/personal-insights-proposal.md (between <!-- generated:<part> --> markers).
  * See that doc for the design.
  *
- *   node scripts/personal-insights-preview.js                    # validate + update the doc
+ *   node scripts/personal-insights-preview.js                    # validate, update the doc, and regenerate
+ *                                                                # the fixture, the seed and the SQL check
  *   node scripts/personal-insights-preview.js --check            # validate only
  *   node scripts/personal-insights-preview.js --pairs <file>     # print insights for real pairs (stdout only)
  *
@@ -108,21 +109,26 @@ function validate(lib) {
 // Selection (keep in sync with section 3 of the doc)
 // ---------------------------------------------------------------------------
 
+// Scores are compared in tenths of a point (integers), like lib/personalInsights.ts and
+// the SQL function, so floats can't flip a threshold or a tie (trait scores have 1 decimal).
+const tenths = value => Math.round(value * 10);
+
 function levelOf(score, lib) {
-  if (score >= lib.levels.high) return 'high';
-  if (score < lib.levels.low) return 'low';
+  if (tenths(score) >= tenths(lib.levels.high)) return 'high';
+  if (tenths(score) < tenths(lib.levels.low)) return 'low';
   return 'medium';
 }
 
-/** Traits by how much they stand out (|score - 50|), ties in TRAITS order. */
-function byDistinctiveness(them) {
-  return TRAITS.map((trait, index) => ({ trait, index, dist: Math.abs(them[trait] - 50) })).sort(
-    (x, y) => y.dist - x.dist || x.index - y.index
-  );
+/** Sorted by value, ties in declaration order. */
+function rank(keys, valueOf, direction) {
+  return keys
+    .map((key, index) => ({ key, index, value: valueOf(key) }))
+    .sort((x, y) => (direction === 'desc' ? y.value - x.value : x.value - y.value) || x.index - y.index);
 }
 
-function fill(text, name, label) {
-  return text.replace(/\{Label\}/g, label).replace(/\{name\}/g, name);
+/** Replaces {name} literally (no `$&`-style patterns from the name). */
+function fillName(text, name) {
+  return text.split('{name}').join(name);
 }
 
 function capitalize(text) {
@@ -132,84 +138,88 @@ function capitalize(text) {
 /**
  * Builds the finished texts for one match, from the viewer's point of view.
  * Returns the texts plus `picks` (which library entries were used) for the doc.
+ * Same rules as buildPersonalInsights() in lib/personalInsights.ts and
+ * personal_insights_build() in SQL; the fixture checks all three.
  */
 function buildInsights(lib, { name, type, me, them, areas }) {
-  const label = capitalize(lib.labels[type].replace('{name}', name));
+  const label = capitalize(fillName(lib.labels[type], name));
   const level = trait => levelOf(them[trait], lib);
-  const text = (trait, section) => fill(lib.traits[trait][level(trait)][type][section], name, label);
-  const ordered = byDistinctiveness(them);
-  const gap = trait => them[trait] - me[trait];
+  const entry = trait => lib.traits[trait][level(trait)][type];
+  // Every finished sentence starts with a capital, even with a lowercase name (email fallback).
+  const text = (trait, section) => capitalize(fillName(entry(trait)[section], name));
+  const standOut = trait => Math.abs(tenths(them[trait]) - 500);
+  const gap = trait => tenths(them[trait]) - tenths(me[trait]);
+  const ordered = rank(TRAITS, standOut, 'desc');
+  const standsOut = item => !!item && item.value >= RULES.distinctive * 10;
   const picks = {};
 
   // 1. Who they are: the 1-2 traits that stand out most.
-  const standOut = ordered.filter(entry => entry.dist >= RULES.distinctive).slice(0, 2);
   let who;
-  if (standOut.length === 0) {
+  if (!standsOut(ordered[0])) {
     who = `${label} ${lib.balanced[type]}.`;
     picks.who = ['balanced'];
   } else {
-    who = `${label} ${lib.traits[standOut[0].trait][level(standOut[0].trait)][type].who}.`;
-    if (standOut[1]) who += ` ${name} ${lib.traits[standOut[1].trait][level(standOut[1].trait)][type].who}.`;
-    picks.who = standOut.map(entry => `${entry.trait} ${level(entry.trait)}`);
+    who = `${label} ${entry(ordered[0].key).who}.`;
+    picks.who = [`${ordered[0].key} ${level(ordered[0].key)}`];
+    if (standsOut(ordered[1])) {
+      who += ` ${capitalize(`${name} ${entry(ordered[1].key).who}`)}.`;
+      picks.who.push(`${ordered[1].key} ${level(ordered[1].key)}`);
+    }
   }
 
   // 2. Strengths: the top 2 traits, plus a 3rd if it stands out too.
-  const strengthTraits = ordered.slice(0, 3).filter((entry, index) => index < 2 || entry.dist >= RULES.distinctive).map(entry => entry.trait);
+  const strengthTraits = ordered.slice(0, 3).filter((item, index) => index < 2 || standsOut(item)).map(item => item.key);
   const strengths = strengthTraits.map(trait => text(trait, 'strength'));
   picks.strengths = strengthTraits.map(trait => `${trait} ${level(trait)}`);
 
-  // 3. Challenges: standing out + being far from you (that's where friction shows up).
-  const challengeScore = trait => Math.abs(them[trait] - 50) + 0.5 * Math.abs(gap(trait));
-  const challengeOrder = TRAITS.map((trait, index) => ({ trait, index, score: challengeScore(trait) })).sort(
-    (x, y) => y.score - x.score || x.index - y.index
-  );
-  const challengeTraits = [challengeOrder[0].trait];
-  if (challengeOrder[1].score >= RULES.secondChallenge) challengeTraits.push(challengeOrder[1].trait);
+  // 3. Challenges: stand-out + 0.5 x |gap| (doubled to stay in integers).
+  const challengeOrder = rank(TRAITS, trait => 2 * standOut(trait) + Math.abs(gap(trait)), 'desc');
+  const challengeTraits = [challengeOrder[0].key];
+  if (challengeOrder[1].value >= 2 * RULES.secondChallenge * 10) challengeTraits.push(challengeOrder[1].key);
   const challenges = challengeTraits.map(trait => text(trait, 'challenge'));
   picks.challenges = challengeTraits.map(trait => `${trait} ${level(trait)}`);
 
   // 4. Tips: 3 different traits. Their top trait (what makes them give their best),
-  // your biggest gap (how to deal with the difference), their main challenge.
-  const byGap = TRAITS.map((trait, index) => ({ trait, index, gap: Math.abs(gap(trait)) })).sort((x, y) => y.gap - x.gap || x.index - y.index);
+  // your biggest gap (how to deal with the difference), their first unused challenge.
+  const byGap = rank(TRAITS, trait => Math.abs(gap(trait)), 'desc');
   const tipTraits = [];
   const addTip = trait => {
     if (trait && !tipTraits.includes(trait) && tipTraits.length < 3) tipTraits.push(trait);
   };
-  addTip(ordered[0].trait);
-  addTip(byGap.find(entry => !tipTraits.includes(entry.trait))?.trait);
+  addTip(ordered[0].key);
+  addTip(byGap.find(item => !tipTraits.includes(item.key))?.key);
   addTip(challengeTraits.find(trait => !tipTraits.includes(trait)));
-  for (const entry of ordered) addTip(entry.trait);
+  for (const item of ordered) addTip(item.key);
   const tips = tipTraits.map(trait => text(trait, 'tip'));
   picks.tips = tipTraits.map(trait => `${trait} ${level(trait)}`);
 
   // 5. Your pair: the biggest trait difference, then the area scores.
   const biggest = byGap[0];
   let pair;
-  if (biggest.gap >= RULES.bigGap) {
-    const direction = gap(biggest.trait) > 0 ? 'they_higher' : 'you_higher';
-    pair = fill(lib.difference[biggest.trait][direction][type], name, label);
-    picks.pair = [`difference ${biggest.trait} ${direction} (${Math.round(biggest.gap)} pts)`];
+  if (biggest.value >= RULES.bigGap * 10) {
+    const direction = gap(biggest.key) > 0 ? 'they_higher' : 'you_higher';
+    pair = capitalize(fillName(lib.difference[biggest.key][direction][type], name));
+    picks.pair = [`difference ${biggest.key} ${direction} (${biggest.value / 10} pts)`];
   } else {
     const closest = byGap[byGap.length - 1];
-    pair = fill(lib.similar[closest.trait], name, label);
-    picks.pair = [`similar ${closest.trait}`];
+    pair = capitalize(fillName(lib.similar[closest.key], name));
+    picks.pair = [`similar ${closest.key}`];
   }
   if (areas) {
-    const sorted = AREAS.map((area, index) => ({ area, index, score: areas[area] })).sort((x, y) => x.score - y.score || x.index - y.index);
-    const weakest = sorted[0];
-    const strongest = [...sorted].sort((x, y) => y.score - x.score || x.index - y.index)[0];
-    if (weakest.score < RULES.weakArea) {
-      pair += ` ${lib.areas[weakest.area].weak[type]}`;
-      picks.pair.push(`${weakest.area} weak (${weakest.score})`);
-    } else if (strongest.score >= RULES.strongArea) {
-      pair += ` ${lib.areas[strongest.area].strong[type]}`;
-      picks.pair.push(`${strongest.area} strong (${strongest.score})`);
+    const weakest = rank(AREAS, area => tenths(areas[area]), 'asc')[0];
+    const strongest = rank(AREAS, area => tenths(areas[area]), 'desc')[0];
+    if (weakest.value < RULES.weakArea * 10) {
+      pair += ` ${lib.areas[weakest.key].weak[type]}`;
+      picks.pair.push(`${weakest.key} weak (${areas[weakest.key]})`);
+    } else if (strongest.value >= RULES.strongArea * 10) {
+      pair += ` ${lib.areas[strongest.key].strong[type]}`;
+      picks.pair.push(`${strongest.key} strong (${areas[strongest.key]})`);
     } else {
       picks.pair.push('no area sentence (all areas 55-69)');
     }
   }
 
-  return { who, strengths, challenges, tips, pair, picks };
+  return { version: lib.version, who, strengths, challenges, tips, pair, picks };
 }
 
 // ---------------------------------------------------------------------------
@@ -299,7 +309,7 @@ function renderExample(lib, pair) {
   const result = buildInsights(lib, pair);
   let out = `#### ${pair.title}\n\n`;
   out += `Input: them (${pair.themLabel}) ${traitLine(pair.them)}; you (${pair.meLabel}) ${traitLine(pair.me)}; `;
-  out += `areas ${AREAS.map(area => `${area} ${pair.areas[area]}`).join(', ')}.\n\n`;
+  out += pair.areas ? `areas ${AREAS.map(area => `${area} ${pair.areas[area]}`).join(', ')}.\n\n` : 'no stored areas (v1 result).\n\n';
   out += renderInsights(result);
   out += `\n${renderPicks(result.picks)}`;
   return out;
@@ -401,6 +411,199 @@ function replaceGenerated(doc, part, content) {
 }
 
 // ---------------------------------------------------------------------------
+// Generated files: fixture (Jest + SQL), content seed, SQL check
+// ---------------------------------------------------------------------------
+
+const FIXTURE_OUT = path.join(ROOT, 'lib', '__tests__', 'fixtures', 'personalInsights-fixture.json');
+const SEED_MIGRATION = path.join(ROOT, 'supabase', 'migrations', '20261122120100_personal_insights_seed.sql');
+const CHECK_MIGRATION = path.join(ROOT, 'supabase', 'migrations', '20261122120200_personal_insights_check.sql');
+
+function traits(social, curiosity, organization, kindness, chill) {
+  return { social, curiosity, organization, kindness, chill };
+}
+
+/** Deterministic cases: profiles, noisy users (1 decimal), and every threshold and tie. */
+function fixtureCases() {
+  const cases = [];
+  const animals = Object.keys(PROFILES);
+  const add = (name, input) => cases.push({ name, ...input });
+
+  // Each animal as "them", against a different animal, in all 3 relationship types.
+  animals.forEach((animal, index) => {
+    const meAnimal = animals[(index + 5) % animals.length];
+    const me = profile(meAnimal);
+    const them = profile(animal);
+    for (const type of TYPES) {
+      add(`${capitalize(animal)} seen by ${capitalize(meAnimal)} (${type})`, { type, person: 'Sam', me, them, areas: areaScores(me, them) });
+    }
+  });
+
+  // Noisy users with 1-decimal scores, like real v2 results.
+  let seed = 2026;
+  const random = () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const noisy = () => {
+    const base = profile(animals[Math.floor(random() * animals.length)]);
+    return Object.fromEntries(TRAITS.map(trait => [trait, Math.round(Math.min(100, Math.max(0, base[trait] + (random() - 0.5) * 50)) * 10) / 10]));
+  };
+  for (let i = 0; i < 30; i += 1) {
+    const me = noisy();
+    const them = noisy();
+    add(`noisy pair ${i + 1}`, { type: TYPES[i % 3], person: 'Alex', me, them, areas: i % 5 === 4 ? null : areaScores(me, them) });
+  }
+
+  // Edge cases: thresholds are inclusive/exclusive exactly as documented.
+  const mid = traits(50, 50, 50, 50, 50);
+  add('everyone at 50: balanced, similar, no area sentence', { type: 'lover', person: 'Sam', me: mid, them: mid, areas: { communication: 60, energy: 60, conflict: 60, values: 60 } });
+  add('levels at the limits (60 high, 59.9 medium, 40 medium, 39.9 low)', { type: 'business_partner', person: 'Alex', me: mid, them: traits(60, 59.9, 40, 39.9, 50), areas: null });
+  add('stand-out exactly 10 vs 9.9', { type: 'family', person: 'Noor', me: mid, them: traits(60, 40.1, 50, 50, 50), areas: null });
+  add('gap exactly 20 (difference text)', { type: 'lover', person: 'Sam', me: traits(50, 50, 50, 50, 50), them: traits(70, 55, 50, 50, 50), areas: null });
+  add('gap 19.9 (similar text)', { type: 'lover', person: 'Sam', me: traits(50.1, 50, 50, 50, 50), them: traits(70, 55, 50, 50, 50), areas: null });
+  add('2nd challenge score exactly 25', { type: 'business_partner', person: 'Alex', me: traits(50, 50, 50, 50, 60), them: traits(90, 50, 50, 50, 70), areas: null });
+  add('2nd challenge score 24.9', { type: 'business_partner', person: 'Alex', me: traits(50, 50, 50, 50, 60.2), them: traits(90, 50, 50, 50, 70), areas: null });
+  add('weakest area exactly 55 and strongest 70', { type: 'family', person: 'Noor', me: profile('owl'), them: profile('lion'), areas: { communication: 70, energy: 55, conflict: 60, values: 65 } });
+  add('weakest area 54', { type: 'family', person: 'Noor', me: profile('owl'), them: profile('lion'), areas: { communication: 70, energy: 54, conflict: 60, values: 65 } });
+  add('area ties (first in area order wins)', { type: 'lover', person: 'Sam', me: profile('bear'), them: profile('parrot'), areas: { communication: 40, energy: 40, conflict: 40, values: 40 } });
+  add('trait ties (first in trait order wins)', { type: 'family', person: 'Noor', me: mid, them: traits(80, 20, 80, 20, 50), areas: null });
+  add('they score lower on the biggest gap', { type: 'business_partner', person: 'Alex', me: traits(90, 50, 50, 50, 50), them: traits(20, 50, 50, 50, 50), areas: null });
+  add('extremes 0 and 100', { type: 'lover', person: 'Sam', me: traits(0, 0, 0, 0, 0), them: traits(100, 100, 100, 100, 100), areas: { communication: 0, energy: 0, conflict: 100, values: 100 } });
+  add("name with an apostrophe", { type: 'family', person: "D'Arcy", me: profile('deer'), them: profile('lion'), areas: null });
+  add('name with $& (inserted literally)', { type: 'lover', person: 'Jo$&n', me: profile('deer'), them: profile('lion'), areas: null });
+  add('lowercase name (sentences still start with a capital)', { type: 'family', person: 'sam', me: profile('owl'), them: profile('otter'), areas: null });
+
+  const lib = JSON.parse(fs.readFileSync(LIBRARY_FILE, 'utf8'));
+  return cases.map(testCase => {
+    const { picks, ...expected } = buildInsights(lib, { name: testCase.person, type: testCase.type, me: testCase.me, them: testCase.them, areas: testCase.areas });
+    return { name: testCase.name, relationshipType: testCase.type, person: testCase.person, me: testCase.me, them: testCase.them, areas: testCase.areas, expected };
+  });
+}
+
+function sqlString(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function sqlJson(value) {
+  return value === null ? 'null::jsonb' : `${sqlString(JSON.stringify(value))}::jsonb`;
+}
+
+function writeFixture(cases) {
+  const fixture = {
+    generatedBy: 'node scripts/personal-insights-preview.js (do not edit by hand)',
+    library: 'supabase/content/personal-insights/library.json',
+    cases,
+  };
+  fs.writeFileSync(FIXTURE_OUT, `${JSON.stringify(fixture, null, 2)}\n`);
+  console.log(`Wrote ${path.relative(ROOT, FIXTURE_OUT)} (${cases.length} cases)`);
+}
+
+/** Content rows for both tables, from the library. */
+function contentRows(lib) {
+  const traitRows = [];
+  for (const trait of TRAITS) {
+    for (const level of LEVELS) {
+      for (const type of TYPES) {
+        for (const section of SECTIONS) traitRows.push([trait, level, type, section, lib.traits[trait][level][type][section]]);
+      }
+    }
+  }
+  // (kind, key, variant, relationship_type, text); '' = not applicable.
+  const pairRows = [];
+  for (const type of TYPES) pairRows.push(['label', '', '', type, lib.labels[type]]);
+  for (const type of TYPES) pairRows.push(['balanced', '', '', type, lib.balanced[type]]);
+  for (const trait of TRAITS) {
+    for (const direction of ['they_higher', 'you_higher']) {
+      for (const type of TYPES) pairRows.push(['difference', trait, direction, type, lib.difference[trait][direction][type]]);
+    }
+    pairRows.push(['similar', trait, '', '', lib.similar[trait]]);
+  }
+  for (const area of AREAS) {
+    for (const strength of ['strong', 'weak']) {
+      for (const type of TYPES) pairRows.push(['area', area, strength, type, lib.areas[area][strength][type]]);
+    }
+  }
+  return { traitRows, pairRows };
+}
+
+function writeSeed(lib) {
+  const { traitRows, pairRows } = contentRows(lib);
+  const values = rows => rows.map(row => `  (${row.map(sqlString).join(', ')})`).join(',\n');
+  const sql = `-- Personal insights content (library version ${lib.version}): ${traitRows.length} trait texts + ${pairRows.length} pair texts.
+-- GENERATED by node scripts/personal-insights-preview.js from supabase/content/personal-insights/library.json.
+-- Edit the JSON and re-run the script; don't edit this file by hand.
+--
+-- Replaces the whole library in one transaction (only personal_insights_build() reads it).
+-- Run in the Supabase SQL editor after 20261122120000_personal_insights.sql.
+
+begin;
+
+delete from public.personal_insight_trait_texts;
+insert into public.personal_insight_trait_texts (trait, level, relationship_type, section, text) values
+${values(traitRows)};
+
+delete from public.personal_insight_pair_texts;
+insert into public.personal_insight_pair_texts (kind, key, variant, relationship_type, text) values
+${values(pairRows)};
+
+do $$
+begin
+  if (select count(*) from public.personal_insight_trait_texts) <> ${traitRows.length}
+    or (select count(*) from public.personal_insight_pair_texts) <> ${pairRows.length} then
+    raise exception 'personal insights seed: unexpected row counts';
+  end if;
+end $$;
+
+commit;
+`;
+  fs.writeFileSync(SEED_MIGRATION, sql);
+  console.log(`Wrote ${path.relative(ROOT, SEED_MIGRATION)}`);
+}
+
+function writeCheck(cases) {
+  const rows = cases
+    .map(c => `    (${[sqlString(c.name), sqlString(c.relationshipType), sqlString(c.person), sqlJson(c.me), sqlJson(c.them), sqlJson(c.areas), sqlJson(c.expected)].join(', ')})`)
+    .join(',\n');
+  const sql = `-- Personal insights: checks personal_insights_build() against the shared fixture.
+-- GENERATED by node scripts/personal-insights-preview.js (same cases as
+-- lib/__tests__/fixtures/personalInsights-fixture.json, which Jest checks against
+-- lib/personalInsights.ts). Don't edit by hand.
+--
+-- Read-only: raises an exception (and changes nothing) if any case returns different texts.
+-- Run in the Supabase SQL editor after 20261122120100_personal_insights_seed.sql.
+
+do $$
+declare
+  c record;
+  v_got jsonb;
+  failures text[] := array[]::text[];
+  checked integer := 0;
+begin
+  for c in
+    select * from (values
+${rows}
+    ) as t (name, relationship_type, person, me, them, areas, expected)
+  loop
+    v_got := public.personal_insights_build(c.me, c.them, c.relationship_type, c.person, c.areas);
+    checked := checked + 1;
+    if v_got is distinct from c.expected then
+      failures := failures || format(E'%s\\n  got:      %s\\n  expected: %s', c.name, v_got, c.expected);
+    end if;
+  end loop;
+
+  if cardinality(failures) > 0 then
+    raise exception E'personal insights check: % of % cases differ:\\n%', cardinality(failures), checked, array_to_string(failures[1:5], E'\\n');
+  end if;
+  raise notice 'personal insights check: all % cases match', checked;
+end $$;
+`;
+  fs.writeFileSync(CHECK_MIGRATION, sql);
+  console.log(`Wrote ${path.relative(ROOT, CHECK_MIGRATION)}`);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -420,7 +623,8 @@ function main() {
   if (pairsIndex !== -1) {
     const pairs = JSON.parse(fs.readFileSync(args[pairsIndex + 1], 'utf8'));
     pairs.forEach((pair, index) => {
-      const areas = pair.areas && AREAS.every(area => Number.isFinite(pair.areas[area])) ? pair.areas : areaScores(pair.me, pair.them);
+      // v1 rows have no stored areas: the area sentence is skipped, like in the app.
+      const areas = pair.areas && AREAS.every(area => Number.isFinite(pair.areas[area])) ? pair.areas : null;
       console.log(
         renderExample(lib, {
           ...pair,
@@ -454,6 +658,11 @@ function main() {
   doc = replaceGenerated(doc, 'variety', renderVariety(lib));
   fs.writeFileSync(DOC_FILE, doc);
   console.log(`Updated ${path.relative(ROOT, DOC_FILE)}`);
+
+  const cases = fixtureCases();
+  writeFixture(cases);
+  writeSeed(lib);
+  writeCheck(cases);
 }
 
 main();
