@@ -75,6 +75,10 @@ Any new top-level route group has to be accounted for in `AuthGuard`, or users w
 - Texts never use "together", he/she, or zodiac / fate words (the script rejects them). Both people of a pair always get the same traits in the same sections (checked by the script and Jest).
 - Never commit real users' insights: `--pairs` prints them to the terminal only.
 
+**Hidden matches:** a user can hide a match only for themselves ("⋯" on a Compatibility card → `components/compatibility/HideMatchDialog.tsx`). Rows live in `hidden_matches` (`user_id`, `compatibility_result_id`; RLS select/insert/delete own rows; migration `20261124090000_hidden_matches.sql`), accessed via `lib/supabase/hiddenMatches.ts`. Hidden results are filtered out of the Compatibility list and Home's matches / pair tips (`fetchPairMatches`); "Show hidden matches (n)" at the bottom of the list shows them with "Show again". The other person isn't affected or notified.
+
+**Header:** every tab header's right side is `components/HeaderActions.tsx` (bell + account button opening `AccountModal`), set as the default `headerRight` in `app/(tabs)/_layout.tsx`; screens with their own `headerRight` (Compatibility) render it too.
+
 The Invites tab only lists invite notifications (`invite_id` set) whose invite is still `pending`; its tab badge counts the same.
 
 **Names:** show people through `lib/names.ts` (`getDisplayName` / `getFirstName`): full name, else the part of the email before "@", else "Someone". Select `email` alongside `full_name` when loading profiles.
@@ -90,7 +94,7 @@ The Invites tab only lists invite notifications (`invite_id` set) whose invite i
   - `match_ready` from `notify_match_ready()` (one row per user when a `compatibility_results` row is inserted; `update_user_compatibility_results` only updates rows, so retakes don't re-notify).
   - Names: first name, else the email before "@", else "Someone" (`notification_first_name()`, same rule as `lib/names.ts`). A missing score shows as `??%`. Clients can only select their own rows and update `read_at` / `is_read`; there is no client insert. IDs (`notifications.id`, `invite_id`) are `bigint`, so numbers in the app.
 - **Texts** live in `constants/notificationCopy.ts`; the app renders from `type` + `data`. The triggers write the same texts into `title` / `body` as a fallback, so change both together.
-- **UI:** `components/NotificationBell.tsx` sits in every tab header (unread badge, hidden at 0) and opens the hidden tab route `app/(tabs)/notifications.tsx`. Tapping a row marks it read and opens its `link` (`/compatibility` or `/invites`; anything else is ignored). There's no realtime: the list refreshes on focus, on pull and when the app returns to the foreground; `NotificationsContext` refreshes both badge counts on tab changes and on foreground.
+- **UI:** `components/NotificationBell.tsx` sits in every tab header (unread badge, hidden at 0) and opens the hidden tab route `app/(tabs)/notifications.tsx`. Tapping a row marks it read and opens its `link` (`/compatibility` or `/invites`; anything else is ignored). `match_ready` / `invite_accepted` rows open that exact match (`lib/notificationRoutes.ts`): `resultId` from `data.compatibility_result_id`, else `withUser` (`actor_id`) + `relationshipType`, which `compatibility.tsx` resolves; old rows without that data open the list, and a hidden match shows "This match is hidden" + "Show again". There's no realtime: the list refreshes on focus, on pull and when the app returns to the foreground; `NotificationsContext` refreshes both badge counts on tab changes and on foreground.
 
 **TODO (push and email):**
 - Push: store Expo push tokens per user (e.g. a `push_tokens` table), then have an Edge Function or cron send rows `where push_sent_at is null` through the Expo push API and set `push_sent_at`.

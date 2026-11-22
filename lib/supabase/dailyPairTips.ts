@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { getDailyPairTipPosition, getPairTipOffsets, toLocalDateString } from '@/lib/dailyAuraSchedule';
 import { getDailyAuraSettings } from '@/lib/supabase/dailyAura';
 import { getDisplayName, getFirstName } from '@/lib/names';
+import { fetchHiddenMatchIds } from '@/lib/supabase/hiddenMatches';
 
 /** One person the user has a compatibility result with (newest result per person). */
 export interface PairMatch {
@@ -57,9 +58,9 @@ function fetchAuraNames(): Promise<Record<number, string>> {
   return auraNamesPromise;
 }
 
-/** The user's matches, one per person (their newest result), newest first. */
+/** The user's matches, one per person (their newest result that isn't hidden), newest first. */
 export async function fetchPairMatches(userId: string): Promise<PairMatch[]> {
-  const [{ data, error }, auraNames] = await Promise.all([
+  const [{ data, error }, auraNames, hiddenIds] = await Promise.all([
     supabase
       .from('compatibility_results')
       .select(`
@@ -70,12 +71,18 @@ export async function fetchPairMatches(userId: string): Promise<PairMatch[]> {
       .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
       .order('created_at', { ascending: false }),
     fetchAuraNames(),
+    // Without hidden_matches (e.g. before its migration), show everything.
+    fetchHiddenMatchIds(userId).catch(hiddenError => {
+      console.error('Error loading hidden matches:', hiddenError);
+      return new Set<number>();
+    }),
   ]);
   if (error) throw error;
 
   const seen = new Set<string>();
   const matches: PairMatch[] = [];
   ((data ?? []) as CompatibilityRow[]).forEach(row => {
+    if (hiddenIds.has(Number(row.id))) return;
     const isUserA = row.user_a_id === userId;
     const otherUserId = isUserA ? row.user_b_id : row.user_a_id;
     if (!otherUserId || seen.has(otherUserId)) return;

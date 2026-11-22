@@ -24,7 +24,10 @@ import { buildShareUrl } from '@/constants/AppLinks';
 import { transparentHeaderOptions } from '@/constants/Theme';
 import { AuraButton } from '@/components/AuraButton';
 import { InviteModal } from '@/components/InviteModal';
-import { NotificationBell } from '@/components/NotificationBell';
+import { HeaderActions } from '@/components/HeaderActions';
+import { HideMatchDialog } from '@/components/compatibility/HideMatchDialog';
+import { fetchHiddenMatchIds, hideMatch, unhideMatch } from '@/lib/supabase/hiddenMatches';
+import { MatchLinkParams } from '@/lib/notificationRoutes';
 import { InviteLinkRoute } from '@/components/InviteForm';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -130,11 +133,20 @@ export default function CompatibilityScreen() {
   const [shareTarget, setShareTarget] = useState<CompatibilityResult | null>(null);
   const [sharingId, setSharingId] = useState<string | null>(null);
   const [shareToast, setShareToast] = useState<string | null>(null);
+  // Hidden only for the current user (hidden_matches).
+  const [hiddenIds, setHiddenIds] = useState<Set<number>>(() => new Set());
+  const [isShowingHidden, setIsShowingHidden] = useState(false);
+  const [hideTarget, setHideTarget] = useState<CompatibilityResult | null>(null);
+  const [isHiding, setIsHiding] = useState(false);
+  const [unhidingId, setUnhidingId] = useState<string | null>(null);
+  // Opened from a link (e.g. a notification) to a match the user has hidden.
+  const [hiddenNotice, setHiddenNotice] = useState<CompatibilityResult | null>(null);
   const shareCardRef = useRef<ShareCardRef>(null);
   const shareToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const router = useRouter();
-  // Set when another screen (e.g. Home's pair tips) opens a specific match.
-  const { resultId } = useLocalSearchParams<{ resultId?: string }>();
+  // Set when another screen (Home's pair tips, a notification) opens a specific match:
+  // resultId, else the match with withUser for relationshipType.
+  const { resultId, withUser, relationshipType } = useLocalSearchParams<MatchLinkParams>();
 
   useEffect(() => () => clearTimeout(shareToastTimeoutRef.current), []);
 
@@ -179,16 +191,24 @@ export default function CompatibilityScreen() {
     if (!user?.id) return;
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('compatibility_results')
-        .select(`
-          *,
-          user_a:user_a_id(full_name, email),
-          user_b:user_b_id(full_name, email)
-        `)
-        .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`);
+      const [{ data, error }, hidden] = await Promise.all([
+        supabase
+          .from('compatibility_results')
+          .select(`
+            *,
+            user_a:user_a_id(full_name, email),
+            user_b:user_b_id(full_name, email)
+          `)
+          .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`),
+        // Without hidden_matches (e.g. before its migration), show everything.
+        fetchHiddenMatchIds(user.id).catch(hiddenError => {
+          console.error('Error loading hidden matches:', hiddenError);
+          return new Set<number>();
+        }),
+      ]);
       if (error) throw error;
       setCompatibilityResults(data || []);
+      setHiddenIds(hidden);
     } catch (err) {
       setError('Failed to load compatibility results');
     } finally {
@@ -305,14 +325,95 @@ export default function CompatibilityScreen() {
     fetchAuras(item);
   };
 
-  // Open the requested match once results are loaded, then clear the param.
+  function isHidden(result: CompatibilityResult): boolean {
+    return hiddenIds.has(Number(result.id));
+  }
+
+  async function handleConfirmHide() {
+    if (!user?.id || !hideTarget || isHiding) return;
+    const target = hideTarget;
+    setIsHiding(true);
+    try {
+      await hideMatch(user.id, Number(target.id));
+      setHiddenIds(current => new Set(current).add(Number(target.id)));
+      setHideTarget(null);
+    } catch (hideError) {
+      console.error('Error hiding match:', hideError);
+      setHideTarget(null);
+      showShareToast("We couldn't hide that match. Please try again.");
+    } finally {
+      setIsHiding(false);
+    }
+  }
+
+  async function handleUnhide(result: CompatibilityResult, openAfter = false) {
+    if (!user?.id || unhidingId) return;
+    setUnhidingId(result.id);
+    try {
+      await unhideMatch(user.id, Number(result.id));
+      setHiddenIds(current => {
+        const next = new Set(current);
+        next.delete(Number(result.id));
+        // Back to the list once nothing is hidden any more.
+        if (next.size === 0) setIsShowingHidden(false);
+        return next;
+      });
+      if (openAfter) {
+        setHiddenNotice(null);
+        handleResultPress(result);
+      }
+    } catch (unhideError) {
+      console.error('Error showing match again:', unhideError);
+      showShareToast("We couldn't show that match again. Please try again.");
+    } finally {
+      setUnhidingId(null);
+    }
+  }
+
+  // Open the requested match once results are loaded, then clear the params.
   useEffect(() => {
-    if (!resultId || isLoading) return;
-    const requested = compatibilityResults.find(result => String(result.id) === String(resultId));
-    if (requested) handleResultPress(requested);
-    router.setParams({ resultId: undefined });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleResultPress is recreated every render.
-  }, [resultId, isLoading, compatibilityResults, router]);
+    if ((!resultId && !withUser) || isLoading) return;
+    const requested = compatibilityResults.find(result =>
+      resultId
+        ? String(result.id) === String(resultId)
+        : result.relationship_type === relationshipType &&
+          (result.user_a_id === user?.id ? result.user_b_id : result.user_a_id) === withUser,
+    );
+    if (requested) {
+      setIsShowingHidden(false);
+      if (isHidden(requested)) {
+        setSelectedResult(null);
+        setHiddenNotice(requested);
+      } else {
+        setHiddenNotice(null);
+        handleResultPress(requested);
+      }
+    } else {
+      // No such match (yet, e.g. an accepted invite before both quizzes): show the list.
+      setSelectedResult(null);
+      setHiddenNotice(null);
+      setIsShowingHidden(false);
+    }
+    router.setParams({ resultId: undefined, withUser: undefined, relationshipType: undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleResultPress / isHidden are recreated every render.
+  }, [resultId, withUser, relationshipType, isLoading, compatibilityResults, router]);
+
+  function renderCardActions(result: CompatibilityResult) {
+    return (
+      <View style={styles.cardActions}>
+        {renderShareButton(result)}
+        <Pressable
+          onPress={() => setHideTarget(result)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`More options for your match with ${getOtherUserName(result)}`}
+          style={({ pressed }) => [styles.shareIconButton, pressed && { opacity: 0.7 }]}
+        >
+          <Ionicons name="ellipsis-horizontal" size={18} color={Colors.text} />
+        </Pressable>
+      </View>
+    );
+  }
 
 
   const renderCompatibilityItem = ({ item }: { item: CompatibilityResult }) => {
@@ -329,7 +430,7 @@ export default function CompatibilityScreen() {
       <MatchCard
         onPress={() => handleResultPress(item)}
         accessibilityLabel={`View details for match with ${otherName}`}
-        action={renderShareButton(item)}
+        action={renderCardActions(item)}
       >
         {(actionSlot, onHeaderLayout) => (
         <>
@@ -383,6 +484,77 @@ export default function CompatibilityScreen() {
     );
   };
 
+
+  function renderShowAgainButton(result: CompatibilityResult, openAfter = false) {
+    const isUnhidingThis = unhidingId === result.id;
+    return (
+      <Pressable
+        onPress={() => handleUnhide(result, openAfter)}
+        disabled={unhidingId !== null}
+        accessibilityRole="button"
+        accessibilityLabel={`Show your match with ${getOtherUserName(result)} again`}
+        accessibilityState={{ busy: isUnhidingThis, disabled: unhidingId !== null }}
+        style={({ pressed }) => [styles.showAgainButton, pressed && { opacity: 0.7 }]}
+      >
+        {isUnhidingThis ? (
+          <ActivityIndicator size="small" color={Colors.text} />
+        ) : (
+          <ThemedText style={styles.showAgainText}>Show again</ThemedText>
+        )}
+      </Pressable>
+    );
+  }
+
+  function renderHiddenItem({ item }: { item: CompatibilityResult }) {
+    const isCurrentUserA = user?.id === item.user_a_id;
+    const myAuraName = auraNamesById[isCurrentUserA ? item.user_a_aura_id : item.user_b_aura_id] ?? '';
+    const otherAuraName = auraNamesById[isCurrentUserA ? item.user_b_aura_id : item.user_a_aura_id] ?? '';
+    return (
+      <View style={[styles.resultCard, styles.resultCardWrapper]}>
+        <View style={styles.hiddenCardRow}>
+          <View style={styles.avatarPair}>
+            <AuraAvatar animalName={myAuraName} size="small" />
+            <AuraAvatar animalName={otherAuraName} size="small" style={styles.avatarOverlap} />
+          </View>
+          <View style={styles.resultCardText}>
+            <ThemedText style={styles.hiddenName} numberOfLines={1}>{getOtherUserName(item)}</ThemedText>
+            <ThemedText type="muted" style={styles.animalName}>
+              {formatRelationshipType(item.relationship_type)}
+            </ThemedText>
+          </View>
+          {renderShowAgainButton(item)}
+        </View>
+      </View>
+    );
+  }
+
+  function renderHiddenLink(count: number) {
+    if (count === 0) return null;
+    return (
+      <Pressable
+        onPress={() => setIsShowingHidden(true)}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.hiddenLink, pressed && { opacity: 0.7 }]}
+      >
+        <ThemedText type="muted" style={styles.hiddenLinkText}>Show hidden matches ({count})</ThemedText>
+      </Pressable>
+    );
+  }
+
+  function renderHiddenNotice(result: CompatibilityResult) {
+    return (
+      <View style={styles.emptyContainer}>
+        <View style={styles.hiddenNoticeIcon}>
+          <Ionicons name="eye-off-outline" size={26} color={Colors.textSecondary} />
+        </View>
+        <ThemedText type="subtitle" style={styles.noResultsTitle}>This match is hidden</ThemedText>
+        <ThemedText type="secondary" style={[styles.noResultsText, styles.hiddenNoticeText]}>
+          You hid your match with {getOtherUserName(result)}.
+        </ThemedText>
+        {renderShowAgainButton(result, true)}
+      </View>
+    );
+  }
 
   function renderDetailView(result: CompatibilityResult) {
     const isCurrentUserA = user?.id === result.user_a_id;
@@ -438,16 +610,39 @@ export default function CompatibilityScreen() {
     );
   }
 
+  const visibleResults = compatibilityResults.filter(result => !isHidden(result));
+  const hiddenResults = compatibilityResults.filter(isHidden);
+
+  function handleBack() {
+    if (selectedResult) {
+      setSelectedResult(null);
+      return;
+    }
+    if (hiddenNotice) {
+      setHiddenNotice(null);
+      return;
+    }
+    setIsShowingHidden(false);
+  }
+
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.container}>
         <Stack.Screen
           options={{
             ...transparentHeaderOptions,
-            title: selectedResult ? 'Relationship details' : 'Compatibility',
-            headerLeft: () => selectedResult ? (
+            title: selectedResult
+              ? 'Relationship details'
+              : hiddenNotice
+                ? 'Hidden match'
+                : isShowingHidden
+                  ? 'Hidden matches'
+                  : 'Compatibility',
+            headerLeft: () => selectedResult || hiddenNotice || isShowingHidden ? (
               <Pressable
-                onPress={() => setSelectedResult(null)}
+                onPress={handleBack}
+                accessibilityRole="button"
+                accessibilityLabel="Back"
                 style={({ pressed }) => [
                   styles.backButton,
                   pressed && { opacity: 0.7 }
@@ -457,15 +652,23 @@ export default function CompatibilityScreen() {
               </Pressable>
             ) : null,
             headerRight: () => (
-              <View style={styles.headerActions}>
-                {selectedResult ? renderShareButton(selectedResult) : null}
-                <NotificationBell />
-              </View>
+              <HeaderActions style={styles.headerActions}>
+                {selectedResult ? renderShareButton(selectedResult, styles.headerShareButton) : null}
+              </HeaderActions>
             ),
           }}
         />
         {selectedResult ? (
           renderDetailView(selectedResult)
+        ) : hiddenNotice ? (
+          renderHiddenNotice(hiddenNotice)
+        ) : isShowingHidden ? (
+          <FlatList
+            data={hiddenResults}
+            renderItem={renderHiddenItem}
+            keyExtractor={(item) => String(item.id)}
+            contentContainerStyle={styles.listContainer}
+          />
         ) : (
           <View style={styles.container}>
             <View style={styles.inviteBar}>
@@ -484,7 +687,7 @@ export default function CompatibilityScreen() {
               <View style={styles.centerContainer}>
                 <ThemedText style={styles.errorText}>{error}</ThemedText>
               </View>
-            ) : compatibilityResults.length === 0 ? (
+            ) : visibleResults.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <ThemedText type="subtitle" style={styles.noResultsTitle}>
                   No matches yet
@@ -492,13 +695,15 @@ export default function CompatibilityScreen() {
                 <ThemedText type="secondary" style={styles.noResultsText}>
                   Invite someone to see how your auras match. Once they accept and you&apos;ve both taken the quiz, your match shows up here.
                 </ThemedText>
+                {renderHiddenLink(hiddenResults.length)}
               </View>
             ) : (
               <FlatList
-                data={compatibilityResults}
+                data={visibleResults}
                 renderItem={renderCompatibilityItem}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => String(item.id)}
                 contentContainerStyle={styles.listContainer}
+                ListFooterComponent={renderHiddenLink(hiddenResults.length) ?? undefined}
               />
             )}
           </View>
@@ -513,6 +718,13 @@ export default function CompatibilityScreen() {
             <MatchShareCard {...getShareCardProps(shareTarget)} />
           </ShareCardHost>
         ) : null}
+        <HideMatchDialog
+          key={hideTarget ? String(hideTarget.id) : 'closed'}
+          name={hideTarget ? getOtherUserName(hideTarget) : null}
+          isHiding={isHiding}
+          onConfirm={handleConfirmHide}
+          onClose={() => setHideTarget(null)}
+        />
         <InviteModal
           visible={isInviteOpen}
           onClose={() => setIsInviteOpen(false)}
@@ -679,11 +891,65 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardRaised,
     marginRight: 8,
   },
-  // Same footprint as shareIconButton (36 + 8 margin), so the header layout doesn't change.
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  // Same footprint as cardActions (two 36 buttons + 8 margins), so the header layout doesn't change.
   shareIconSlot: {
-    width: 36,
+    width: 88,
     height: 36,
-    marginRight: 8,
+  },
+  headerShareButton: {
+    marginRight: 0,
+  },
+  hiddenCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  hiddenName: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '500',
+  },
+  showAgainButton: {
+    minWidth: 104,
+    minHeight: 36,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.cardRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  showAgainText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  hiddenLink: {
+    alignSelf: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginTop: 4,
+  },
+  hiddenLinkText: {
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  hiddenNoticeIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.card,
+    marginBottom: 16,
+  },
+  hiddenNoticeText: {
+    marginBottom: 20,
   },
   shareIconOverlay: {
     position: 'absolute',

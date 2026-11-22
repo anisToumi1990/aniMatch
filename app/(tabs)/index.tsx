@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,8 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuiz } from '@/context/QuizContext';
 import { ThemedText } from '@/components/ThemedText';
 import { ScreenBackground } from '@/components/ScreenBackground';
-import { AccountModal } from '@/components/AccountModal';
-import { NotificationBell } from '@/components/NotificationBell';
+import { HeaderActions } from '@/components/HeaderActions';
 import { AuraQuizHero } from '@/components/AuraQuizHero';
 import { InviteModal } from '@/components/InviteModal';
 import { InviteLinkRoute } from '@/components/InviteForm';
@@ -23,7 +22,6 @@ import { transparentHeaderOptions } from '@/constants/Theme';
 import { buildShareUrl } from '@/constants/AppLinks';
 import { useDailyAura } from '@/hooks/useDailyAura';
 import { PairTipItem, useDailyPairTips } from '@/hooks/useDailyPairTips';
-import { getDisplayName } from '@/lib/names';
 import { formatLongDate } from '@/lib/dateLabels';
 import { dismissQuizV2Banner, isQuizV2BannerDismissed, shouldShowQuizV2Banner } from '@/lib/quizV2Banner';
 import { shareCardImage } from '@/lib/share/shareCardImage';
@@ -38,7 +36,6 @@ const CONTENT_PADDING = 20;
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const userInitial = getDisplayName(user?.user_metadata?.full_name, user?.email).charAt(0).toUpperCase();
   // On wide screens, line the header up with the centered content column instead of the window edges.
   const { width: windowWidth } = useWindowDimensions();
   const columnInset = Math.max(0, (windowWidth - CONTENT_MAX_WIDTH) / 2) + CONTENT_PADDING;
@@ -51,7 +48,6 @@ export default function HomeScreen() {
       : null;
   const { state: pairTips, retry: retryPairTips } = useDailyPairTips(aura !== null);
 
-  const [showAccountModal, setShowAccountModal] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const shareCardRef = useRef<ShareCardRef>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -183,19 +179,7 @@ export default function HomeScreen() {
             headerTitleAlign: 'left',
             headerTitleContainerStyle: { marginLeft: columnInset, marginRight: 0 },
             headerRightContainerStyle: { paddingRight: columnInset },
-            headerRight: () => (
-              <View style={styles.headerActions}>
-                <NotificationBell />
-                <TouchableOpacity
-                  style={styles.accountButton}
-                  onPress={() => setShowAccountModal(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Open account menu"
-                >
-                  <ThemedText style={styles.accountInitial}>{userInitial}</ThemedText>
-                </TouchableOpacity>
-              </View>
-            ),
+            headerRight: () => <HeaderActions />,
           }}
         />
         <ScrollView contentContainerStyle={styles.scrollContent}>{renderBody()}</ScrollView>
@@ -212,7 +196,6 @@ export default function HomeScreen() {
           </ShareCardHost>
         ) : null}
         <InviteModal visible={isInviteOpen} onClose={() => setIsInviteOpen(false)} onLinkPress={handleInviteLink} />
-        <AccountModal visible={showAccountModal} onClose={() => setShowAccountModal(false)} />
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -222,26 +205,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 60,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  accountButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  accountInitial: {
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '500',
   },
   scrollContent: {
     flexGrow: 1,

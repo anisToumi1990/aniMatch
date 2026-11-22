@@ -9,7 +9,7 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useQuiz } from '@/context/QuizContext';
 import { useNotifications } from '@/context/NotificationsContext';
-import { NotificationBell } from '@/components/NotificationBell';
+import { HeaderActions } from '@/components/HeaderActions';
 import { toIconColor } from '@/components/ui/iconColor';
 
 /**
@@ -51,8 +51,8 @@ export default function TabLayout() {
       // Back from the notifications list returns to the tab it was opened from.
       backBehavior="history"
       screenOptions={{
-        // Default header action on every tab; screens that set their own headerRight include the bell themselves.
-        headerRight: () => <NotificationBell style={styles.headerBell} />,
+        // Default header actions on every tab (bell + account); screens that set their own headerRight use HeaderActions too.
+        headerRight: () => <HeaderActions style={styles.headerActions} />,
         tabBarActiveTintColor: Colors.tabIconSelected,
         tabBarInactiveTintColor: Colors.tabIconDefault,
         tabBarLabelStyle: { fontWeight: '500' },
@@ -167,7 +167,7 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  headerBell: {
+  headerActions: {
     marginRight: 16,
   },
   badge: {
