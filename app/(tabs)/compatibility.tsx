@@ -14,6 +14,7 @@ import { Colors, getAuraColor, withAlpha } from '@/constants/Colors';
 import { formatRelationshipType, getMatchLevel } from '@/lib/compatibility';
 import { getStoredAreaScores } from '@/lib/compatibilityV2';
 import { AreaBreakdown } from '@/components/compatibility/AreaBreakdown';
+import { PersonalInsights } from '@/components/compatibility/PersonalInsights';
 import { getDisplayName, getFirstName } from '@/lib/names';
 import { ShareCardHost, ShareCardRef } from '@/components/share/ShareCardHost';
 import { MatchShareCard } from '@/components/share/MatchShareCard';
@@ -62,16 +63,6 @@ interface CompatibilityResult {
     full_name: string | null;
     email: string | null;
   } | null;
-}
-
-interface CompatibilityInsightTemplate {
-  id: string;
-  relationship_type: 'lover' | 'business_partner' | 'family';
-  score_range_min: number;
-  score_range_max: number;
-  strengths: string;
-  challenges: string;
-  tips: string;
 }
 
 interface AnimalAura {
@@ -131,9 +122,6 @@ export default function CompatibilityScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedResult, setSelectedResult] = useState<CompatibilityResult | null>(null);
-  const [insight, setInsight] = useState<CompatibilityInsightTemplate | null>(null);
-  const [isInsightLoading, setIsInsightLoading] = useState(false);
-  const [insightError, setInsightError] = useState<string | null>(null);
   const [auraA, setAuraA] = useState<AnimalAura | null>(null);
   const [auraB, setAuraB] = useState<AnimalAura | null>(null);
   const [isAuraLoading, setIsAuraLoading] = useState(false);
@@ -293,22 +281,6 @@ export default function CompatibilityScreen() {
     );
   }
 
-  async function fetchInsight(result: CompatibilityResult) {
-    setIsInsightLoading(true);
-    setInsightError(null);
-    setInsight(null);
-    const { data, error } = await supabase
-      .from('compatibility_insight_templates')
-      .select('*')
-      .eq('relationship_type', result.relationship_type)
-      .lte('score_range_min', result.compatibility_score)
-      .gte('score_range_max', result.compatibility_score)
-      .maybeSingle();
-    if (error) setInsightError('Failed to load insights');
-    setInsight(data || null);
-    setIsInsightLoading(false);
-  }
-
   async function fetchAuras(result: CompatibilityResult) {
     setIsAuraLoading(true);
     setAuraA(null);
@@ -330,7 +302,6 @@ export default function CompatibilityScreen() {
 
   const handleResultPress = (item: CompatibilityResult) => {
     setSelectedResult(item);
-    fetchInsight(item);
     fetchAuras(item);
   };
 
@@ -412,18 +383,6 @@ export default function CompatibilityScreen() {
     );
   };
 
-  function renderTextList(text: string[] | string) {
-    const sentences = Array.isArray(text)
-      ? text
-      : typeof text === 'string'
-      ? text.split(',')
-      : [];
-
-    return sentences.map((sentence, idx) => (
-      <ThemedText key={idx} type="secondary" style={styles.listItem}>{sentence.trim()}</ThemedText>
-    ));
-  }
-
 
   function renderDetailView(result: CompatibilityResult) {
     const isCurrentUserA = user?.id === result.user_a_id;
@@ -472,28 +431,7 @@ export default function CompatibilityScreen() {
                 {formatRelationshipType(result.relationship_type)}
               </ThemedText>
             </View>
-            {isInsightLoading ? (
-              <View style={{ marginTop: 24, alignSelf: 'center' }}>
-                <ActivityIndicator size="small" color={Colors.textSecondary} />
-              </View>
-            ) : insightError ? (
-              <ThemedText style={styles.errorText}>{insightError}</ThemedText>
-            ) : insight ? (
-              <>
-                <View style={styles.sectionContainer}>
-                  <ThemedText style={styles.sectionTitle}>Strengths</ThemedText>
-                  {renderTextList(insight.strengths)}
-                </View>
-                <View style={styles.sectionContainer}>
-                  <ThemedText style={styles.sectionTitle}>Challenges</ThemedText>
-                  {renderTextList(insight.challenges)}
-                </View>
-                <View style={styles.sectionContainer}>
-                  <ThemedText style={styles.sectionTitle}>Tips for improvement</ThemedText>
-                  {renderTextList(insight.tips)}
-                </View>
-              </>
-            ) : null}
+            <PersonalInsights key={result.id} resultId={result.id} />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -846,19 +784,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-  },
-  sectionContainer: {
-    width: '100%',
-    marginBottom: 22,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  listItem: {
-    fontSize: 15,
-    lineHeight: 23,
   },
   auraCard: {
     backgroundColor: Colors.card,
