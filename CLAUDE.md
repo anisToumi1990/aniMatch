@@ -19,6 +19,13 @@ AniMatch ("animatchaura") is an Expo SDK 58 / React Native 0.88 (React 19.3) app
 - `.env` needs `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`. `lib/supabase/index.ts` throws at import time if either one is missing.
 - **Never commit `.env`.** Don't stage it, even if `git add -A` or `git status` shows it.
 
+## Web hosting (Firebase)
+
+- Firebase project `animatch-df5b1` (`.firebaserc`). `firebase.json` serves `dist/` with `cleanUrls: true` and `trailingSlash: false`, so `/compatibility` serves `dist/compatibility.html` (expo-router's static output writes each route both under its group, e.g. `(tabs)/compatibility.html`, and flattened at the root).
+- `npm run export:web` runs `expo export --platform web --clear` and copies `dist/+not-found.html` to `dist/404.html`, which Firebase serves for unknown paths. There's no SPA rewrite to `index.html`, so a new dynamic route (`[id].tsx`) would need a `rewrites` entry.
+- `npm run deploy:web` = export + `npx firebase-tools deploy --only hosting` (no global install). Needs a one-time `npx firebase-tools login`. The `EXPO_PUBLIC_*` values from `.env` are baked into the web bundle at export time.
+- `.firebase/` (deploy cache) is gitignored.
+
 ## Security (Supabase project settings)
 
 - `supabase/migrations/20261121090000_security_hardening.sql` pins `search_path = public` on `handle_new_user()`, `mark_notification_read()`, `create_compatibility_results(integer)` and `update_user_compatibility_results(uuid, integer)`, and revokes execute from `public` / `anon` / `authenticated` on the trigger functions (`handle_new_user`, `send_invite_notification`, `notify_invite_accepted`, `notify_match_ready`). Set `search_path` on any new function the same way.
